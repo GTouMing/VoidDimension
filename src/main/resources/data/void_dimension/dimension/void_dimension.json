@@ -1,0 +1,11 @@
+{
+  "type": "void_dimension:void_dimension",
+  "generator": {
+    "type": "void_dimension:void_generator",
+    "settings": "void_dimension:void_noise",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "void_dimension:void_biome"
+    }
+  }
+}
