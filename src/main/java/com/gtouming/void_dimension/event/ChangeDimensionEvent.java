@@ -13,13 +13,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.Objects;
 
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
+import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWaitTime;
 
 public class ChangeDimensionEvent {
     private static boolean keyDown = false;
+    private static long pastSeconds = 0;
 
 
     public static void changeDimensionByRightClick(PlayerInteractEvent.RightClickBlock event) {
@@ -44,7 +47,38 @@ public class ChangeDimensionEvent {
         handleVoidAnchorTeleport((ServerPlayer) player, event.getPos(), (ServerLevel) event.getLevel());
 
     }
+    public static void changeDimensionBy5Seconds(PlayerTickEvent.Pre event) {
+        Player player = Objects.requireNonNull(event.getEntity());
+        Level level = player.level();
 
+        if (level.isClientSide()) return;
+
+        // 检查下方方块是否为虚空锚点
+        BlockState clickedBlockState = level.getBlockState(player.blockPosition().below());
+        if (!clickedBlockState.is(ModBlocks.VOID_ANCHOR_BLOCK)) {
+            pastSeconds = 0;
+            return;
+        }
+
+        if (clickedBlockState.getValue(VoidAnchorBlock.POWER_LEVEL) == 0) {
+            pastSeconds = 0;
+            return;
+        }
+
+        float tickRate = Objects.requireNonNull(level.getServer()).tickRateManager().tickrate();
+        if (pastSeconds != tickRate * teleportWaitTime) {
+            pastSeconds++;
+            if (pastSeconds % tickRate == 0) {
+                float progress = teleportWaitTime - pastSeconds / tickRate;
+                player.displayClientMessage(Component.literal("§" + (int) progress % 10 + "倒计时：" + (int) progress), true);
+            }
+            return;
+        }
+
+        handleVoidAnchorTeleport((ServerPlayer) player, player.blockPosition().below(), (ServerLevel) level);
+
+        pastSeconds = 0;
+    }
 
     /**
      * 处理虚空锚点传送逻辑
@@ -77,20 +111,13 @@ public class ChangeDimensionEvent {
             double centerZ = targetAnchorPos.getZ() + 0.5;
 
             player.teleportTo(targetLevel, centerX, centerY, centerZ, player.getYRot(), player.getXRot());
-            
         }
     }
 
-    /**
-     * 在目标维度寻找或创建虚空锚点
-     * 在y轴方向上寻找现有的虚空锚点，找到则返回其位置，否则在指定坐标创建
-     */
     private static BlockPos findOrCreateVoidAnchor(ServerLevel targetLevel, BlockPos sourcePos, ServerLevel currentLevel) {
         int targetX = sourcePos.getX();
         int targetY = sourcePos.getY();
         int targetZ = sourcePos.getZ();
-        BlockState sourceState = currentLevel.getBlockState(sourcePos);
-        int sourcePowerLevel = sourceState.getValue(VoidAnchorBlock.POWER_LEVEL);
 
         // 在y轴方向上寻找现有的虚空锚点
         for (int y = 320; y >= -64; y--) {
@@ -108,7 +135,7 @@ public class ChangeDimensionEvent {
         BlockPos createPos = new BlockPos(targetX, targetY, targetZ);
         
         // 检查目标位置是否可放置
-        if (canPlaceAnchor(targetLevel, createPos)) {
+        if (canThanPlaceAnchor(targetLevel, createPos)) {
             powerFloat(currentLevel, sourcePos, targetLevel, createPos);
             return createPos;
         }
@@ -116,44 +143,41 @@ public class ChangeDimensionEvent {
         // 如果目标位置不可放置，尝试在y轴方向上寻找可放置的位置
         for (int y = -64; y <= 320; y++) {
             BlockPos tryPos = new BlockPos(targetX, y, targetZ);
-            if (canPlaceAnchor(targetLevel, tryPos)) {
-                // 创建能量为1的新锚点，源锚点减1
-                BlockState newAnchorState = ModBlocks.VOID_ANCHOR_BLOCK.get().defaultBlockState()
-                        .setValue(VoidAnchorBlock.POWER_LEVEL, 1);
-                int newSourcePower = Math.max(0, sourcePowerLevel - 1);
-                
-                targetLevel.setBlock(tryPos, newAnchorState, 3);
-                currentLevel.setBlock(sourcePos, sourceState.setValue(VoidAnchorBlock.POWER_LEVEL, newSourcePower), 3);
+            if (canThanPlaceAnchor(targetLevel, tryPos)) {
+                powerFloat(currentLevel, sourcePos, targetLevel, tryPos);
                 return tryPos;
             }
         }
-
-        // 如果所有位置都不可放置，返回null
         return null;
     }
 
-    /**
-     * 检查玩家双手是否都没有物品
-     */
     private static boolean isPlayerHandsEmpty(Player player) {
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
         return mainHand.isEmpty() && offHand.isEmpty();
     }
 
-    private static boolean canPlaceAnchor(ServerLevel level, BlockPos pos) {
+    private static boolean canThanPlaceAnchor(ServerLevel level, BlockPos pos) {
         for (int i = 0; i < 3; i++) {
             if (!level.isEmptyBlock(pos.above(i))) {
                 return false;
             }
         }
+        BlockState newAnchorState = ModBlocks.VOID_ANCHOR_BLOCK.get().defaultBlockState();
+        level.setBlock(pos, newAnchorState, 3);
         return true;
     }
 
     private static void powerFloat(ServerLevel sourceLevel, BlockPos sourcePos, ServerLevel targetLevel, BlockPos targetPos) {
         BlockState sourceState = sourceLevel.getBlockState(sourcePos);
-        int sourcePowerLevel = sourceState.getValue(VoidAnchorBlock.POWER_LEVEL);
+        // 修复：先检查方块类型再获取属性
+        if (!(sourceState.getBlock() instanceof VoidAnchorBlock)) return;
+        
         BlockState targetState = targetLevel.getBlockState(targetPos);
+        // 修复：先检查方块类型再获取属性
+        if (!(targetState.getBlock() instanceof VoidAnchorBlock)) return;
+        
+        int sourcePowerLevel = sourceState.getValue(VoidAnchorBlock.POWER_LEVEL);
         int targetPowerLevel = targetState.getValue(VoidAnchorBlock.POWER_LEVEL);
         int newTargetPower = Math.min(maxPowerLevel, targetPowerLevel + 1);
         int newSourcePower = Math.max(0, sourcePowerLevel - 1);

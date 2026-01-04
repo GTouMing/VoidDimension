@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
+
 public class VoidTerminalGUI extends Screen {
     // GUI纹理路径
     private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(VoidDimension.MODID, "textures/gui/terminal_gui_background.png");
@@ -135,7 +137,7 @@ public class VoidTerminalGUI extends Screen {
         page1Widgets.add(anchorPosValue);
 
         StringWidget boundPowerLabel = new StringWidget(xOffset, yOffset + 75, 100, 20,
-                Component.literal("绑定锚点能量等级: " + player.getMainHandItem().getDamageValue()), this.font);
+                Component.literal("绑定锚点能量等级: " + (maxPowerLevel - player.getMainHandItem().getDamageValue())), this.font);
         page1Widgets.add(boundPowerLabel);
 //
 //        // 操作按钮

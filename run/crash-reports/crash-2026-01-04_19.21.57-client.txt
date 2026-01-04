@@ -1,0 +1,273 @@
+---- Minecraft Crash Report ----
+// Hi. I'm Minecraft, and I'm a crashaholic.
+
+Time: 2026-01-04 19:21:57
+Description: Initializing game
+
+java.lang.LinkageError: loader 'MC-BOOTSTRAP' @5c20ffa8 attempted duplicate interface definition for com.mojang.text2speech.Narrator. (com.mojang.text2speech.Narrator is in module text2speech@1.17.9 of loader 'MC-BOOTSTRAP' @5c20ffa8, parent loader 'bootstrap')
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method) ~[?:?] {}
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1027) ~[?:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.readerToClass(ModuleClassLoader.java:196) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.lambda$findClass$20(ModuleClassLoader.java:298) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadFromModule(ModuleClassLoader.java:311) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.findClass(ModuleClassLoader.java:298) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:214) ~[securejarhandler-3.0.8.jar:?] {}
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526) ~[?:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:216) ~[securejarhandler-3.0.8.jar:?] {}
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.GameNarrator.<init>(GameNarrator.java:21) ~[neoforge-21.1.215-merged.jar%23189!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.Minecraft.<init>(Minecraft.java:615) ~[neoforge-21.1.215-merged.jar%23189!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.main.Main.main(Main.java:214) ~[neoforge-21.1.215-merged.jar%23189!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:136) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:124) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.NeoForgeClientDevLaunchHandler.runService(NeoForgeClientDevLaunchHandler.java:23) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.CommonLaunchHandler.lambda$launchService$4(CommonLaunchHandler.java:118) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.run(Launcher.java:103) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.main(Launcher.java:74) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.run(BootstrapLauncher.java:210) [bootstraplauncher-2.0.2.jar:?] {}
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:69) [bootstraplauncher-2.0.2.jar:?] {}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?] {}
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method) ~[?:?] {}
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1027) ~[?:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.readerToClass(ModuleClassLoader.java:196) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.lambda$findClass$20(ModuleClassLoader.java:298) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadFromModule(ModuleClassLoader.java:311) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.findClass(ModuleClassLoader.java:298) ~[securejarhandler-3.0.8.jar:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:214) ~[securejarhandler-3.0.8.jar:?] {}
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526) ~[?:?] {}
+	at cpw.mods.securejarhandler/cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:216) ~[securejarhandler-3.0.8.jar:?] {}
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.GameNarrator.<init>(GameNarrator.java:21) ~[neoforge-21.1.215-merged.jar%23189!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.Minecraft.<init>(Minecraft.java:615) ~[neoforge-21.1.215-merged.jar%23189!/:?] {re:classloading,pl:runtimedistcleaner:A}
+-- Initialization --
+Details:
+	Modules: 
+		ADVAPI32.dll:高级 Windows 32 基本 API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		COMCTL32.dll:用户体验控件库:6.10 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPT32.dll:加密 API32:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTSP.dll:Cryptographic Service Provider API:10.0.19041.5856 (WinBuild.160101.0800):Microsoft Corporation
+		ColorAdapterClient.dll:Microsoft Color Adapter Client:10.0.19041.5129 (WinBuild.160101.0800):Microsoft Corporation
+		CoreMessaging.dll:Microsoft CoreMessaging Dll:10.0.19041.5915:Microsoft Corporation
+		CoreUIComponents.dll:Microsoft Core UI Components Dll:10.0.19041.3636:Microsoft Corporation
+		DBGHELP.DLL:Windows Image Helper:10.0.19041.5848 (WinBuild.160101.0800):Microsoft Corporation
+		DEVOBJ.dll:Device Information Set DLL:10.0.19041.5794 (WinBuild.160101.0800):Microsoft Corporation
+		DNSAPI.dll:DNS 客户端 API DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		GDI32.dll:GDI Client DLL:10.0.19041.6157 (WinBuild.160101.0800):Microsoft Corporation
+		GLU32.dll:OpenGL 实用工具库 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		IMM32.DLL:Multi-User Windows IMM32 API Client DLL:10.0.19041.6157 (WinBuild.160101.0800):Microsoft Corporation
+		IPHLPAPI.DLL:IP 帮助程序 API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		KERNEL32.DLL:Windows NT 基本 API 客户端 DLL:10.0.19041.5915 (WinBuild.160101.0800):Microsoft Corporation
+		KERNELBASE.dll:Windows NT 基本 API 客户端 DLL:10.0.19041.5915 (WinBuild.160101.0800):Microsoft Corporation
+		MMDevApi.dll:MMDevice API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		MSCTF.dll:MSCTF 服务器 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		NLAapi.dll:Network Location Awareness 2:10.0.19041.6456 (WinBuild.160101.0800):Microsoft Corporation
+		NSI.dll:NSI User-mode interface DLL:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		NTASN1.dll:Microsoft ASN.1 API:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		OLEAUT32.dll:OLEAUT32.DLL:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		Oleacc.dll:Active Accessibility Core Component:7.2.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		OpenAL.dll:Main implementation library:1.23.1:
+		POWRPROF.dll:电源配置文件帮助程序 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		PROPSYS.dll:Microsoft 属性系统:7.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		PSAPI.DLL:Process Status Helper:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		RPCRT4.dll:远程过程调用运行时:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		SETUPAPI.dll:Windows 安装程序 API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		SHCORE.dll:SHCORE:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		SHELL32.dll:Windows Shell 公用 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		UMPDC.dll
+		USER32.dll:多用户 Windows 用户 API 客户端 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		USERENV.dll:Userenv:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		VCRUNTIME140.dll:Microsoft® C Runtime Library:14.38.33135.0:Microsoft Corporation
+		VERSION.dll:Version Checking and File Installation Libraries:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		WINHTTP.dll:Windows HTTP 服务:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		WINMM.dll:MCI API DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		WINSTA.dll:Winstation Library:10.0.19041.6456 (WinBuild.160101.0800):Microsoft Corporation
+		WINTRUST.dll:Microsoft Trust Verification APIs:10.0.19041.6456 (WinBuild.160101.0800):Microsoft Corporation
+		WS2_32.dll:Windows Socket 2.0 32 位 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		WTSAPI32.dll:Windows Remote Desktop Session Host Server SDK APIs:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		Wldp.dll:Windows 锁定策略:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		amsi.dll:Anti-Malware Scan Interface:10.0.19041.4355 (WinBuild.160101.0800):Microsoft Corporation
+		bcrypt.dll:Windows 加密基元库:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		bcryptPrimitives.dll:Windows Cryptographic Primitives Library:10.0.19041.5007 (WinBuild.160101.0800):Microsoft Corporation
+		cfgmgr32.dll:Configuration Manager DLL:10.0.19041.3996 (WinBuild.160101.0800):Microsoft Corporation
+		clbcatq.dll:COM+ Configuration Catalog:2001.12.10941.16384 (WinBuild.160101.0800):Microsoft Corporation
+		combase.dll:用于 Windows 的 Microsoft COM:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		cryptbase.dll:Base cryptographic API DLL:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		cryptnet.dll:Crypto Network Related API:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		dbgcore.DLL:Windows Core Debugging Helpers:10.0.19041.5794 (WinBuild.160101.0800):Microsoft Corporation
+		dinput8.dll:Microsoft DirectInput:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		drvstore.dll:Driver Store API:10.0.19041.5794 (WinBuild.160101.0800):Microsoft Corporation
+		dwmapi.dll:Microsoft 桌面窗口管理器 API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		dxcore.dll:DXCore:10.0.19041.5794 (WinBuild.160101.0800):Microsoft Corporation
+		extnet.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		fwpuclnt.dll:FWP/IPsec 用户模式 API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		gdi32full.dll:GDI Client DLL:10.0.19041.6157 (WinBuild.160101.0800):Microsoft Corporation
+		glfw.dll:GLFW 3.4.0 DLL:3.4.0:GLFW
+		icm32.dll:Microsoft Color Management Module (CMM):10.0.19041.5129 (WinBuild.160101.0800):Microsoft Corporation
+		imagehlp.dll:Windows NT Image Helper:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		inputhost.dll:InputHost:10.0.19041.5794 (WinBuild.160101.0800):Microsoft Corporation
+		instrument.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		java.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		java.exe:OpenJDK Platform binary:21.0.6.0:Microsoft
+		jemalloc.dll
+		jimage.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		jli.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		jna16969564882898689285.dll:JNA native library:7.0.0:Java(TM) Native Access (JNA)
+		jsvml.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		jvm.dll:OpenJDK 64-Bit server VM:21.0.6.0:Microsoft
+		kernel.appcore.dll:AppModel API Host:10.0.19041.3758 (WinBuild.160101.0800):Microsoft Corporation
+		lwjgl.dll
+		lwjgl_opengl.dll
+		lwjgl_stb.dll
+		management.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		management_ext.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		msasn1.dll:ASN.1 Runtime APIs:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		mscms.dll:Microsoft 颜色匹配系统 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		msvcp140.dll:Microsoft® C Runtime Library:14.38.33135.0:Microsoft Corporation
+		msvcp_win.dll:Microsoft® C Runtime Library:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		msvcrt.dll:Windows NT CRT DLL:7.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		mswsock.dll:Microsoft Windows Sockets 2.0 服务提供程序:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		napinsp.dll:电子邮件命名填充提供程序:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		ncrypt.dll:Windows NCrypt 路由器:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		net.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		nio.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		ntdll.dll:NT 层 DLL:10.0.19041.4842 (WinBuild.160101.0800):Microsoft Corporation
+		ntmarta.dll:Windows NT MARTA 提供程序:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		nvgpucomp64.dll:NVIDIA GPU Compiler Driver, Version 580.88 :32.0.15.8088:NVIDIA Corporation
+		nvoglv64.dll:NVIDIA Compatible OpenGL ICD:32.0.15.8088:NVIDIA Corporation
+		nvspcap64.dll:NVIDIA Game Proxy:3.28.0.417:NVIDIA Corporation
+		ole32.dll:用于 Windows 的 Microsoft OLE:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		opengl32.dll:OpenGL Client DLL:10.0.19041.5794 (WinBuild.160101.0800):Microsoft Corporation
+		pdh.dll:Windows 性能数据助手 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		perfos.dll:Windows 系统性能对象 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		perfproc.dll:Windows 系统进程性能对象 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		pnrpnsp.dll:PNRP 命名空间提供程序:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		profapi.dll:User Profile Basic API:10.0.19041.6033 (WinBuild.160101.0800):Microsoft Corporation
+		rasadhlp.dll:Remote Access AutoDial Helper:10.0.19041.6328 (WinBuild.160101.0800):Microsoft Corporation
+		rsaenh.dll:Microsoft Enhanced Cryptographic Provider:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		sechost.dll:Host for SCM/SDDL/LSA Lookup APIs:10.0.19041.1 (WinBuild.160101.0800):Microsoft Corporation
+		shlwapi.dll:外壳简易实用工具库:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		sunmscapi.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		textinputframework.dll:"TextInputFramework.DYNLINK":10.0.19041.6456 (WinBuild.160101.0800):Microsoft Corporation
+		ucrtbase.dll:Microsoft® C Runtime Library:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		uxtheme.dll:Microsoft UxTheme 库:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		vcruntime140_1.dll:Microsoft® C Runtime Library:14.38.33135.0:Microsoft Corporation
+		verify.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+		win32u.dll:Win32u:10.0.19041.6456 (WinBuild.160101.0800):Microsoft Corporation
+		windows.storage.dll:Microsoft WinRT Storage API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		winrnr.dll:LDAP RnR Provider DLL:10.0.19041.3636 (WinBuild.160101.0800):Microsoft Corporation
+		wintypes.dll:Windows 基本类型 DLL:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		wshbth.dll:Windows Sockets Helper DLL:10.0.19041.5848 (WinBuild.160101.0800):Microsoft Corporation
+		xinput1_4.dll:Microsoft 公共控制器 API:10.0.19041.4522 (WinBuild.160101.0800):Microsoft Corporation
+		zip.dll:OpenJDK Platform binary:21.0.6.0:Microsoft
+Stacktrace:
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.main.Main.main(Main.java:214) ~[neoforge-21.1.215-merged.jar%23189!/:?] {re:classloading,pl:runtimedistcleaner:A}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:136) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:124) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.NeoForgeClientDevLaunchHandler.runService(NeoForgeClientDevLaunchHandler.java:23) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/fml_loader@4.0.42/net.neoforged.fml.loading.targets.CommonLaunchHandler.lambda$launchService$4(CommonLaunchHandler.java:118) ~[loader-4.0.42.jar%23146!/:4.0] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.run(Launcher.java:103) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.main(Launcher.java:74) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-11.0.5.jar%23128!/:?] {}
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.run(BootstrapLauncher.java:210) [bootstraplauncher-2.0.2.jar:?] {}
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:69) [bootstraplauncher-2.0.2.jar:?] {}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[?:?] {}
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.21.1
+	Minecraft Version ID: 1.21.1
+	Operating System: Windows 10 (amd64) version 10.0
+	Java Version: 21.0.6, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Microsoft
+	Memory: 62262104 bytes (59 MiB) / 469762048 bytes (448 MiB) up to 4271898624 bytes (4074 MiB)
+	CPUs: 20
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Xeon(R) CPU E5-2666 v3 @ 2.90GHz
+	Identifier: Intel64 Family 6 Model 63 Stepping 2
+	Microarchitecture: Haswell (Server)
+	Frequency (GHz): 2.89
+	Number of physical packages: 1
+	Number of physical CPUs: 10
+	Number of logical CPUs: 20
+	Graphics card #0 name: NVIDIA GeForce GTX 1660 SUPER
+	Graphics card #0 vendor: NVIDIA
+	Graphics card #0 VRAM (MiB): 6144.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.15.8088
+	Memory slot #0 capacity (MiB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 2.67
+	Memory slot #0 type: DDR4
+	Memory slot #1 capacity (MiB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 2.67
+	Memory slot #1 type: DDR4
+	Virtual memory max (MiB): 26530.08
+	Virtual memory used (MiB): 14427.68
+	Swap memory total (MiB): 10240.00
+	Swap memory used (MiB): 70.17
+	Space in storage for jna.tmpdir (MiB): <path not set>
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): <path not set>
+	Space in storage for io.netty.native.workdir (MiB): <path not set>
+	Space in storage for java.io.tmpdir (MiB): available: 45129.41, total: 181074.55
+	Space in storage for workdir (MiB): available: 163258.08, total: 307201.88
+	JVM Flags: 0 total; 
+	Launched Version: 21.1.215
+	Backend library: LWJGL version 3.3.3+5
+	Backend API: NVIDIA GeForce GTX 1660 SUPER/PCIe/SSE2 GL version 4.6.0 NVIDIA 580.88, NVIDIA Corporation
+	Window size: <not initialized>
+	GFLW Platform: win32
+	GL Caps: Using framebuffer using OpenGL 3.2
+	GL debug messages: 
+	Is Modded: Definitely; Client brand changed to 'neoforge'
+	Universe: 404
+	Type: Client (map_client.txt)
+	Locale: zh_CN
+	System encoding: GBK
+	File encoding: UTF-8
+	CPU: 20x Intel(R) Xeon(R) CPU E5-2666 v3 @ 2.90GHz
+	ModLauncher: 11.0.5+main.901c6ea8
+	ModLauncher launch target: forgeclientdev
+	ModLauncher services: 
+		sponge-mixin-0.15.2+mixin.0.8.7.jar mixin PLUGINSERVICE 
+		loader-4.0.42.jar slf4jfixer PLUGINSERVICE 
+		loader-4.0.42.jar runtime_enum_extender PLUGINSERVICE 
+		at-modlauncher-10.0.1.jar accesstransformer PLUGINSERVICE 
+		loader-4.0.42.jar runtimedistcleaner PLUGINSERVICE 
+		modlauncher-11.0.5.jar mixin TRANSFORMATIONSERVICE 
+		modlauncher-11.0.5.jar fml TRANSFORMATIONSERVICE 
+	FML Language Providers: 
+		javafml@4.0
+		lowcodefml@4.0
+		minecraft@4.0
+	Mod List: 
+		neoforge-21.1.215-merged.jar                      |Minecraft                     |minecraft                     |1.21.1              |Manifest: NOSIGNATURE
+		neoforge-21.1.215-merged.jar                      |NeoForge                      |neoforge                      |21.1.215            |Manifest: NOSIGNATURE
+		main                                              |Void Dimension                |void_dimension                |0.2                 |Manifest: NOSIGNATURE
+	Crash Report UUID: 806ac9d5-acbc-4b22-9371-32137cab58fa
+	FML: 4.0.42
+	NeoForge: 21.1.215

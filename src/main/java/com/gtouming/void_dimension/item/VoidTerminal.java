@@ -33,7 +33,7 @@ import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLev
 public class VoidTerminal extends Item {
     private boolean bound = false;
     private boolean canUse = true;
-    private long lastGameTime;
+    private long pastTimes = 0;
 
     public VoidTerminal(Properties properties) {
         super(properties
@@ -50,11 +50,12 @@ public class VoidTerminal extends Item {
         if (!level.isClientSide()){
             if(level.getGameTime() % 20 == 0) syncWithAnchor(stack, level);
             if(bound) {
-                if(level.getGameTime() - lastGameTime >= 5 * 20) {
+                pastTimes++;
+                if(pastTimes >= 5 * Objects.requireNonNull(level.getServer()).tickRateManager().tickrate()) {
                     bound = false;
+                    pastTimes = 0;
                 }
             }
-            else lastGameTime = level.getGameTime();
         }
         super.inventoryTick(stack, level, entity, slotId, isSelected);
     }
@@ -158,7 +159,7 @@ public class VoidTerminal extends Item {
     @Override
     public int getBarColor(@NotNull ItemStack stack) {
         int powerLevel = isBound(stack) ? stack.getDamageValue() : 0;
-        float ratio = powerLevel / (float) VoidDimensionConfig.maxPowerLevel; // 使用配置中的能量上限
+        float ratio = powerLevel / (float) maxPowerLevel; // 使用配置中的能量上限
 
         if (ratio < 0.25f) return 0xFF5555; // 红色（低充能）
         else if (ratio < 0.5f) return 0xFFAA00; // 橙色（中低充能）
@@ -170,7 +171,7 @@ public class VoidTerminal extends Item {
      * 绑定到锚点
      */
     private void bindToAnchor(ItemStack stack, BlockPos pos, int powerLevel) {
-        stack.setDamageValue(VoidDimensionConfig.maxPowerLevel - powerLevel); // 使用配置中的能量上限
+        stack.setDamageValue(maxPowerLevel - powerLevel);
 
         CompoundTag boundData = new CompoundTag();
 
@@ -210,7 +211,7 @@ public class VoidTerminal extends Item {
             int currentPower = anchorState.getValue(VoidAnchorBlock.POWER_LEVEL);
 
             // 更新终端耐久度
-            stack.setDamageValue(256 - currentPower);
+            stack.setDamageValue(maxPowerLevel - currentPower);
         } else {
             // 锚点被破坏，解绑终端
             stack.set(BOUND_DATA, null);

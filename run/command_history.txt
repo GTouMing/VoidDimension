@@ -1,0 +1,50 @@
+/check totalPowerLevel
+/check anchorList
+/setblock ~ ~ ~ void_dimension:void_anchor
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/setblock ~ ~ ~ void_dimension:void_anchor
+/check anchorList
+/setblock ~ ~ ~ void_dimension:void_anchor[power_level=1]
+/check totalPowerLevel
+/kill
+/check respawnPoint Dev
+/kill
+/check totalPowerLevel
+/check respawnPoint Dev
+/kill
+/check respawnPoint Dev
+/kill
+/check respawnPoint Dev
+/kill
+/check respawnPoint Dev
+/kill
+/give Dev minecraft:debug_stick
+/check totalPowerLevel
+/check anchorList
+/check totalPowerLevel
+/check anchorList
+/setblock 8 -20 0 air
+/check anchorList
+/check totalPowerLevel
+/tick rate 30
+/tick rate 20
+/tick rate 30
+/tick rate 60
+/check totalPowerLevel

@@ -1,0 +1,22 @@
+#启用仁慈的虚空
+enableFallVoid = true
+#虚空锚点最大能量上限
+# Default: 256
+# Range: 1 ~ 10240
+maxPowerLevel = 256
+#充能物品配置列表，格式: '物品ID=能量值'，例如: minecraft:ender_pearl=8, minecraft:nether_star=256
+chargeItems = ["minecraft:ender_pearl=8", "minecraft:nether_star=256"]
+#是否在世界生成时生成初始平台
+generateInitialPlatform = true
+#初始平台结构类型: flat(平面), pyramid(金字塔), tower(高塔), custom(自定义)
+platformStructure = "custom"
+#是否在非自定义平台中启用随机方块
+enableRandomBlocks = false
+#随机方块列表，格式: '方块ID'，例如: minecraft:obsidian, minecraft:crying_obsidian
+randomBlocks = ["minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:end_stone", "minecraft:blackstone"]
+#自定义结构列表，格式: '方块ID@范围', 例如: minecraft:grass_block@0,0,0-8,0,8
+customStructures = ["minecraft:stone@0,0,0-8,0,8"]
+#虚空锚点传送等待时间（秒）
+# Default: 5
+# Range: 0 ~ 60
+teleportWaitTime = 5

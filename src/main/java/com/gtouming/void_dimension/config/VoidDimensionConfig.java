@@ -19,6 +19,8 @@ public class VoidDimensionConfig {
 
     public static final ModConfigSpec.BooleanValue ENABLE_FALL_VOID = BUILDER.comment("启用仁慈的虚空").define("enableFallVoid", true);
 
+    public static final ModConfigSpec.IntValue TELEPORT_WAIT_TIME = BUILDER.comment("虚空锚点传送等待时间（秒）").defineInRange("teleportWaitTime", 5, 0, 60);
+
     public static final ModConfigSpec.IntValue MAX_POWER_LEVEL = BUILDER.comment("虚空锚点最大能量上限").defineInRange("maxPowerLevel", 256, 1, 10240);
     
     public static final ModConfigSpec.ConfigValue<List<? extends String>> CHARGE_ITEMS = BUILDER
@@ -47,6 +49,7 @@ public class VoidDimensionConfig {
 
     public static boolean enableFallVoid = false;
     public static int maxPowerLevel = 256;
+    public static int teleportWaitTime = 5;
     public static Map<String, Integer> chargeItems = new HashMap<>();
     public static boolean generateInitialPlatform = false;
     public static String platformStructure = "flat";
@@ -58,6 +61,7 @@ public class VoidDimensionConfig {
     static void onLoad(final ModConfigEvent event){
         enableFallVoid = ENABLE_FALL_VOID.get();
         maxPowerLevel = MAX_POWER_LEVEL.get();
+        teleportWaitTime = TELEPORT_WAIT_TIME.get();
         generateInitialPlatform = GENERATE_INITIAL_PLATFORM.get();
         platformStructure = PLATFORM_STRUCTURE.get();
         enableRandomBlocks = ENABLE_RANDOM_BLOCKS.get();
