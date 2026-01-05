@@ -120,7 +120,7 @@ public class VoidTerminal extends Item {
             // 检查是否已绑定
             if (isBound(stack)) {
                 // 打开GUI（这里需要创建GUI类）
-                VoidTerminalGUI.open(level, player);
+                VoidTerminalGUI.open(player);
             } else {
                 player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
             }

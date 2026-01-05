@@ -21,11 +21,13 @@ import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLev
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWaitTime;
 
 public class ChangeDimensionEvent {
+    private static boolean teleportType = true;
     private static boolean keyDown = false;
     private static long pastSeconds = 0;
 
 
     public static void changeDimensionByRightClick(PlayerInteractEvent.RightClickBlock event) {
+        if (!teleportType) return;
 
         keyDown = !keyDown;
         if (!keyDown) return;
@@ -47,8 +49,11 @@ public class ChangeDimensionEvent {
         handleVoidAnchorTeleport((ServerPlayer) player, event.getPos(), (ServerLevel) event.getLevel());
 
     }
-    public static void changeDimensionBy5Seconds(PlayerTickEvent.Pre event) {
+    public static void changeDimensionBySeconds(PlayerTickEvent.Pre event) {
+        if (teleportType) return;
+
         Player player = Objects.requireNonNull(event.getEntity());
+
         Level level = player.level();
 
         if (level.isClientSide()) return;
@@ -189,5 +194,9 @@ public class ChangeDimensionEvent {
         else if (targetLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
             DimensionData.updateTotalPowerLevel(targetLevel);
         }
+    }
+
+    public static void setTeleportType(boolean teleportType) {
+        ChangeDimensionEvent.teleportType = teleportType;
     }
 }

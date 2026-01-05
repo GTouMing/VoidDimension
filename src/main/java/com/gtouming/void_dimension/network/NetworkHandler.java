@@ -25,7 +25,7 @@ public class NetworkHandler {
         registrar.playToServer(
                 SetRespawnPointPacket.TYPE,
                 SetRespawnPointPacket.STREAM_CODEC,
-                SetRespawnPointPacket::handler
+                SetRespawnPointPacket::handle
         );
     }
 }

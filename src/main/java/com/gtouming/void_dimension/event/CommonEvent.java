@@ -31,7 +31,7 @@ public class CommonEvent {
 
         FallInVoidEvent.onFallInVoid(event);
 
-        ChangeDimensionEvent.changeDimensionBy5Seconds(event);
+        ChangeDimensionEvent.changeDimensionBySeconds(event);
     }
 
     @SubscribeEvent

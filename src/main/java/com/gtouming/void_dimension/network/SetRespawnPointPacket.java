@@ -24,7 +24,7 @@ public record SetRespawnPointPacket(long pos) implements CustomPacketPayload {
         return TYPE;
     }
 
-    public static void handler(SetRespawnPointPacket packet, IPayloadContext context) {
+    public static void handle(SetRespawnPointPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             // 确保在服务器端执行
             if (context.flow().isServerbound()) {

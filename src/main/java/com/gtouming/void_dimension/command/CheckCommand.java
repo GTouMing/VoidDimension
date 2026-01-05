@@ -1,6 +1,5 @@
 package com.gtouming.void_dimension.command;
 
-import com.gtouming.void_dimension.DimensionData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -8,8 +7,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+
+import static com.gtouming.void_dimension.DimensionData.anchorPosList;
+import static com.gtouming.void_dimension.DimensionData.totalPowerLevel;
 
 public class CheckCommand {
     
@@ -38,11 +39,6 @@ public class CheckCommand {
      */
     private static int checkTotalPowerLevel(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        ServerLevel level = source.getLevel();
-        
-        DimensionData data = DimensionData.getData(level);
-        int totalPowerLevel = data.getTotalPowerLevel();
-        
         source.sendSuccess(() -> Component.literal("虚空维度总能量等级: " + totalPowerLevel), false);
         return 1;
     }
@@ -52,10 +48,6 @@ public class CheckCommand {
      */
     private static int checkAnchorList(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        ServerLevel level = source.getLevel();
-        
-        DimensionData data = DimensionData.getData(level);
-        var anchorPosList = data.getAnchorPosList();
         
         if (anchorPosList.isEmpty()) {
             source.sendSuccess(() -> Component.literal("虚空维度中没有锚点"), false);

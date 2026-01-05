@@ -1,7 +1,7 @@
 package com.gtouming.void_dimension.gui;
 
-import com.gtouming.void_dimension.DimensionData;
 import com.gtouming.void_dimension.VoidDimension;
+import com.gtouming.void_dimension.event.ChangeDimensionEvent;
 import com.gtouming.void_dimension.item.VoidTerminal;
 import com.gtouming.void_dimension.network.SetRespawnPointPacket;
 import net.minecraft.client.Minecraft;
@@ -11,7 +11,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
+import static com.gtouming.void_dimension.DimensionData.totalPowerLevel;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 
 public class VoidTerminalGUI extends Screen {
@@ -46,7 +46,6 @@ public class VoidTerminalGUI extends Screen {
 
     // 示例数据
     private final Player player;
-    private final Level level;
 
     // 随机提示文本
     private final String randomTip;
@@ -64,9 +63,8 @@ public class VoidTerminalGUI extends Screen {
     };
     private static final Random RANDOM = new Random();
 
-    public VoidTerminalGUI(Level level, Player player) {
+    public VoidTerminalGUI(Player player) {
         super(Component.literal("§a§l虚空终端控制面板"));
-        this.level = level;
         this.player = player;
         this.randomTip = TIP_TEXTS[RANDOM.nextInt(TIP_TEXTS.length)];
     }
@@ -125,7 +123,7 @@ public class VoidTerminalGUI extends Screen {
 
 
         StringWidget powerLabel = new StringWidget(xOffset, yOffset + 30, 100, 20,
-                Component.literal("总能量等级: " + DimensionData.getData(level).getTotalPowerLevel()), this.font);
+                Component.literal("总能量等级: " + totalPowerLevel), this.font);
         page1Widgets.add(powerLabel);
 
         StringWidget anchorPosTitle = new StringWidget(xOffset, yOffset + 45, 100, 20,
@@ -199,6 +197,23 @@ public class VoidTerminalGUI extends Screen {
         AbstractWidget titleLabel = new StringWidget(xOffset, yOffset, 100, 20,
                 Component.literal("高级功能"), this.font);
         page3Widgets.add(titleLabel);
+
+        // 传送方式切换按钮
+        Button teleportModeButton = Button.builder(Component.literal("传送方式: 空手蹲下右键传送"), button -> {
+            // 切换传送方式逻辑
+            String currentMode = button.getMessage().getString();
+            if (currentMode.contains("空手蹲下右键传送")) {
+                ChangeDimensionEvent.setTeleportType(true);
+                button.setMessage(Component.literal("传送方式: 倒计时传送"));
+                player.sendSystemMessage(Component.literal("§a传送方式已切换为倒计时传送"));
+            } else {
+                ChangeDimensionEvent.setTeleportType(false);
+                button.setMessage(Component.literal("传送方式: 空手蹲下右键传送"));
+                player.sendSystemMessage(Component.literal("§a传送方式已切换为空手蹲下右键传送"));
+            }
+        }).bounds(xOffset, yOffset + 30, 150, 20).build();
+        page3Widgets.add(teleportModeButton);
+
 
         Checkbox checkbox = Checkbox.builder(Component.literal("设置锚点为出生点"), this.font).pos(xOffset, yOffset + 60).onValueChange((checkbox1, newValue) -> {
             if (newValue) {
@@ -416,7 +431,7 @@ public class VoidTerminalGUI extends Screen {
     }
 
     // 在VoidTerminal中调用此方法打开GUI
-    public static void open(Level level, Player player) {
-        Minecraft.getInstance().setScreen(new VoidTerminalGUI(level, player));
+    public static void open(Player player) {
+        Minecraft.getInstance().setScreen(new VoidTerminalGUI(player));
     }
 }

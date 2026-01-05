@@ -11,20 +11,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
-
 @Mixin(Level.class)
 public class LevelMixin {
 
     @Inject(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At("HEAD"))
     public void setBlock(BlockPos pos, BlockState state, int flags, int recursionLeft, CallbackInfoReturnable<Boolean> cir) {
-        if (((Object) this instanceof ServerLevel serverLevel)) {
-            if (state.getBlock() instanceof VoidAnchorBlock) {
-                List<BlockPos> anchorPosList = DimensionData.getData(serverLevel).anchorPosList;
-                if (!anchorPosList.contains(pos))
-                    anchorPosList.add(pos);
-                DimensionData.updateTotalPowerLevel(serverLevel);
-            }
-        }
+        if (!((Level)(Object)this instanceof ServerLevel serverLevel)) return;
+        if (!(state.getBlock() instanceof VoidAnchorBlock)) return;
+
+        if (!DimensionData.anchorPosList.contains(pos))
+            DimensionData.anchorPosList.add(pos);
+        DimensionData.updateTotalPowerLevel(serverLevel);
     }
 }

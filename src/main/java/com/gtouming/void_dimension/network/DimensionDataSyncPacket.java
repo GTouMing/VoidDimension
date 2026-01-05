@@ -7,7 +7,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,16 +28,15 @@ public record DimensionDataSyncPacket(CompoundTag tag) implements CustomPacketPa
         context.enqueueWork(() -> {
             // 客户端处理
             if (context.flow().isClientbound()) {
-                Level level = context.player().level();
-                DimensionData clientData = DimensionData.getData(level);
-                clientData.totalPowerLevel = packet.tag.getInt("totalPowerLevel");
+                DimensionData.totalPowerLevel = packet.tag.getInt("totalPowerLevel");
                 int size = packet.tag.getInt("anchorPosListSize");
-                clientData.anchorPosList.clear();
+                DimensionData.anchorPosList.clear();
                 for (int i = 0; i < size; i++) {
-                    clientData.anchorPosList.add(new BlockPos(
-                            packet.tag.getList("anchorPosList", CompoundTag.TAG_COMPOUND).getCompound(i).getInt("x"),
-                            packet.tag.getList("anchorPosList", CompoundTag.TAG_COMPOUND).getCompound(i).getInt("y"),
-                            packet.tag.getList("anchorPosList", CompoundTag.TAG_COMPOUND).getCompound(i).getInt("z")));
+                    CompoundTag posTag = packet.tag.getList("anchorPosList", CompoundTag.TAG_COMPOUND).getCompound(i);
+                    DimensionData.anchorPosList.add(new BlockPos(
+                            posTag.getInt("x"),
+                            posTag.getInt("y"),
+                            posTag.getInt("z")));
                 }
             }
         });

@@ -6,6 +6,7 @@ import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
@@ -51,6 +52,6 @@ public class ChargeAnchorEvent {
 
         player.getMainHandItem().shrink(1);
         
-        DimensionData.updateTotalPowerLevel(level);
+        DimensionData.updateTotalPowerLevel((ServerLevel) level);
     }
 }
