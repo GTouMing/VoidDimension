@@ -1,13 +1,14 @@
 package com.gtouming.void_dimension.gui;
 
 import com.gtouming.void_dimension.VoidDimension;
-import com.gtouming.void_dimension.event.ChangeDimensionEvent;
+import com.gtouming.void_dimension.data.UpdateData;
 import com.gtouming.void_dimension.item.VoidTerminal;
-import com.gtouming.void_dimension.network.SetRespawnPointPacket;
+import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -18,16 +19,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-import static com.gtouming.void_dimension.DimensionData.totalPowerLevel;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 
 public class VoidTerminalGUI extends Screen {
-    // GUI纹理路径
     private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(VoidDimension.MODID, "textures/gui/terminal_gui_background.png");
+    private static VoidTerminalGUI INSTANCE = null;
 
-    // 界面尺寸
     private static final int GUI_WIDTH = 256;
     private static final int GUI_HEIGHT = 166;
+
     private int leftPos;
     private int topPos;
 
@@ -123,7 +123,7 @@ public class VoidTerminalGUI extends Screen {
 
 
         StringWidget powerLabel = new StringWidget(xOffset, yOffset + 30, 100, 20,
-                Component.literal("总能量等级: " + totalPowerLevel), this.font);
+                Component.literal("总能量等级: " + UpdateData.getClientTotalPower()), this.font);
         page1Widgets.add(powerLabel);
 
         StringWidget anchorPosTitle = new StringWidget(xOffset, yOffset + 45, 100, 20,
@@ -202,12 +202,13 @@ public class VoidTerminalGUI extends Screen {
         Button teleportModeButton = Button.builder(Component.literal("传送方式: 空手蹲下右键传送"), button -> {
             // 切换传送方式逻辑
             String currentMode = button.getMessage().getString();
+            CompoundTag tag = new CompoundTag();
+            tag.putUUID("toggle_teleport_type", player.getUUID());
+            C2STagPacket.sendToServer(tag);
             if (currentMode.contains("空手蹲下右键传送")) {
-                ChangeDimensionEvent.setTeleportType(true);
                 button.setMessage(Component.literal("传送方式: 倒计时传送"));
                 player.sendSystemMessage(Component.literal("§a传送方式已切换为倒计时传送"));
             } else {
-                ChangeDimensionEvent.setTeleportType(false);
                 button.setMessage(Component.literal("传送方式: 空手蹲下右键传送"));
                 player.sendSystemMessage(Component.literal("§a传送方式已切换为空手蹲下右键传送"));
             }
@@ -217,7 +218,9 @@ public class VoidTerminalGUI extends Screen {
 
         Checkbox checkbox = Checkbox.builder(Component.literal("设置锚点为出生点"), this.font).pos(xOffset, yOffset + 60).onValueChange((checkbox1, newValue) -> {
             if (newValue) {
-               SetRespawnPointPacket.sendToServer(Objects.requireNonNull(VoidTerminal.getBoundPos(player.getMainHandItem())).asLong());
+                CompoundTag tag = new CompoundTag();
+                tag.putLong("set_respawn_point", Objects.requireNonNull(VoidTerminal.getBoundPos(player.getMainHandItem())).asLong());
+                C2STagPacket.sendToServer(tag);
             }
         }).build();
         page3Widgets.add(checkbox);
@@ -431,7 +434,8 @@ public class VoidTerminalGUI extends Screen {
     }
 
     // 在VoidTerminal中调用此方法打开GUI
-    public static void open(Player player) {
-        Minecraft.getInstance().setScreen(new VoidTerminalGUI(player));
+    public static void open() {
+        if (INSTANCE == null) INSTANCE = new VoidTerminalGUI(Minecraft.getInstance().player);
+        Minecraft.getInstance().setScreen(INSTANCE);
     }
 }

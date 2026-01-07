@@ -1,5 +1,8 @@
 package com.gtouming.void_dimension.command;
 
+import com.gtouming.void_dimension.DimensionData;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import com.gtouming.void_dimension.data.UpdateData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -9,8 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-import static com.gtouming.void_dimension.DimensionData.anchorPosList;
-import static com.gtouming.void_dimension.DimensionData.totalPowerLevel;
+import java.util.Objects;
 
 public class CheckCommand {
     
@@ -39,7 +41,7 @@ public class CheckCommand {
      */
     private static int checkTotalPowerLevel(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        source.sendSuccess(() -> Component.literal("虚空维度总能量等级: " + totalPowerLevel), false);
+        source.sendSuccess(() -> Component.literal("虚空维度总能量等级: " + UpdateData.getTotalPower()), false);
         return 1;
     }
     
@@ -48,15 +50,23 @@ public class CheckCommand {
      */
     private static int checkAnchorList(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
+        var anchorList = DimensionData.getServerData(source.getLevel().getServer()).anchorList;
         
-        if (anchorPosList.isEmpty()) {
+        if (anchorList.isEmpty()) {
             source.sendSuccess(() -> Component.literal("虚空维度中没有锚点"), false);
         } else {
-            source.sendSuccess(() -> Component.literal("虚空维度锚点列表 (" + anchorPosList.size() + " 个):"), false);
-            for (int i = 0; i < anchorPosList.size(); i++) {
-                var pos = anchorPosList.get(i);
+            source.sendSuccess(() -> Component.literal("虚空维度锚点列表 (" + anchorList.size() + " 个):"), false);
+            for (int i = 0; i < anchorList.size(); i++) {
+                var tag = anchorList.get(i);
                 final int index = i;
-                source.sendSuccess(() -> Component.literal("  " + (index + 1) + ". " + pos.toShortString()), false);
+                BlockPos pos = BlockPos.of(tag.getLong("pos"));
+                source.sendSuccess(() -> Component.literal(
+                        (index + 1) + ". §e"
+                        + tag.getString("dim") + ", "
+                        + "§cx: " + pos.getX() + ", "
+                        + "§ay: " + pos.getY() + ", "
+                        + "§9z: " + pos.getZ() + ", "
+                        + "§6power: " + Objects.requireNonNull(VoidAnchorBlockEntity.getBlockEntity(source.getLevel(), pos)).getPowerLevel()), false);
             }
         }
         return 1;

@@ -1,6 +1,7 @@
 package com.gtouming.void_dimension;
 
 import com.gtouming.void_dimension.block.ModBlocks;
+import com.gtouming.void_dimension.block.entity.ModBlockEntities;
 import com.gtouming.void_dimension.command.CheckCommand;
 import com.gtouming.void_dimension.component.ModDataComponents;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
@@ -32,6 +33,8 @@ public class VoidDimension {
         ModItems.register(modEventBus);
 
         ModDimensions.register(modEventBus);
+
+        ModBlockEntities.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(this);
 

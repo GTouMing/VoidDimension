@@ -12,16 +12,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+
 @Mixin(Block.class)
 public class BlockMixin {
 
     @Inject(method = "destroy", at = @At("HEAD"))
     public void destroy(LevelAccessor level, BlockPos pos, BlockState state, CallbackInfo ci) {
         if (!(level instanceof ServerLevel serverLevel)) return;
-        if (!(state.getBlock() instanceof VoidAnchorBlock)) return;
-
-        DimensionData.anchorPosList.remove(pos);
-        DimensionData.updateTotalPowerLevel(serverLevel);
-
+        if (VoidAnchorBlock.noAnchor(state)) return;
+        DimensionData.changePos(pos, serverLevel, false);
     }
 }

@@ -17,15 +17,15 @@ public class NetworkHandler {
     // 注册网络包
     public static void register(PayloadRegistrar registrar) {
         registrar.playToClient(
-                DimensionDataSyncPacket.TYPE,
-                DimensionDataSyncPacket.STREAM_CODEC,
-                DimensionDataSyncPacket::handle
+                S2CTagPacket.TYPE,
+                S2CTagPacket.STREAM_CODEC,
+                S2CTagPacket::handle
         );
 
         registrar.playToServer(
-                SetRespawnPointPacket.TYPE,
-                SetRespawnPointPacket.STREAM_CODEC,
-                SetRespawnPointPacket::handle
+                C2STagPacket.TYPE,
+                C2STagPacket.STREAM_CODEC,
+                C2STagPacket::handle
         );
     }
 }

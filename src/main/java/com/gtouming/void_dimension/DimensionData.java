@@ -1,139 +1,66 @@
 package com.gtouming.void_dimension;
 
-import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.dimension.VoidDimensionType;
-import com.gtouming.void_dimension.network.DimensionDataSyncPacket;
+import com.gtouming.void_dimension.data.UpdateData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DimensionData extends SavedData {
-    public static final DimensionData DIMENSION_DATA = new DimensionData();
     public static final String DATA_NAME = "void_dimension_data";
 
-    private static long lastUpdateTime = 0;
-    public static boolean update = false;
-    private ServerLevel level;
-    public static int totalPowerLevel;
-    public static List<BlockPos> anchorPosList = new ArrayList<>();
-    
-    public DimensionData() {}
+    public static List<CompoundTag> clientAnchorList = new ArrayList<>();
+    //必须是tag，保存坐标以及维度信息
+    public List<CompoundTag> anchorList = new ArrayList<>();
 
-    public DimensionData(CompoundTag tag, HolderLookup.@NotNull Provider provider, ServerLevel level) {
-        this.level = level;
+    DimensionData() {}
 
-        ListTag anchorList = tag.getList("anchorPosList", CompoundTag.TAG_COMPOUND);
-
-        for (int i = 0; i < anchorList.size(); i++) {
-            CompoundTag posTag = anchorList.getCompound(i);
-            BlockPos pos = new BlockPos(
-                    posTag.getInt("x"),
-                    posTag.getInt("y"),
-                    posTag.getInt("z"));
-
-            // 修复逻辑：确保位置被添加到列表
-            anchorPosList.add(pos);
+    DimensionData(CompoundTag tag, HolderLookup.@NotNull Provider provider) {
+        for (int i = 0; i < tag.size(); i++) {
+            if (tag.contains(String.valueOf(i))) {
+                anchorList.add(tag.getCompound(String.valueOf(i)));
+            }
         }
-        totalPowerLevel = tag.getInt("totalPowerLevel");
     }
 
     @Override
     public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider provider) {
-        ListTag anchorList = new ListTag();
-        int powerLevel = 0;
-        for (BlockPos pos : anchorPosList) {
-            if (level.getBlockState(pos).getBlock() instanceof VoidAnchorBlock) {
-                CompoundTag posTag = new CompoundTag();
-                posTag.putInt("x", pos.getX());
-                posTag.putInt("y", pos.getY());
-                posTag.putInt("z", pos.getZ());
-                anchorList.add(posTag);
-
-                powerLevel += this.level.getBlockState(pos).getValue(VoidAnchorBlock.POWER_LEVEL);
-            }
+        for (int i = 0; i < anchorList.size(); i++) {
+            tag.put(String.valueOf(i), anchorList.get(i));
         }
-        tag.put("anchorPosList", anchorList);
-        tag.putInt("anchorPosListSize", anchorList.size());
-        tag.putInt("totalPowerLevel", powerLevel);
         return tag;
     }
     
-    // 服务器端获取实例的方法
-    private static DimensionData getServerData(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(
-                new Factory<>(DimensionData::new, (t, p) -> new DimensionData(t, p, level)),
+    // 服务器端获取实例的方法 - 基于存档存储数据
+    public static DimensionData getServerData(MinecraftServer server) {
+        return server.overworld().getDataStorage().computeIfAbsent(
+                new Factory<>(DimensionData::new, DimensionData::new),
             DATA_NAME
         );
     }
 
-    public static DimensionData getData(@Nullable Level level) {
-        if (level instanceof ServerLevel) {
-            DimensionData data = getServerData((ServerLevel) level);
-            setUpdate();
-            data.setDirty();
-            return data;
-        } else {
-            return DIMENSION_DATA;
-        }
-    }
-    public static void setUpdate() {
-        update = true;
+    public static List<CompoundTag> getAnchorList(ServerLevel level) {
+        return getServerData(level.getServer()).anchorList;
     }
 
-    public static void updateTotalPowerLevel(ServerLevel level) {
-        totalPowerLevel = 0;
-        for (BlockPos pos : anchorPosList) {
-            if (level.getBlockState(pos).getBlock() instanceof VoidAnchorBlock) {
-                totalPowerLevel += level.getBlockState(pos).getValue(VoidAnchorBlock.POWER_LEVEL);
-            }
-        }
-    }
-
-    public static void broadcastDataToAllPlayers(ServerTickEvent.Pre event) {
-        ServerLevel voidDimension = event.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
-        if (voidDimension == null) return;
-        if (!update) {
-            if (System.currentTimeMillis() - lastUpdateTime < 1000) return;
-        }
-        lastUpdateTime = System.currentTimeMillis();
-        update = false;
-        System.out.println(1);
-        updateTotalPowerLevel(voidDimension);
-        CompoundTag tag = writeTag(voidDimension);
-        for (ServerPlayer player : voidDimension.players()) {
-            player.connection.send(new DimensionDataSyncPacket(tag));
-        }
-    }
-
-    private static CompoundTag writeTag(ServerLevel level) {
+    public static void changePos(BlockPos pos, ServerLevel serverLevel, boolean add) {
         CompoundTag tag = new CompoundTag();
-        ListTag anchorList = new ListTag();
-        int powerLevel = 0;
-        for (BlockPos pos : anchorPosList) {
-            if (level.getBlockState(pos).getBlock() instanceof VoidAnchorBlock) {
-                CompoundTag posTag = new CompoundTag();
-                posTag.putInt("x", pos.getX());
-                posTag.putInt("y", pos.getY());
-                posTag.putInt("z", pos.getZ());
-                anchorList.add(posTag);
-
-                powerLevel += level.getBlockState(pos).getValue(VoidAnchorBlock.POWER_LEVEL);
-            }
+        tag.putString("dim", serverLevel.dimension().location().toString());
+        tag.putLong("pos", pos.asLong());
+        if (add) {
+            if (getAnchorList(serverLevel).contains(tag)) return;
+            else getAnchorList(serverLevel).add(tag);
         }
-        tag.put("anchorPosList", anchorList);
-        tag.putInt("anchorPosListSize", anchorList.size());
-        tag.putInt("totalPowerLevel", powerLevel);
-        return tag;
+        else {
+            getAnchorList(serverLevel).remove(tag);
+        }
+        getServerData(serverLevel.getServer()).setDirty();
+        UpdateData.needsBroadcast();
     }
 }

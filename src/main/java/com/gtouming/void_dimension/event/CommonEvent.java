@@ -1,10 +1,11 @@
 package com.gtouming.void_dimension.event;
 
-import com.gtouming.void_dimension.DimensionData;
 import com.gtouming.void_dimension.VoidDimension;
+import com.gtouming.void_dimension.data.UpdateData;
 import com.gtouming.void_dimension.dimension.PlatformGenerator;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -23,6 +24,8 @@ public class CommonEvent {
     @SubscribeEvent
     static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
 
+        ReturnDeathItemEvent.returnDeathItem(event);
+
         ChangeDimensionEvent.changeDimensionByRightClick(event);
     }
 
@@ -36,12 +39,20 @@ public class CommonEvent {
 
     @SubscribeEvent
     static void onServerTick(ServerTickEvent.Pre event) {
-        DimensionData.broadcastDataToAllPlayers(event);
+
+        UpdateData.sumTotalPower(event);
+
+        UpdateData.broadcastAllPlayer(event);
+    }
+
+    @SubscribeEvent
+    static void onLivingDeath(LivingDeathEvent event) {
+
+        PlayerDeathEvent.onPlayerDeath(event);
     }
 
     @SubscribeEvent
     public static void onWorldLoad(LevelEvent.Load event) {
-
         PlatformGenerator.generateInitialPlatform(event);
     }
 }

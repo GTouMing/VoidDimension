@@ -1,6 +1,5 @@
 package com.gtouming.void_dimension.event;
 
-import com.gtouming.void_dimension.DimensionData;
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
@@ -15,27 +14,30 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWaitTime;
 
 public class ChangeDimensionEvent {
-    private static boolean teleportType = true;
+    public static List<UUID> useClickTypeMap = new ArrayList<>();
     private static boolean keyDown = false;
     private static long pastSeconds = 0;
 
 
     public static void changeDimensionByRightClick(PlayerInteractEvent.RightClickBlock event) {
-        if (!teleportType) return;
 
         keyDown = !keyDown;
         if (!keyDown) return;
 
         // 只在服务端处理
-        if (event.getLevel().isClientSide()) return;
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
 
         Player player = Objects.requireNonNull(event.getEntity());
+        if (!useClickTypeMap.contains(player.getUUID())) return;
         // 检查玩家是否蹲下且双手没有物品
         if (!player.isCrouching() || !isPlayerHandsEmpty(player)) return;
 
@@ -46,13 +48,14 @@ public class ChangeDimensionEvent {
         if (clickedBlockState.getValue(VoidAnchorBlock.POWER_LEVEL) == 0) return;
 
         // 处理虚空锚点传送逻辑
-        handleVoidAnchorTeleport((ServerPlayer) player, event.getPos(), (ServerLevel) event.getLevel());
+        handleVoidAnchorTeleport((ServerPlayer) player, event.getPos(), serverLevel);
 
     }
     public static void changeDimensionBySeconds(PlayerTickEvent.Pre event) {
-        if (teleportType) return;
 
         Player player = Objects.requireNonNull(event.getEntity());
+
+        if (useClickTypeMap.contains(player.getUUID())) return;
 
         Level level = player.level();
 
@@ -188,15 +191,19 @@ public class ChangeDimensionEvent {
         int newSourcePower = Math.max(0, sourcePowerLevel - 1);
         sourceLevel.setBlock(sourcePos, sourceState.setValue(VoidAnchorBlock.POWER_LEVEL, newSourcePower), 3);
         targetLevel.setBlock(targetPos, targetState.setValue(VoidAnchorBlock.POWER_LEVEL, newTargetPower), 3);
-        if (sourceLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
-            DimensionData.updateTotalPowerLevel(sourceLevel);
-        }
-        else if (targetLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
-            DimensionData.updateTotalPowerLevel(targetLevel);
-        }
+//        if (sourceLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
+//            DimensionData.updateTotalPowerLevel(sourceLevel);
+//        }
+//        else if (targetLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
+//            DimensionData.updateTotalPowerLevel(targetLevel);
+//        }
     }
 
-    public static void setTeleportType(boolean teleportType) {
-        ChangeDimensionEvent.teleportType = teleportType;
+    public static void updateUseClickTypeList(UUID uuid) {
+        if (useClickTypeMap.contains(uuid)) {
+            useClickTypeMap.remove(uuid);
+        } else {
+            useClickTypeMap.add(uuid);
+        }
     }
 }
