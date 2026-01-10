@@ -16,12 +16,14 @@ import net.minecraft.world.level.material.PushReaction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
+
 /**
  * 虚空传送门方块
  * 用于传送到虚空维度
  */
 public class VoidAnchorBlock extends Block implements EntityBlock {
-    public static final IntegerProperty POWER_LEVEL = IntegerProperty.create("power_level", 0, 256);
+    public static final IntegerProperty POWER_LEVEL = IntegerProperty.create("power_level", 0, maxPowerLevel);
 
     public VoidAnchorBlock() {
         super(Properties.of()
@@ -50,11 +52,26 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
         return level.isClientSide ? null : (level1, pos, state1, blockEntity) -> {
-            if (blockEntity instanceof VoidAnchorBlockEntity) {
-                // 可以在这里添加每tick的逻辑
-                System.out.println("同步方块实体和方块的能量等级");
-            }
+            if (!(blockEntity instanceof VoidAnchorBlockEntity anchorBlockEntity)) return;
+            if (!(state1.getBlock() instanceof VoidAnchorBlock)) return;
+            if (state1.getValue(POWER_LEVEL) == anchorBlockEntity.getPowerLevel()) return;
+            anchorBlockEntity.setPowerLevel(state1.getValue(POWER_LEVEL));
         };
+    }
+
+    public static int getPowerLevel(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof VoidAnchorBlock) {
+            return state.getValue(POWER_LEVEL);
+        }
+        return 0;
+    }
+
+    public static void setPowerLevel(Level level, BlockPos pos, int powerLevel) {
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof VoidAnchorBlock) {
+            level.setBlock(pos, state.setValue(POWER_LEVEL, powerLevel), 3);
+        }
     }
 
     public static boolean noAnchor(BlockState state) {

@@ -13,6 +13,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
+import static com.gtouming.void_dimension.component.ModDataComponents.GUI_STATE_DATA;
+
 public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<C2STagPacket> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("void_dimension", "c2s_tag"));
@@ -31,14 +33,17 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static void handle(C2STagPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if(context.flow().isServerbound()) {
+                ServerPlayer serverPlayer = (ServerPlayer) context.player();
                 if (packet.tag.contains("toggle_teleport_type")) {
-                    ChangeDimensionEvent.updateUseClickTypeList(packet.tag.getUUID("toggle_teleport_type"));
+                    ChangeDimensionEvent.updateUseClickTypeList(packet.tag.getUUID("toggle_teleport_type"), packet.tag.getBoolean("add"));
                 }
                 if (packet.tag.contains("set_respawn_point")) {
-                    ServerPlayer serverPlayer = (ServerPlayer) context.player();
                     serverPlayer.setRespawnPosition(serverPlayer.level().dimension(), BlockPos.of(packet.tag.getLong("set_respawn_point")).above(), 0.0f, true, true);
                     serverPlayer.sendSystemMessage(Component.literal("已设置锚点坐标为重生点"));
                     serverPlayer.sendSystemMessage(Component.literal(serverPlayer.level().dimension().toString()));
+                }
+                if (packet.tag.contains(serverPlayer.getUUID().toString())) {
+                    serverPlayer.getMainHandItem().set(GUI_STATE_DATA, packet.tag);
                 }
             }
         });

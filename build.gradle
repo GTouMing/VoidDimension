@@ -40,6 +40,17 @@ neoForge {
         client {
             client()
 
+            programArgument '--username'
+            programArgument project.player_name_1
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        client2 {
+            client()
+
+            programArgument '--username'
+            programArgument project.player_name_2
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }

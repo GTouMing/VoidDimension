@@ -7,6 +7,8 @@ import com.gtouming.void_dimension.component.ModDataComponents;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import com.gtouming.void_dimension.dimension.ModDimensions;
 import com.gtouming.void_dimension.item.ModItems;
+import com.gtouming.void_dimension.network.C2STagPacket;
+import com.gtouming.void_dimension.network.S2CTagPacket;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -17,14 +19,18 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 
-@Mod(VoidDimension.MODID)
+@Mod(VoidDimension.MOD_ID)
 public class VoidDimension {
-    public static final String MODID = "void_dimension";
+    public static final String MOD_ID = "void_dimension";
     public static final Logger LOGGER = LogUtils.getLogger();
     public VoidDimension(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
+
+        modEventBus.addListener(this::registerPayloadHandlers);
 
         ModDataComponents.register(modEventBus);
 
@@ -41,13 +47,29 @@ public class VoidDimension {
         modContainer.registerConfig(ModConfig.Type.COMMON, VoidDimensionConfig.SPEC);
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event) {
+    void commonSetup(final FMLCommonSetupEvent event) {}
+
+    /**
+     * 注册网络包处理器
+     */
+    void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.2");
+        registrar.playToClient(
+                S2CTagPacket.TYPE,
+                S2CTagPacket.STREAM_CODEC,
+                S2CTagPacket::handle
+        );
+
+        registrar.playToServer(
+                C2STagPacket.TYPE,
+                C2STagPacket.STREAM_CODEC,
+                C2STagPacket::handle
+        );
     }
 
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-    }
-    
+    public void onServerStarting(ServerStartingEvent event) {}
+
     /**
      * 注册命令
      */
@@ -55,4 +77,5 @@ public class VoidDimension {
     public void onRegisterCommands(RegisterCommandsEvent event) {
         CheckCommand.register(event.getDispatcher());
     }
+
 }

@@ -2,6 +2,8 @@ package com.gtouming.void_dimension.event;
 
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.data.SyncData;
+import com.gtouming.void_dimension.dimension.PlatformGenerator;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -24,20 +26,15 @@ import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWai
 
 public class ChangeDimensionEvent {
     public static List<UUID> useClickTypeMap = new ArrayList<>();
-    private static boolean keyDown = false;
     private static long pastSeconds = 0;
 
 
     public static void changeDimensionByRightClick(PlayerInteractEvent.RightClickBlock event) {
-
-        keyDown = !keyDown;
-        if (!keyDown) return;
-
-        // 只在服务端处理
         if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
+        // 只在服务端处理
 
         Player player = Objects.requireNonNull(event.getEntity());
-        if (!useClickTypeMap.contains(player.getUUID())) return;
+        if (useClickTypeMap.contains(player.getUUID())) return;
         // 检查玩家是否蹲下且双手没有物品
         if (!player.isCrouching() || !isPlayerHandsEmpty(player)) return;
 
@@ -55,35 +52,29 @@ public class ChangeDimensionEvent {
 
         Player player = Objects.requireNonNull(event.getEntity());
 
-        if (useClickTypeMap.contains(player.getUUID())) return;
+        if (!(player.level() instanceof ServerLevel level)) return;
 
-        Level level = player.level();
-
-        if (level.isClientSide()) return;
+        if (!useClickTypeMap.contains(player.getUUID())) return;
 
         // 检查下方方块是否为虚空锚点
         BlockState clickedBlockState = level.getBlockState(player.blockPosition().below());
-        if (!clickedBlockState.is(ModBlocks.VOID_ANCHOR_BLOCK)) {
-            pastSeconds = 0;
-            return;
-        }
-
-        if (clickedBlockState.getValue(VoidAnchorBlock.POWER_LEVEL) == 0) {
+        if (!clickedBlockState.is(ModBlocks.VOID_ANCHOR_BLOCK) ||
+                clickedBlockState.getValue(VoidAnchorBlock.POWER_LEVEL) == 0) {
             pastSeconds = 0;
             return;
         }
 
         float tickRate = Objects.requireNonNull(level.getServer()).tickRateManager().tickrate();
         if (pastSeconds != tickRate * teleportWaitTime) {
-            pastSeconds++;
             if (pastSeconds % tickRate == 0) {
                 float progress = teleportWaitTime - pastSeconds / tickRate;
                 player.displayClientMessage(Component.literal("§" + (int) progress % 10 + "倒计时：" + (int) progress), true);
             }
+            pastSeconds++;
             return;
         }
 
-        handleVoidAnchorTeleport((ServerPlayer) player, player.blockPosition().below(), (ServerLevel) level);
+        handleVoidAnchorTeleport((ServerPlayer) player, player.blockPosition().below(), level);
 
         pastSeconds = 0;
     }
@@ -145,6 +136,7 @@ public class ChangeDimensionEvent {
         // 检查目标位置是否可放置
         if (canThanPlaceAnchor(targetLevel, createPos)) {
             powerFloat(currentLevel, sourcePos, targetLevel, createPos);
+            PlatformGenerator.generatePlatformAroundAnchor(targetLevel, createPos);
             return createPos;
         }
 
@@ -153,6 +145,7 @@ public class ChangeDimensionEvent {
             BlockPos tryPos = new BlockPos(targetX, y, targetZ);
             if (canThanPlaceAnchor(targetLevel, tryPos)) {
                 powerFloat(currentLevel, sourcePos, targetLevel, tryPos);
+                PlatformGenerator.generatePlatformAroundAnchor(targetLevel, tryPos);
                 return tryPos;
             }
         }
@@ -177,33 +170,20 @@ public class ChangeDimensionEvent {
     }
 
     private static void powerFloat(ServerLevel sourceLevel, BlockPos sourcePos, ServerLevel targetLevel, BlockPos targetPos) {
-        BlockState sourceState = sourceLevel.getBlockState(sourcePos);
-        // 修复：先检查方块类型再获取属性
-        if (!(sourceState.getBlock() instanceof VoidAnchorBlock)) return;
-        
-        BlockState targetState = targetLevel.getBlockState(targetPos);
-        // 修复：先检查方块类型再获取属性
-        if (!(targetState.getBlock() instanceof VoidAnchorBlock)) return;
-        
-        int sourcePowerLevel = sourceState.getValue(VoidAnchorBlock.POWER_LEVEL);
-        int targetPowerLevel = targetState.getValue(VoidAnchorBlock.POWER_LEVEL);
+        int sourcePowerLevel = VoidAnchorBlock.getPowerLevel(sourceLevel, sourcePos);
+        int targetPowerLevel = VoidAnchorBlock.getPowerLevel(targetLevel, targetPos);
         int newTargetPower = Math.min(maxPowerLevel, targetPowerLevel + 1);
         int newSourcePower = Math.max(0, sourcePowerLevel - 1);
-        sourceLevel.setBlock(sourcePos, sourceState.setValue(VoidAnchorBlock.POWER_LEVEL, newSourcePower), 3);
-        targetLevel.setBlock(targetPos, targetState.setValue(VoidAnchorBlock.POWER_LEVEL, newTargetPower), 3);
-//        if (sourceLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
-//            DimensionData.updateTotalPowerLevel(sourceLevel);
-//        }
-//        else if (targetLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
-//            DimensionData.updateTotalPowerLevel(targetLevel);
-//        }
+        VoidAnchorBlock.setPowerLevel(sourceLevel, sourcePos, newSourcePower);
+        VoidAnchorBlock.setPowerLevel(targetLevel, targetPos, newTargetPower);
+        SyncData.needsSum();
     }
 
-    public static void updateUseClickTypeList(UUID uuid) {
-        if (useClickTypeMap.contains(uuid)) {
-            useClickTypeMap.remove(uuid);
+    public static void updateUseClickTypeList(UUID uuid, boolean add) {
+        if (add) {
+            if (!useClickTypeMap.contains(uuid)) useClickTypeMap.add(uuid);
         } else {
-            useClickTypeMap.add(uuid);
+            useClickTypeMap.remove(uuid);
         }
     }
 }

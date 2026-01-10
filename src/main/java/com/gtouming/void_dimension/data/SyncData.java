@@ -1,16 +1,18 @@
 package com.gtouming.void_dimension.data;
 
-import com.gtouming.void_dimension.DimensionData;
-import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.network.S2CTagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+/*
+* 同步服务器获得的数据到客户端
+* 在GUI类会用到
+* */
 
-public class UpdateData {
+public class SyncData {
     private static long totalPower = 0;
     public static long clientTotalPower = 0;
     private static boolean needsSum = false;
@@ -19,33 +21,29 @@ public class UpdateData {
 
     // 实际更新总能量的方法
     public static void sumTotalPower(ServerTickEvent event) {
-        if ((event.getServer().getTickCount() % 1200 > 0) && !needsSum) return;
-        ServerLevel level = event.getServer().overworld();
+        if ((event.getServer().getTickCount() % 200 > 0) && !needsSum) return;// 每10秒同步一次
+        ServerLevel level = event.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
+        if (level == null) return;
+        totalPower = 0;
         for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
-            if (!tag.getString("dim").equals("void_dimension:void_dimension")) continue;
-            BlockPos pos = BlockPos.of(tag.getLong("pos"));
-            VoidAnchorBlockEntity anchor = VoidAnchorBlockEntity.getBlockEntity(level, pos);
-            if (anchor == null) continue;
-            totalPower += anchor.getPowerLevel();
+            if (tag == null || !tag.getString("dim").equals("void_dimension:void_dimension")) continue;
+            totalPower += level.getBlockState(BlockPos.of(tag.getLong("pos"))).getValue(VoidAnchorBlock.POWER_LEVEL);
         }
         CompoundTag tag = new CompoundTag();
         tag.putLong("total_power", totalPower);
-        for (ServerPlayer player : level.players()) {
-            player.connection.send(new S2CTagPacket(tag));
-        }
+        S2CTagPacket.sendToAllPlayers(tag);
+        needsSum = false;
     }
 
     public static void broadcastAllPlayer(ServerTickEvent event) {
-        if ((event.getServer().getTickCount() % 200 > 0) && !needBroadcast) return;
+        if ((event.getServer().getTickCount() % 200 > 0) && !needBroadcast) return;// 每十秒同步一次
         ServerLevel level = event.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
         if (level == null) return;
-        for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
-            CompoundTag change = new CompoundTag();
-            change.putBoolean("change", true);
-            player.connection.send(new S2CTagPacket(change));
-            for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
-                player.connection.send(new S2CTagPacket(tag));
-            }
+        CompoundTag change = new CompoundTag();
+        change.putBoolean("change", true);
+        S2CTagPacket.sendToAllPlayers(change);
+        for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
+            S2CTagPacket.sendToAllPlayers(tag);
         }
         needBroadcast = false;
     }

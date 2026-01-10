@@ -1,8 +1,8 @@
 package com.gtouming.void_dimension.command;
 
-import com.gtouming.void_dimension.DimensionData;
+import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
-import com.gtouming.void_dimension.data.UpdateData;
+import com.gtouming.void_dimension.data.SyncData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -11,8 +11,6 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-
-import java.util.Objects;
 
 public class CheckCommand {
     
@@ -41,7 +39,7 @@ public class CheckCommand {
      */
     private static int checkTotalPowerLevel(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        source.sendSuccess(() -> Component.literal("虚空维度总能量等级: " + UpdateData.getTotalPower()), false);
+        source.sendSuccess(() -> Component.literal("§6虚空维度总能量等级: " + SyncData.getTotalPower()), false);
         return 1;
     }
     
@@ -53,20 +51,21 @@ public class CheckCommand {
         var anchorList = DimensionData.getServerData(source.getLevel().getServer()).anchorList;
         
         if (anchorList.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("虚空维度中没有锚点"), false);
+            source.sendSuccess(() -> Component.literal("§c所有维度都没有锚点"), false);
         } else {
-            source.sendSuccess(() -> Component.literal("虚空维度锚点列表 (" + anchorList.size() + " 个):"), false);
+            source.sendSuccess(() -> Component.literal("§e虚空锚列表 (" + anchorList.size() + " 个):"), false);
             for (int i = 0; i < anchorList.size(); i++) {
                 var tag = anchorList.get(i);
                 final int index = i;
                 BlockPos pos = BlockPos.of(tag.getLong("pos"));
+                VoidAnchorBlockEntity[] entities = VoidAnchorBlockEntity.getAllBlockEntity(source.getLevel());
                 source.sendSuccess(() -> Component.literal(
                         (index + 1) + ". §e"
                         + tag.getString("dim") + ", "
                         + "§cx: " + pos.getX() + ", "
                         + "§ay: " + pos.getY() + ", "
                         + "§9z: " + pos.getZ() + ", "
-                        + "§6power: " + Objects.requireNonNull(VoidAnchorBlockEntity.getBlockEntity(source.getLevel(), pos)).getPowerLevel()), false);
+                        + "§6power: " + entities[index].getPowerLevel()), false);
             }
         }
         return 1;
@@ -81,7 +80,7 @@ public class CheckCommand {
         // 如果没有指定玩家，则检查执行命令的玩家
         if (targetPlayer == null) {
             if (!(source.getEntity() instanceof ServerPlayer)) {
-                source.sendFailure(Component.literal("只有玩家可以执行此命令"));
+                source.sendFailure(Component.literal("§e只有玩家可以执行此命令"));
                 return 0;
             }
             targetPlayer = (ServerPlayer) source.getEntity();
@@ -90,20 +89,20 @@ public class CheckCommand {
         BlockPos respawnPos = targetPlayer.getRespawnPosition();
         Component respawnInfo;
         if (respawnPos != null) {
-            respawnInfo = Component.literal("§a当前重生点: " +
-                    respawnPos.getX() + ", " +
-                    respawnPos.getY() + ", " +
-                    respawnPos.getZ());
+            respawnInfo = Component.literal("§e当前重生点: "
+                    + "§cx: " + respawnPos.getX() + ", "
+                    + "§ay: " + respawnPos.getY() + ", "
+                    + "§9z: " + respawnPos.getZ());
         } else {
             respawnInfo = Component.literal("§c未设置重生点");
         }
         
         // 根据是否查看自己来显示不同的消息
         if (targetPlayer == source.getEntity()) {
-            source.sendSuccess(() -> Component.literal("你的重生点信息: ").append(respawnInfo), false);
+            source.sendSuccess(() -> Component.literal("§e你的重生点信息: ").append(respawnInfo), false);
         } else {
             ServerPlayer finalTargetPlayer = targetPlayer;
-            source.sendSuccess(() -> Component.literal("玩家 " + finalTargetPlayer.getScoreboardName() + " 的重生点信息: ").append(respawnInfo), false);
+            source.sendSuccess(() -> Component.literal("§e玩家 " + finalTargetPlayer.getScoreboardName() + " 的重生点信息: ").append(respawnInfo), false);
         }
         return 1;
     }

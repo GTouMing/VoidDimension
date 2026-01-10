@@ -5,27 +5,23 @@ import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import java.util.Objects;
 
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 
 public class ChargeAnchorEvent {
-    private static boolean keyDown = false;
 
-    public static void onChargeAnchor(UseItemOnBlockEvent event) {
-        keyDown = !keyDown;
-        if (!keyDown) return;
+    public static void onChargeAnchor(PlayerInteractEvent.RightClickBlock event) {
 
-        Level level = event.getLevel();
-        if (level.isClientSide()) return;
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
 
-        Player player = Objects.requireNonNull(event.getPlayer());
+        Player player = Objects.requireNonNull(event.getEntity());
 
         Item item = event.getItemStack().getItem();
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);

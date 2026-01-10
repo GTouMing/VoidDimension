@@ -1,6 +1,5 @@
-package com.gtouming.void_dimension;
+package com.gtouming.void_dimension.data;
 
-import com.gtouming.void_dimension.data.UpdateData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -11,7 +10,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/*
+* 存储所有虚空锚的坐标以及维度信息
+* */
 public class DimensionData extends SavedData {
     public static final String DATA_NAME = "void_dimension_data";
 
@@ -61,6 +62,7 @@ public class DimensionData extends SavedData {
             getAnchorList(serverLevel).remove(tag);
         }
         getServerData(serverLevel.getServer()).setDirty();
-        UpdateData.needsBroadcast();
+        SyncData.needsBroadcast();
+        SyncData.needsSum();
     }
 }

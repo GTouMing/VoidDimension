@@ -5,10 +5,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import static com.gtouming.void_dimension.VoidDimension.MODID;
+import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
 
 public class ModBlocks {
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
     // 虚空传送门方块
     public static final DeferredBlock<Block> VOID_ANCHOR_BLOCK = BLOCKS.register("void_anchor", VoidAnchorBlock::new);
 

@@ -17,7 +17,7 @@ import com.mojang.datafixers.DSL;
  */
 public class ModBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
-            DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, VoidDimension.MODID);
+            DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, VoidDimension.MOD_ID);
 
     public static final Supplier<BlockEntityType<VoidAnchorBlockEntity>> VOID_ANCHOR_BLOCK_ENTITY =
             BLOCK_ENTITIES.register("void_anchor",

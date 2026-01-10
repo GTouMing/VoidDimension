@@ -8,10 +8,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.event.level.LevelEvent;
 
 import java.util.List;
 import java.util.Random;
+
+import static com.gtouming.void_dimension.config.VoidDimensionConfig.generateInitialPlatform;
 
 /**
  * 平台生成器 - 负责在虚空维度生成初始平台
@@ -19,51 +20,43 @@ import java.util.Random;
 public class PlatformGenerator {
 
     /**
-     * 在虚空维度生成初始平台
+     * 在锚点周围生成平台（以锚点为中心）
      */
-    public static void generateInitialPlatform(LevelEvent.Load event) {
+    public static void generatePlatformAroundAnchor(ServerLevel level, BlockPos anchorPos) {
+        if (!generateInitialPlatform) return;
 
-        if (!(event.getLevel() instanceof ServerLevel level)) return;
-
-        if (!VoidDimensionConfig.shouldGenerateInitialPlatform()) {
-            return;
-        }
-
-        if (level.dimension() != VoidDimensionType.VOID_DIMENSION) {
-            return;
-        }
+        if (level.dimension() != VoidDimensionType.VOID_DIMENSION) return;
 
         String structureType = VoidDimensionConfig.getPlatformStructure();
         Random random = new Random();
 
         switch (structureType) {
             case "pyramid":
-                generatePyramidPlatform(level, random);
+                generatePyramidPlatformAroundAnchor(level, anchorPos, random);
                 break;
             case "tower":
-                generateTowerPlatform(level, random);
+                generateTowerPlatformAroundAnchor(level, anchorPos, random);
                 break;
             case "custom":
-                generateCustomStructure(level);
+                generateCustomStructureAroundAnchor(level, anchorPos);
                 break;
             case "flat":
             default:
-                generateFlatPlatform(level, random);
+                generateFlatPlatformAroundAnchor(level, anchorPos, random);
                 break;
         }
     }
 
     /**
-     * 生成平面平台
+     * 以锚点为中心生成平面平台
      */
-    private static void generateFlatPlatform(ServerLevel level, Random random) {
-        BlockPos center = new BlockPos(0, 64, 0);
+    private static void generateFlatPlatformAroundAnchor(ServerLevel level, BlockPos anchorPos, Random random) {
         int size = 8;
 
-        // 生成平台地板
+        // 生成平台地板（以锚点为中心）
         for (int x = -size; x <= size; x++) {
             for (int z = -size; z <= size; z++) {
-                BlockPos pos = center.offset(x, 0, z);
+                BlockPos pos = anchorPos.offset(x, 0, z);
                 if (level.isEmptyBlock(pos)) {
                     Block block = getRandomPlatformBlock(random);
                     level.setBlock(pos, block.defaultBlockState(), 3);
@@ -75,7 +68,7 @@ public class PlatformGenerator {
         for (int x = -size - 1; x <= size + 1; x++) {
             for (int z = -size - 1; z <= size + 1; z++) {
                 if (Math.abs(x) == size + 1 || Math.abs(z) == size + 1) {
-                    BlockPos pos = center.offset(x, 1, z);
+                    BlockPos pos = anchorPos.offset(x, 1, z);
                     if (level.isEmptyBlock(pos)) {
                         level.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
                     }
@@ -85,17 +78,16 @@ public class PlatformGenerator {
     }
 
     /**
-     * 生成金字塔平台
+     * 以锚点为中心生成金字塔平台
      */
-    private static void generatePyramidPlatform(ServerLevel level, Random random) {
-        BlockPos center = new BlockPos(0, 64, 0);
+    private static void generatePyramidPlatformAroundAnchor(ServerLevel level, BlockPos anchorPos, Random random) {
         int height = 5;
 
         for (int y = 0; y < height; y++) {
             int layerSize = height - y;
             for (int x = -layerSize; x <= layerSize; x++) {
                 for (int z = -layerSize; z <= layerSize; z++) {
-                    BlockPos pos = center.offset(x, y, z);
+                    BlockPos pos = anchorPos.offset(x, y - height, z);
                     if (level.isEmptyBlock(pos)) {
                         Block block = getRandomPlatformBlock(random);
                         level.setBlock(pos, block.defaultBlockState(), 3);
@@ -106,17 +98,16 @@ public class PlatformGenerator {
     }
 
     /**
-     * 生成高塔平台
+     * 以锚点为中心生成高塔平台
      */
-    private static void generateTowerPlatform(ServerLevel level, Random random) {
-        BlockPos center = new BlockPos(0, 64, 0);
+    private static void generateTowerPlatformAroundAnchor(ServerLevel level, BlockPos anchorPos, Random random) {
         int baseSize = 3;
         int height = 10;
 
         // 生成塔基
         for (int x = -baseSize; x <= baseSize; x++) {
             for (int z = -baseSize; z <= baseSize; z++) {
-                BlockPos pos = center.offset(x, 0, z);
+                BlockPos pos = anchorPos.offset(x, 0, z);
                 if (level.isEmptyBlock(pos)) {
                     Block block = getRandomPlatformBlock(random);
                     level.setBlock(pos, block.defaultBlockState(), 3);
@@ -126,16 +117,17 @@ public class PlatformGenerator {
 
         // 生成塔身
         for (int y = 1; y < height; y++) {
-            BlockPos pos = center.offset(0, y, 0);
+            BlockPos pos = anchorPos.offset(0, y, 0);
             if (level.isEmptyBlock(pos)) {
-                level.setBlock(pos, Blocks.OBSIDIAN.defaultBlockState(), 3);
+                Block block = getRandomPlatformBlock(random);
+                level.setBlock(pos, block.defaultBlockState(), 3);
             }
         }
 
         // 生成塔顶平台
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
-                BlockPos pos = center.offset(x, height, z);
+                BlockPos pos = anchorPos.offset(x, height, z);
                 if (level.isEmptyBlock(pos)) {
                     Block block = getRandomPlatformBlock(random);
                     level.setBlock(pos, block.defaultBlockState(), 3);
@@ -145,21 +137,21 @@ public class PlatformGenerator {
     }
 
     /**
-     * 生成自定义结构
+     * 以锚点为中心生成自定义结构
      */
-    private static void generateCustomStructure(ServerLevel level) {
+    private static void generateCustomStructureAroundAnchor(ServerLevel level, BlockPos anchorPos) {
         List<String> customConfigs = VoidDimensionConfig.getCustomStructures();
         
         for (String customConfig : customConfigs) {
             try {
-                // 解析格式: 方块ID@minX,minY,minZ-maxX,maxY,maxZ
+                // 解析格式: 方块ID@minX,minY,minZ_maxX,maxY,maxZ (使用下划线分隔范围)
                 String[] parts = customConfig.split("@");
                 if (parts.length == 2) {
                     String blockId = parts[0].trim();
                     String rangeStr = parts[1].trim();
 
-                    // 解析范围
-                    String[] ranges = rangeStr.split("-");
+                    // 解析范围 - 使用下划线分隔
+                    String[] ranges = rangeStr.split("_");
                     if (ranges.length == 2) {
                         String[] minCoords = ranges[0].split(",");
                         String[] maxCoords = ranges[1].split(",");
@@ -177,11 +169,11 @@ public class PlatformGenerator {
                             if (blockLocation != null && BuiltInRegistries.BLOCK.containsKey(blockLocation)) {
                                 Block block = BuiltInRegistries.BLOCK.get(blockLocation);
 
-                                // 生成结构
+                                // 以锚点为中心生成结构
                                 for (int x = minX; x <= maxX; x++) {
                                     for (int y = minY; y <= maxY; y++) {
                                         for (int z = minZ; z <= maxZ; z++) {
-                                            BlockPos pos = new BlockPos(x, y, z);
+                                            BlockPos pos = anchorPos.offset(x, y, z);
                                             if (level.isEmptyBlock(pos)) {
                                                 level.setBlock(pos, block.defaultBlockState(), 3);
                                             }
@@ -203,7 +195,7 @@ public class PlatformGenerator {
      */
     private static Block getRandomPlatformBlock(Random random) {
         // 如果启用了随机方块，从配置列表中随机选择
-        if (VoidDimensionConfig.shouldEnableRandomBlocks()) {
+        if (VoidDimensionConfig.enableRandomBlocks) {
             List<String> blockIds = VoidDimensionConfig.getRandomBlocks();
             if (!blockIds.isEmpty()) {
                 String randomBlockId = blockIds.get(random.nextInt(blockIds.size()));
@@ -215,6 +207,6 @@ public class PlatformGenerator {
         }
         
         // 如果未启用随机方块或配置为空，使用默认方块
-        return Blocks.GRASS_BLOCK;
+        return Blocks.COBBLESTONE;
     }
 }

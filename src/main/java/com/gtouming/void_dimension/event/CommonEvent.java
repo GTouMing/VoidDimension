@@ -1,24 +1,20 @@
 package com.gtouming.void_dimension.event;
 
 import com.gtouming.void_dimension.VoidDimension;
-import com.gtouming.void_dimension.data.UpdateData;
-import com.gtouming.void_dimension.dimension.PlatformGenerator;
+import com.gtouming.void_dimension.data.SyncData;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-@EventBusSubscriber(modid = VoidDimension.MODID)
+@EventBusSubscriber(modid = VoidDimension.MOD_ID)
 public class CommonEvent {
 
     @SubscribeEvent
     static void onRightClickBlock(UseItemOnBlockEvent event) {
-
-        ChargeAnchorEvent.onChargeAnchor(event);
     }
 
     @SubscribeEvent
@@ -26,33 +22,30 @@ public class CommonEvent {
 
         ReturnDeathItemEvent.returnDeathItem(event);
 
+        ChargeAnchorEvent.onChargeAnchor(event);
+
         ChangeDimensionEvent.changeDimensionByRightClick(event);
     }
 
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Pre event) {
 
-        FallInVoidEvent.onFallInVoid(event);
-
         ChangeDimensionEvent.changeDimensionBySeconds(event);
+
+        FallInVoidEvent.onFallInVoid(event);
     }
 
     @SubscribeEvent
     static void onServerTick(ServerTickEvent.Pre event) {
 
-        UpdateData.sumTotalPower(event);
+        SyncData.sumTotalPower(event);
 
-        UpdateData.broadcastAllPlayer(event);
+        SyncData.broadcastAllPlayer(event);
     }
 
     @SubscribeEvent
     static void onLivingDeath(LivingDeathEvent event) {
 
         PlayerDeathEvent.onPlayerDeath(event);
-    }
-
-    @SubscribeEvent
-    public static void onWorldLoad(LevelEvent.Load event) {
-        PlatformGenerator.generateInitialPlatform(event);
     }
 }

@@ -1,5 +1,6 @@
 package com.gtouming.void_dimension.event;
 
+import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -10,16 +11,17 @@ public class ReturnDeathItemEvent {
 
     public static void returnDeathItem(PlayerInteractEvent.RightClickBlock event) {
         // 检查玩家是否有死亡物品可以取回
-        if (event.getLevel().isClientSide()) return;
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
+
+        if (VoidAnchorBlock.noAnchor(serverLevel, event.getPos())) return;
         
         Player player = event.getEntity();
-        VoidAnchorBlockEntity blockEntity = VoidAnchorBlockEntity.getBlockEntity((ServerLevel) event.getLevel(), event.getPos());
+        VoidAnchorBlockEntity blockEntity = VoidAnchorBlockEntity.getBlockEntity(serverLevel, event.getPos());
         
-        if (blockEntity != null && blockEntity.hasPlayerDeathItems(player)) {
+        if (blockEntity == null || !blockEntity.hasPlayerDeathItems(player)) return;
             // 取回死亡物品
-            if (blockEntity.retrievePlayerDeathItems(player)) {
-                player.displayClientMessage(Component.literal("§a物品已取回！"), true);
-            }
-        }
+        if (!blockEntity.retrievePlayerDeathItems(player)) return;
+
+        player.displayClientMessage(Component.literal("§a物品已取回！"), true);
     }
 }

@@ -10,13 +10,13 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import static com.gtouming.void_dimension.VoidDimension.MODID;
+import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
 import static com.gtouming.void_dimension.block.ModBlocks.VOID_ANCHOR_BLOCK;
 
 public class ModItems {
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
 
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
 
     public static final DeferredItem<BlockItem> VOID_ANCHOR_ITEM = ITEMS.registerSimpleBlockItem("void_anchor", VOID_ANCHOR_BLOCK);
     public static final DeferredItem<VoidTerminal> VOID_TERMINAL = ITEMS.register("void_terminal", () -> new VoidTerminal(new Item.Properties()));

@@ -13,15 +13,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@EventBusSubscriber(modid = VoidDimension.MODID)
+@EventBusSubscriber(modid = VoidDimension.MOD_ID)
 public class VoidDimensionConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue ENABLE_FALL_VOID = BUILDER.comment("启用仁慈的虚空").define("enableFallVoid", true);
 
-    public static final ModConfigSpec.IntValue TELEPORT_WAIT_TIME = BUILDER.comment("虚空锚点传送等待时间（秒）").defineInRange("teleportWaitTime", 5, 0, 60);
+    public static final ModConfigSpec.IntValue TELEPORT_WAIT_TIME = BUILDER.comment("虚空锚传送等待时间（秒），范围: 0-60").defineInRange("teleportWaitTime", 5, 0, 60);
 
-    public static final ModConfigSpec.IntValue MAX_POWER_LEVEL = BUILDER.comment("虚空锚点最大能量上限").defineInRange("maxPowerLevel", 256, 1, 10240);
+    public static final ModConfigSpec.IntValue MAX_POWER_LEVEL = BUILDER.comment("虚空锚点最大能量上限，范围: 1-10240").defineInRange("maxPowerLevel", 256, 1, 10240);
     
     public static final ModConfigSpec.ConfigValue<List<? extends String>> CHARGE_ITEMS = BUILDER
             .comment("充能物品配置列表，格式: '物品ID=能量值'，例如: minecraft:ender_pearl=8, minecraft:nether_star=256")
@@ -35,15 +35,15 @@ public class VoidDimensionConfig {
             .comment("随机方块列表，格式: '方块ID'，例如: minecraft:obsidian, minecraft:crying_obsidian")
             .define("randomBlocks", List.of("minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:end_stone", "minecraft:blackstone"), VoidDimensionConfig::validateBlockIds);
 
-    public static final ModConfigSpec.BooleanValue GENERATE_INITIAL_PLATFORM = BUILDER.comment("是否在世界生成时生成初始平台").define("generateInitialPlatform", false);
+    public static final ModConfigSpec.BooleanValue GENERATE_INITIAL_PLATFORM = BUILDER.comment("是否在新虚空锚放置（仅在虚空纬度）时生成初始平台").define("generateInitialPlatform", false);
 
     public static final ModConfigSpec.ConfigValue<String> PLATFORM_STRUCTURE = BUILDER
             .comment("初始平台结构类型: flat(平面), pyramid(金字塔), tower(高塔), custom(自定义)")
             .define("platformStructure", "flat");
 
     public static final ModConfigSpec.ConfigValue<List<? extends String>> CUSTOM_STRUCTURES = BUILDER
-            .comment("自定义结构列表，格式: '方块ID@范围', 例如: minecraft:grass_block@0,0,0-8,0,8")
-            .define("customStructures", List.of("minecraft:grass_block@0,0,0-8,0,8"), VoidDimensionConfig::validateCustomStructures);
+            .comment("自定义结构列表，格式: '方块ID@相对范围（中心为0,0,0）', 例如: minecraft:grass_block@-8,0,-8_8,0,8")
+            .define("customStructures", List.of("minecraft:grass_block@-8,0,-8_8,0,8"), VoidDimensionConfig::validateCustomStructures);
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
@@ -53,7 +53,7 @@ public class VoidDimensionConfig {
     public static Map<String, Integer> chargeItems = new HashMap<>();
     public static boolean generateInitialPlatform = false;
     public static String platformStructure = "flat";
-    public static List<String> customStructures = new ArrayList<>(List.of("minecraft:grass_block@0,0,0-8,0,8"));
+    public static List<String> customStructures = new ArrayList<>(List.of("minecraft:grass_block@-8,0,-8_8,0,8"));
     public static boolean enableRandomBlocks = false;
     public static List<String> randomBlocks = new ArrayList<>(List.of("minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:end_stone", "minecraft:blackstone"));
 
@@ -132,7 +132,7 @@ public class VoidDimensionConfig {
             }
 
             try {
-                String[] ranges = parts[1].trim().split("-");
+                String[] ranges = parts[1].trim().split("_");
                 if (ranges.length != 2) return false;
                 String[] minCoords = ranges[0].split(",");
                 String[] maxCoords = ranges[1].split(",");
@@ -176,13 +176,6 @@ public class VoidDimensionConfig {
     }
     
     /**
-     * 获取是否生成初始平台
-     */
-    public static boolean shouldGenerateInitialPlatform() {
-        return generateInitialPlatform;
-    }
-    
-    /**
      * 获取平台结构类型
      */
     public static String getPlatformStructure() {
@@ -196,13 +189,6 @@ public class VoidDimensionConfig {
         return customStructures;
     }
 
-    /**
-     * 获取是否启用随机方块
-     */
-    public static boolean shouldEnableRandomBlocks() {
-        return enableRandomBlocks;
-    }
-    
     /**
      * 获取随机方块列表
      */

@@ -1,6 +1,6 @@
 package com.gtouming.void_dimension.mixin;
 
-import com.gtouming.void_dimension.DimensionData;
+import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

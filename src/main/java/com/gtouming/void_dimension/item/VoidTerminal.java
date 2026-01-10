@@ -1,10 +1,10 @@
 package com.gtouming.void_dimension.item;
 
-import com.gtouming.void_dimension.DimensionData;
+import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
-import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import com.gtouming.void_dimension.gui.VoidTerminalGUI;
+import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -13,6 +13,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -21,12 +22,16 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
+import static com.gtouming.void_dimension.component.ModDataComponents.GUI_STATE_DATA;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 
 /**
@@ -35,8 +40,7 @@ import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLev
  */
 public class VoidTerminal extends Item {
     private boolean bound = false;
-    private boolean canOpenGUI = true;
-    private long pastTimes = 0;
+    private int pastTimes = 0;
 
     public VoidTerminal(Properties properties) {
         super(properties
@@ -75,7 +79,6 @@ public class VoidTerminal extends Item {
         if (level.isClientSide() || player == null) return InteractionResult.PASS;
         // 检查是否为虚空锚点
         if (VoidAnchorBlock.noAnchor(level, pos)) return InteractionResult.PASS;
-        canOpenGUI = false;
         int powerLevel = state.getValue(VoidAnchorBlock.POWER_LEVEL);
         if (stack.get(BOUND_DATA) == null) {
             // 绑定到锚点
@@ -107,18 +110,72 @@ public class VoidTerminal extends Item {
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+
         if (!level.isClientSide()) return InteractionResultHolder.fail(stack);
-        if (!canOpenGUI) {
-            canOpenGUI = true;
-            return InteractionResultHolder.fail(stack);
+
+        HitResult hitResult = player.pick(player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE), 0.0F, false);
+
+        if (hitResult.getType() == HitResult.Type.BLOCK) {
+
+            BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+
+            BlockPos pos = blockHitResult.getBlockPos();
+
+            if (!VoidAnchorBlock.noAnchor(level, pos)) return InteractionResultHolder.fail(stack);
         }
 
-        if (isBound(stack)) VoidTerminalGUI.open();
-        else player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
+        if (isBound(stack)) {
+            // 初始化或获取GUI状态
+            initOrGetGUIState(stack, player);
+            VoidTerminalGUI.open(player, stack);
+        } else {
+            player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
+        }
 
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
+    /**
+     * 初始化或获取GUI状态
+     * 同一个玩家：返回上次的状态
+     * 不同玩家：重新初始化状态
+     */
+    private void initOrGetGUIState(ItemStack stack, Player player) {
+        if (stack.get(GUI_STATE_DATA) == null) {
+            stack.set(GUI_STATE_DATA, new CompoundTag());
+        }
+        CompoundTag tagA = stack.get(GUI_STATE_DATA);
+        UUID playerUUID = player.getUUID();
+
+        assert tagA != null;
+        if (!tagA.contains(playerUUID.toString())) {
+            // 首次使用，创建新的GUI状态
+            CompoundTag tagB = new CompoundTag();
+            tagB.putInt("current_page", 0);
+            tagB.putBoolean("teleport_mode", false);
+            tagB.putBoolean("respawn_set", false);
+            tagA.put(playerUUID.toString(), tagB);
+            stack.set(GUI_STATE_DATA, tagA);
+        }
+    }
+
+    public static CompoundTag get(ItemStack stack, UUID playerUUID){
+        return (CompoundTag) Objects.requireNonNull(
+                stack.get(GUI_STATE_DATA))
+                .get(playerUUID.toString());
+    }
+
+    public static void set(ItemStack stack, UUID playerUUID, CompoundTag playerDataValue){
+        CompoundTag tagA = stack.get(GUI_STATE_DATA);
+        if (tagA == null) return;
+        CompoundTag tagB = tagA.getCompound(playerUUID.toString());
+        tagB.putInt("current_page", playerDataValue.getInt("current_page"));
+        tagB.putBoolean("teleport_mode", playerDataValue.getBoolean("teleport_mode"));
+        tagB.putBoolean("respawn_set", playerDataValue.getBoolean("respawn_set"));
+        tagA.put(playerUUID.toString(), tagB);
+        stack.set(GUI_STATE_DATA, tagA);
+        C2STagPacket.sendToServer(tagA);
+    }
     /**
      * 添加物品提示信息
      */
@@ -127,9 +184,9 @@ public class VoidTerminal extends Item {
         if (isBound(stack)) {
             BlockPos pos = getBoundPos(stack);
             if (pos == null) return;
-            tooltip.add(Component.literal("§a已绑定锚点: " + getBoundDim(stack) + " " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
+            tooltip.add(Component.literal("§a已绑定锚点: " + " " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
             tooltip.add(Component.literal("§a绑定锚点所在维度: " + getBoundDim(stack)));
-            tooltip.add(Component.literal("§a当前能量: " + stack.getDamageValue() + "/" + VoidDimensionConfig.maxPowerLevel)); // 使用配置中的能量上限
+            tooltip.add(Component.literal("§a当前能量: " + (maxPowerLevel - stack.getDamageValue()) + "/" + maxPowerLevel)); // 使用配置中的能量上限
         } else {
             tooltip.add(Component.literal("§c未绑定锚点"));
         }
@@ -202,8 +259,8 @@ public class VoidTerminal extends Item {
         if (boundPos == null) return;
 
         CompoundTag boundData = stack.get(BOUND_DATA);
-        if (boundData == null) return;
         for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
+            assert boundData != null;
             if (tag.getString("dim").equals(boundData.getString("dim"))
                 && tag.getLong("pos") == boundPos.asLong()) {
                 VoidAnchorBlockEntity anchorEntity = VoidAnchorBlockEntity.getBlockEntity(level, boundPos);

@@ -1,7 +1,8 @@
 package com.gtouming.void_dimension.mixin;
 
-import com.gtouming.void_dimension.DimensionData;
+import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.data.SyncData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -21,12 +22,14 @@ public class LevelMixin {
         if (!(level instanceof ServerLevel serverLevel)) return;
         //原方块是虚空锚,要放置的方块不能是虚空锚
         if (!VoidAnchorBlock.noAnchor(level, pos) && !(state.getBlock() instanceof VoidAnchorBlock)) {
-            System.out.println("Replace anchor block to other block in Mixin");
             DimensionData.changePos(pos, serverLevel, false);
         }
+        //原方块不是虚空锚,要放置的方块是虚空锚
         if (VoidAnchorBlock.noAnchor(level, pos) && state.getBlock() instanceof VoidAnchorBlock) {
-            System.out.println("Place anchor block in Mixin");
             DimensionData.changePos(pos, serverLevel, true);
+        }
+        if (!VoidAnchorBlock.noAnchor(level, pos) && (state.getBlock() instanceof VoidAnchorBlock)) {
+            SyncData.needsSum();
         }
 
     }

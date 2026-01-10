@@ -1,6 +1,6 @@
 package com.gtouming.void_dimension.block.entity;
 
-import com.gtouming.void_dimension.dimension.VoidDimensionType;
+import com.gtouming.void_dimension.data.DimensionData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -26,7 +26,7 @@ public class VoidAnchorBlockEntity extends BlockEntity {
     private static final String DIMENSION_KEY = "dimension";
     private static final String PLAYER_ITEMS_KEY = "player_items";
 
-    private int powerLevel = 0;
+    private int powerLevel;
     private String dimension = "";
 
     private final Map<UUID, List<ItemStack>> playerDeathItems = new HashMap<>();
@@ -89,6 +89,11 @@ public class VoidAnchorBlockEntity extends BlockEntity {
     // 获取能量等级
     public int getPowerLevel() {
         return powerLevel;
+    }
+
+    public void setPowerLevel(int powerLevel) {
+        this.powerLevel = powerLevel;
+        this.setChanged();
     }
 
     // 获取维度
@@ -161,14 +166,32 @@ public class VoidAnchorBlockEntity extends BlockEntity {
         return items != null && !items.isEmpty();
     }
 
-    // 静态方法：获取指定位置的方块实体
-    public static VoidAnchorBlockEntity getBlockEntity(ServerLevel level, BlockPos pos) {
-        ServerLevel overWorld = level.getServer().overworld();
-        ServerLevel voidDimension = level.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
-        VoidAnchorBlockEntity blockEntity = (VoidAnchorBlockEntity) overWorld.getBlockEntity(pos);
-        if (!(blockEntity instanceof VoidAnchorBlockEntity)) {
-            return (VoidAnchorBlockEntity) Objects.requireNonNull(voidDimension).getBlockEntity(pos);
+    public static VoidAnchorBlockEntity[] getAllBlockEntity(ServerLevel level) {
+        List<CompoundTag> tags = DimensionData.getServerData(level.getServer()).anchorList;
+        VoidAnchorBlockEntity[] entities = new VoidAnchorBlockEntity[tags.size()];
+        String dimension = level.dimension().location().toString();
+        ServerLevel dimension2 = dimension.equals("void_dimension:void_dimension") ? level.getServer().overworld() : level;
+        for (CompoundTag tag : tags) {
+            BlockPos pos = BlockPos.of(tag.getLong("pos"));
+            if (tag.getString("dim").equals(dimension) && BlockPos.of(tag.getLong("pos")).equals(pos)) {
+                entities[tags.indexOf(tag)] = (VoidAnchorBlockEntity) level.getBlockEntity(pos);
+                entities[tags.indexOf(tag)].setDimension(dimension);
+            }
+            else if (tag.getString("dim").equals(dimension2.dimension().location().toString()) && BlockPos.of(tag.getLong("pos")).equals(pos)) {
+                entities[tags.indexOf(tag)] = (VoidAnchorBlockEntity) dimension2.getBlockEntity(pos);
+                entities[tags.indexOf(tag)].setDimension(dimension2.dimension().location().toString());
+            }
         }
-        else return blockEntity;
+        return entities;
+    }
+
+    public static VoidAnchorBlockEntity getBlockEntity(ServerLevel level, BlockPos pos) {
+        VoidAnchorBlockEntity[] entities = getAllBlockEntity(level);
+        for (VoidAnchorBlockEntity entity : entities) {
+            if (level.equals(entity.level) && pos.equals(entity.getBlockPos())) {
+                return entity;
+            }
+        }
+        return null;
     }
 }
