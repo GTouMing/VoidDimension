@@ -174,12 +174,17 @@ public class VoidAnchorBlockEntity extends BlockEntity {
         for (CompoundTag tag : tags) {
             BlockPos pos = BlockPos.of(tag.getLong("pos"));
             if (tag.getString("dim").equals(dimension) && BlockPos.of(tag.getLong("pos")).equals(pos)) {
-                entities[tags.indexOf(tag)] = (VoidAnchorBlockEntity) level.getBlockEntity(pos);
-                entities[tags.indexOf(tag)].setDimension(dimension);
+                VoidAnchorBlockEntity entity = (VoidAnchorBlockEntity) level.getBlockEntity(pos);
+                if (entity == null) continue;
+                entities[tags.indexOf(tag)] = entity;
+                entity.setDimension(dimension);
             }
             else if (tag.getString("dim").equals(dimension2.dimension().location().toString()) && BlockPos.of(tag.getLong("pos")).equals(pos)) {
-                entities[tags.indexOf(tag)] = (VoidAnchorBlockEntity) dimension2.getBlockEntity(pos);
-                entities[tags.indexOf(tag)].setDimension(dimension2.dimension().location().toString());
+                VoidAnchorBlockEntity entity = (VoidAnchorBlockEntity) dimension2.getBlockEntity(pos);
+                if (entity != null) {
+                    entities[tags.indexOf(tag)] = entity;
+                    entity.setDimension(dimension2.dimension().location().toString());
+                }
             }
         }
         return entities;
@@ -188,7 +193,7 @@ public class VoidAnchorBlockEntity extends BlockEntity {
     public static VoidAnchorBlockEntity getBlockEntity(ServerLevel level, BlockPos pos) {
         VoidAnchorBlockEntity[] entities = getAllBlockEntity(level);
         for (VoidAnchorBlockEntity entity : entities) {
-            if (level.equals(entity.level) && pos.equals(entity.getBlockPos())) {
+            if (entity != null && level.equals(entity.level) && pos.equals(entity.getBlockPos())) {
                 return entity;
             }
         }

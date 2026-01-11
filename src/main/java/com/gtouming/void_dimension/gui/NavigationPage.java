@@ -2,6 +2,7 @@ package com.gtouming.void_dimension.gui;
 
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -48,7 +49,9 @@ public class NavigationPage extends BTerminalPage {
     @Override
     protected List<AbstractWidget> createComponents() {
         List<AbstractWidget> navigationButtons = new ArrayList<>();
-        currentPage = get(player.getMainHandItem(), player.getUUID()).getInt("current_page");
+        CompoundTag tag = get(player.getMainHandItem(), player.getUUID());
+        if (tag != null)
+            currentPage = tag.getInt("current_page");
 
         // 按钮纵向排列参数
         int buttonWidth = 40;    // 按钮宽度
@@ -66,7 +69,7 @@ public class NavigationPage extends BTerminalPage {
                 // 切换到对应页面
                 currentPage = pageIndex;
                 updateButtonStates(); // 更新所有按钮状态
-            }).bounds(leftPos, startY + (buttonHeight + buttonSpacing) * i,
+            }).bounds(leftPos + 5, startY + (buttonHeight + buttonSpacing) * i,
                      buttonWidth, buttonHeight).build();
 
             navigationButtons.add(pageButtons[i]);
@@ -82,13 +85,4 @@ public class NavigationPage extends BTerminalPage {
         return currentPage;
     }
 
-    @Override
-    public String getTitle() {
-        return "";
-    }
-
-    @Override
-    public int getPageIndex() {
-        return 0;
-    }
 }

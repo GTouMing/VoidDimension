@@ -1,6 +1,7 @@
 package com.gtouming.void_dimension.dimension;
 
 import com.gtouming.void_dimension.VoidDimension;
+import com.gtouming.void_dimension.dimension.generator.VoidDimensionChunkGenerator;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.player.Player;

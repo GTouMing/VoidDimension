@@ -18,13 +18,4 @@ public interface ITerminalPage {
      */
     List<AbstractWidget> initComponents(Player player, Font font, int leftPos, int topPos);
 
-    /**
-     * 获取页面标题
-     */
-    String getTitle();
-
-    /**
-     * 获取页面索引
-     */
-    int getPageIndex();
 }

@@ -22,8 +22,7 @@ public class TerminalPage4 extends BTerminalPage {
             "锚点貌似无法破坏？在改了在改了...",
             "§cC§di§6a§el§al§bo§9~ (∠・ω< )⌒☆",
             "系统提示：定期维护锚点以确保稳定性§m瞎说的",
-            "开死亡不掉落了没？床还在没？是不是极限模式？试试往下边跳？",
-            "两手空空蹲下右键使用锚点传送（飞行状态按shift不算蹲下吗）"
+            "两手空空蹲下右键使用锚点传送"
     };
     private static final Random RANDOM = new Random();
     private final String randomTip;
@@ -37,22 +36,17 @@ public class TerminalPage4 extends BTerminalPage {
         List<AbstractWidget> widgets = new ArrayList<>();
         
         // 第四页：提示信息
-        int yOffset = topPos + 15;
+        int yOffset = topPos + 10;
+
+        StringWidget cnbLabel = new StringWidget(leftPos + 5, topPos, 100, 20,
+                Component.literal("§1吹点牛逼"), font).alignLeft();
+        widgets.add(cnbLabel);
         
-        StringWidget tipLabel = new StringWidget(leftPos + 50, yOffset + 15, 256 - 20, 20,
+        StringWidget tipLabel = new StringWidget(leftPos + 50, yOffset + 15, 256, 20,
                 Component.literal("§e" + randomTip), font).alignLeft();
         widgets.add(tipLabel);
         
         return widgets;
     }
-    
-    @Override
-    public String getTitle() {
-        return "提示";
-    }
-    
-    @Override
-    public int getPageIndex() {
-        return 3;
-    }
+
 }

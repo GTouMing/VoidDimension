@@ -2,12 +2,14 @@ package com.gtouming.void_dimension.item;
 
 import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.gui.VoidTerminalGUI;
 import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -160,9 +162,11 @@ public class VoidTerminal extends Item {
     }
 
     public static CompoundTag get(ItemStack stack, UUID playerUUID){
-        return (CompoundTag) Objects.requireNonNull(
-                stack.get(GUI_STATE_DATA))
-                .get(playerUUID.toString());
+        CompoundTag guiStateData = stack.get(GUI_STATE_DATA);
+        if (guiStateData == null) {
+            return null;
+        }
+        return (CompoundTag) guiStateData.get(playerUUID.toString());
     }
 
     public static void set(ItemStack stack, UUID playerUUID, CompoundTag playerDataValue){
@@ -263,10 +267,13 @@ public class VoidTerminal extends Item {
             assert boundData != null;
             if (tag.getString("dim").equals(boundData.getString("dim"))
                 && tag.getLong("pos") == boundPos.asLong()) {
-                VoidAnchorBlockEntity anchorEntity = VoidAnchorBlockEntity.getBlockEntity(level, boundPos);
-                if (anchorEntity == null) return;
+                BlockState anchorState = Objects.requireNonNull(level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(boundData.getString("dim"))))).getBlockState(boundPos);
+                int powerLevel = 0;
+                if (anchorState.getBlock() instanceof VoidAnchorBlock) {
+                    powerLevel = anchorState.getValue(VoidAnchorBlock.POWER_LEVEL);
+                }
                 // 更新终端耐久度
-                stack.setDamageValue(maxPowerLevel - anchorEntity.getPowerLevel());
+                stack.setDamageValue(maxPowerLevel - powerLevel);
                 return;
             }
         }

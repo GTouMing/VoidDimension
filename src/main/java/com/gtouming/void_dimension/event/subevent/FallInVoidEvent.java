@@ -1,4 +1,4 @@
-package com.gtouming.void_dimension.event;
+package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.dimension.ModDimensions;
 import net.minecraft.server.level.ServerLevel;

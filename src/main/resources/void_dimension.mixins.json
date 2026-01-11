@@ -5,8 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "BlockMixin",
+    "ClientboundSetTimePacketMixin",
     "EnderpearlItemMixin",
-    "LevelMixin"
+    "LevelMixin",
+    "ServerLevelMixin"
   ],
   "client": [
     "LevelRendererMixin"

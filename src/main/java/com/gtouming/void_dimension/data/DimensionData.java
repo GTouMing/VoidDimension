@@ -16,6 +16,9 @@ import java.util.List;
 public class DimensionData extends SavedData {
     public static final String DATA_NAME = "void_dimension_data";
 
+    public long gameTime = 0L;
+    public long dayTime = 0L;
+
     public static List<CompoundTag> clientAnchorList = new ArrayList<>();
     //必须是tag，保存坐标以及维度信息
     public List<CompoundTag> anchorList = new ArrayList<>();
@@ -28,6 +31,8 @@ public class DimensionData extends SavedData {
                 anchorList.add(tag.getCompound(String.valueOf(i)));
             }
         }
+        gameTime = tag.getLong("gameTime");
+        dayTime = tag.getLong("dayTime");
     }
 
     @Override
@@ -35,6 +40,8 @@ public class DimensionData extends SavedData {
         for (int i = 0; i < anchorList.size(); i++) {
             tag.put(String.valueOf(i), anchorList.get(i));
         }
+        tag.putLong("gameTime", gameTime);
+        tag.putLong("dayTime", dayTime);
         return tag;
     }
     

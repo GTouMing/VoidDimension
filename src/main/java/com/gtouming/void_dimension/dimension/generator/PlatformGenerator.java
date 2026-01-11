@@ -1,7 +1,8 @@
-package com.gtouming.void_dimension.dimension;
+package com.gtouming.void_dimension.dimension.generator;
 
 import com.gtouming.void_dimension.VoidDimension;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;

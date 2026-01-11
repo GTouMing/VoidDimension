@@ -1,4 +1,4 @@
-package com.gtouming.void_dimension.dimension;
+package com.gtouming.void_dimension.dimension.generator;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

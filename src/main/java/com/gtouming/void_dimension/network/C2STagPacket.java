@@ -1,6 +1,7 @@
 package com.gtouming.void_dimension.network;
 
-import com.gtouming.void_dimension.event.ChangeDimensionEvent;
+import com.gtouming.void_dimension.event.subevent.ChangeDimensionEvent;
+import com.gtouming.void_dimension.util.DimTimeInterface;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -8,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -36,6 +38,9 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 ServerPlayer serverPlayer = (ServerPlayer) context.player();
                 if (packet.tag.contains("toggle_teleport_type")) {
                     ChangeDimensionEvent.updateUseClickTypeList(packet.tag.getUUID("toggle_teleport_type"), packet.tag.getBoolean("add"));
+                }
+                if (packet.tag.contains("set_day_time")) {
+                    DimTimeInterface.setVoidDimensionDayTime((ServerLevel) serverPlayer.level(), packet.tag.getLong("set_day_time"));
                 }
                 if (packet.tag.contains("set_respawn_point")) {
                     serverPlayer.setRespawnPosition(serverPlayer.level().dimension(), BlockPos.of(packet.tag.getLong("set_respawn_point")).above(), 0.0f, true, true);

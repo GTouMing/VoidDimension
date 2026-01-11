@@ -19,11 +19,11 @@ public class LevelRendererMixin {
                     target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderColor(FFFF)V",
                     ordinal = 2,
                     shift = At.Shift.AFTER
-            ), cancellable = true)
+            ))
     private void renderSky(CallbackInfo ci) {
         FogRenderer.levelFogColor();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.depthMask(true);
-        ci.cancel();
+        //ci.cancel();
     }
 }

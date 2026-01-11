@@ -1,9 +1,9 @@
-package com.gtouming.void_dimension.event;
+package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.SyncData;
-import com.gtouming.void_dimension.dimension.PlatformGenerator;
+import com.gtouming.void_dimension.dimension.generator.PlatformGenerator;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
