@@ -7,7 +7,6 @@
     "BlockMixin",
     "EnderpearlItemMixin",
     "LevelMixin",
-    "PrimaryLevelDataMixin",
     "ServerLevelMixin"
   ],
   "client": [

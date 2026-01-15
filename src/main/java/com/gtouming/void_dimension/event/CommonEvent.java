@@ -1,11 +1,8 @@
 package com.gtouming.void_dimension.event;
 
 import com.gtouming.void_dimension.VoidDimension;
-import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.event.subevent.*;
-import com.gtouming.void_dimension.item.ModItems;
-import net.minecraft.world.InteractionResult;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
