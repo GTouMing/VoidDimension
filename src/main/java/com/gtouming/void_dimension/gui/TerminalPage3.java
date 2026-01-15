@@ -21,6 +21,7 @@ public class TerminalPage3 extends BTerminalPage {
     CompoundTag tag;
     boolean ct;
     boolean rs;
+    int weather;
     
     @Override
     protected List<AbstractWidget> createComponents() {
@@ -29,6 +30,7 @@ public class TerminalPage3 extends BTerminalPage {
         if (tag != null) {
             ct = tag.getBoolean("teleport_mode");
             rs = tag.getBoolean("respawn_set");
+            weather = player.level().isRaining() ? player.level().isThundering() ? 2 : 1 : 0;
         }
 
         
@@ -44,7 +46,7 @@ public class TerminalPage3 extends BTerminalPage {
 
 
         StringWidget teleportModeLabel = new StringWidget(xOffset + 15, yOffset + 25, 150, 20,
-                Component.literal("传送方式: " + (ct ? "倒计时传送" : "空手蹲下右键传送")), font).alignLeft();
+                Component.literal("§6传送方式: " + (ct ? "§e倒计时传送" : "§e空手蹲下右键传送")), font).alignLeft();
         // 传送方式切换按钮
         Button teleportModeButton = Button.builder(
                 Component.literal(""),
@@ -68,16 +70,16 @@ public class TerminalPage3 extends BTerminalPage {
 
 
 
-        StringWidget resetAnchorLabel = new StringWidget(xOffset + 15, yOffset + 40, 100, 20,
+        StringWidget resetAnchorLabel = new StringWidget(xOffset + 15, yOffset + 40, 150, 20,
                 Component.literal(rs ? "§a重生点已设置" : "§6将绑定的锚点设置为重生点"), font).alignLeft();
         Button resetAnchorButton = Button.builder(
                 Component.literal(""),
                 button -> {
             // 重置锚点逻辑
-            CompoundTag tag1 = new CompoundTag();
-            tag1.putLong("set_respawn_point",
+            C2STagPacket.sendLongToServer("set_respawn_point",
                 Objects.requireNonNull(getBoundPos(player.getMainHandItem())).asLong());
-            C2STagPacket.sendToServer(tag1);
+
+
 
             // 更新物品堆栈中的重生点状态
             tag.putBoolean("respawn_set", true);
@@ -92,8 +94,34 @@ public class TerminalPage3 extends BTerminalPage {
         widgets.add(resetAnchorButton);
 
 
-        AbstractSliderButton dayTimeSlider = new AbstractSliderButton(xOffset, yOffset + 60, 150, 20,
-                Component.literal("维度时间: " + (int)player.level().getDayTime()), player.level().getDayTime()/24000.0) {
+
+        // 天气下拉选择按钮
+        String[] weatherOptions = {"§a晴", "§6雨天", "§c雷暴"};
+        StringWidget weatherLabel = new StringWidget(xOffset + 15, yOffset + 55, 150, 20,
+                Component.literal("§6天气: " + weatherOptions[weather]), font).alignLeft();
+
+        Button weatherDropdownButton = Button.builder(
+                Component.literal("▼"),
+                button -> {
+                    // 循环切换天气
+                    weather = (weather + 1) % 3;
+                    weatherLabel.setMessage(Component.literal("§6天气: " + weatherOptions[weather]));
+
+                    // 发送天气设置到服务器
+                    C2STagPacket.sendLongToServer("set_weather", weather);
+                    weatherLabel.setMessage(Component.literal("§6天气: " + weatherOptions[weather]));
+                    player.sendSystemMessage(Component.literal("§a天气已切换为" + weatherOptions[weather]));
+                }).bounds(xOffset, yOffset + 60, 10, 10).build();
+
+        if (!player.level().dimension().location().toString().equals("void_dimension:void_dimension"))
+            weatherDropdownButton.active = false;
+        widgets.add(weatherLabel);
+        widgets.add(weatherDropdownButton);
+
+
+        int dayTime = (int)player.level().getDayTime();
+        AbstractSliderButton dayTimeSlider = new AbstractSliderButton(xOffset, yOffset + 75, 150, 20,
+                Component.literal("维度时间: " + (dayTime < 0 ? (Integer.MAX_VALUE + dayTime) + 11647: dayTime) % 24000), player.level().getDayTime()/24000.0) {
             @Override
             protected void updateMessage() {
                 this.setMessage(Component.literal("维度时间: " + (int)(this.value * 24000)));
@@ -101,9 +129,7 @@ public class TerminalPage3 extends BTerminalPage {
 
             @Override
             protected void applyValue() {
-                // 音量设置逻辑
-                tag.putLong("set_day_time", (long)(this.value * 24000));
-                C2STagPacket.sendToServer(tag);
+                C2STagPacket.sendLongToServer("set_day_time", (long)(this.value * 24000));
             }
         };
         if (!player.level().dimension().location().toString().equals("void_dimension:void_dimension"))

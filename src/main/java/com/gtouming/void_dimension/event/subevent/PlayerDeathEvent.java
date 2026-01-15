@@ -46,19 +46,16 @@ public class PlayerDeathEvent {
      */
     private static void clearPlayerInventory(ServerPlayer player) {
         var inventory = player.getInventory();
-        // 清除主手和副手物品
+
         inventory.setItem(inventory.selected, ItemStack.EMPTY);
         inventory.offhand.set(0, ItemStack.EMPTY);
-        
-        // 清除装备栏物品
+
         Collections.fill(inventory.armor, ItemStack.EMPTY);
-        
-        // 清除背包物品
         Collections.fill(inventory.items, ItemStack.EMPTY);
     }
 
     /**
-     * 查找死亡位置附近的锚点
+     * 查找绑定的锚点
      */
     private static BlockPos findBoundedAnchor(ServerPlayer player) {
         if (ItemStack.EMPTY.equals(findBoundVoidTerminal(player))) return null;

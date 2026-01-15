@@ -1,8 +1,9 @@
 package com.gtouming.void_dimension.command;
 
+import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.DimensionData;
-import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.data.SyncData;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -10,7 +11,9 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class CheckCommand {
     
@@ -48,7 +51,7 @@ public class CheckCommand {
      */
     private static int checkAnchorList(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        var anchorList = DimensionData.getServerData(source.getLevel().getServer()).anchorList;
+        var anchorList = DimensionData.getAnchorList(source.getLevel());
         
         if (anchorList.isEmpty()) {
             source.sendSuccess(() -> Component.literal("§c所有维度都没有锚点"), false);
@@ -57,15 +60,17 @@ public class CheckCommand {
             for (int i = 0; i < anchorList.size(); i++) {
                 var tag = anchorList.get(i);
                 final int index = i;
+                ServerLevel level = VoidDimensionType.getLevelFromDim(source.getLevel(), tag.getString("dim"));
                 BlockPos pos = BlockPos.of(tag.getLong("pos"));
-                VoidAnchorBlockEntity[] entities = VoidAnchorBlockEntity.getAllBlockEntity(source.getLevel());
+                BlockState state = level.getBlockState(pos);
+                if (!VoidAnchorBlock.noAnchor(state)) continue;
                 source.sendSuccess(() -> Component.literal(
                         (index + 1) + ". §e"
                         + tag.getString("dim") + ", "
                         + "§cx: " + pos.getX() + ", "
                         + "§ay: " + pos.getY() + ", "
                         + "§9z: " + pos.getZ() + ", "
-                        + "§6power: " + entities[index].getPowerLevel()), false);
+                        + "§6power: " + tag.getString("power")), false);
             }
         }
         return 1;

@@ -2,6 +2,7 @@ package com.gtouming.void_dimension;
 
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.entity.ModBlockEntities;
+import com.gtouming.void_dimension.command.ApplyCommand;
 import com.gtouming.void_dimension.command.CheckCommand;
 import com.gtouming.void_dimension.component.ModDataComponents;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
@@ -42,6 +43,8 @@ public class VoidDimension {
 
         ModBlockEntities.register(modEventBus);
 
+        //ModMenus.register(modEventBus);
+
         NeoForge.EVENT_BUS.register(this);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, VoidDimensionConfig.SPEC);
@@ -53,7 +56,7 @@ public class VoidDimension {
      * 注册网络包处理器
      */
     void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.3");
+        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.4");
         registrar.playToClient(
                 S2CTagPacket.TYPE,
                 S2CTagPacket.STREAM_CODEC,
@@ -75,6 +78,7 @@ public class VoidDimension {
      */
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
+        ApplyCommand.register(event.getDispatcher());
         CheckCommand.register(event.getDispatcher());
     }
 

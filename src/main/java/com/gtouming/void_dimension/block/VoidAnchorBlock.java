@@ -1,7 +1,14 @@
 package com.gtouming.void_dimension.block;
 
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import com.gtouming.void_dimension.config.VoidDimensionConfig;
+import com.gtouming.void_dimension.item.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -20,7 +27,6 @@ import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLev
 
 /**
  * 虚空传送门方块
- * 用于传送到虚空维度
  */
 public class VoidAnchorBlock extends Block implements EntityBlock {
     public static final IntegerProperty POWER_LEVEL = IntegerProperty.create("power_level", 0, maxPowerLevel);
@@ -32,8 +38,7 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
                 .strength(50F, 1200F)
                 .requiresCorrectToolForDrops()
                 .pushReaction(PushReaction.BLOCK));
-        
-        // 设置默认方块状态（0级，未充能）
+
         this.registerDefaultState(this.stateDefinition.any().setValue(POWER_LEVEL, 0));
     }
 
@@ -51,12 +56,7 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
-        return level.isClientSide ? null : (level1, pos, state1, blockEntity) -> {
-            if (!(blockEntity instanceof VoidAnchorBlockEntity anchorBlockEntity)) return;
-            if (!(state1.getBlock() instanceof VoidAnchorBlock)) return;
-            if (state1.getValue(POWER_LEVEL) == anchorBlockEntity.getPowerLevel()) return;
-            anchorBlockEntity.setPowerLevel(state1.getValue(POWER_LEVEL));
-        };
+        return null;
     }
 
     public static int getPowerLevel(Level level, BlockPos pos) {
@@ -80,5 +80,28 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
 
     public static boolean noAnchor(Level level, BlockPos pos) {
         return noAnchor(level.getBlockState(pos));
+    }
+
+    @Override
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull net.minecraft.world.phys.BlockHitResult hit) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof VoidAnchorBlockEntity blockEntity) {
+            // 检查玩家是否手持虚空终端
+            ItemStack mainHand = player.getMainHandItem();
+            ItemStack offHand = player.getOffhandItem();
+
+            // 如果玩家手持虚空终端，则不打开容器，允许绑定操作
+            if (mainHand.is(ModItems.VOID_TERMINAL.get()) || offHand.is(ModItems.VOID_TERMINAL.get())) {
+                return InteractionResult.PASS; // 返回PASS让VoidTerminal的useOn方法处理绑定
+            }
+
+            if (VoidDimensionConfig.isChargeItem(BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString())) {
+                return InteractionResult.PASS; // 返回PASS让ChargeAnchorEvent处理充能
+            }
+
+            // 玩家没有手持虚空终端，正常打开容器
+            serverPlayer.openMenu(blockEntity, buf -> buf.writeBlockPos(pos));
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.PASS;
     }
 }

@@ -1,17 +1,23 @@
 package com.gtouming.void_dimension.block.entity;
 
+import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.DimensionData;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,15 +27,14 @@ import java.util.*;
  * 虚空锚点方块实体
  * 管理锚点的状态和数据
  */
-public class VoidAnchorBlockEntity extends BlockEntity {
-    private static final String POWER_LEVEL_KEY = "power_level";
-    private static final String DIMENSION_KEY = "dimension";
-    private static final String PLAYER_ITEMS_KEY = "player_items";
-
-    private int powerLevel;
-    private String dimension = "";
+public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
+    private static final String DEATH_ITEMS_KEY = "death_items";
+    private static final String VAULT_ITEMS_KEY = "vault_items";
+    private static final String CONTAINER_ITEMS_KEY = "container_items";
 
     private final Map<UUID, List<ItemStack>> playerDeathItems = new HashMap<>();
+    private final Map<UUID, List<ItemStack>> playerVaultItems = new HashMap<>();
+    private final NonNullList<ItemStack> containerItems = NonNullList.withSize(54, ItemStack.EMPTY);
 
     public VoidAnchorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VOID_ANCHOR_BLOCK_ENTITY.get(), pos, state);
@@ -38,73 +43,184 @@ public class VoidAnchorBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
-        tag.putInt(POWER_LEVEL_KEY, this.powerLevel);
-        tag.putString(DIMENSION_KEY, this.dimension);
+        ListTag deathItemTags = new ListTag();
+        ListTag vaultItemTags = new ListTag();
+        ListTag containerItemTags = new ListTag();
         
         // 保存玩家死亡物品数据
-        ListTag playersTag = new ListTag();
         for (Map.Entry<UUID, List<ItemStack>> playerEntry : playerDeathItems.entrySet()) {
             CompoundTag playerTag = new CompoundTag();
             playerTag.putUUID("playerUUID", playerEntry.getKey());
             
             ListTag itemsTag = new ListTag();
             for (ItemStack stack : playerEntry.getValue()) {
-                CompoundTag itemTag = new CompoundTag();
-                stack.save(provider, itemTag);
-                itemsTag.add(itemTag);
+                itemsTag.add(stack.saveOptional(provider));
             }
-            playerTag.put("items", itemsTag);
-            playersTag.add(playerTag);
+            playerTag.put("deathItems", itemsTag);
+            deathItemTags.add(playerTag);
         }
-        tag.put(PLAYER_ITEMS_KEY, playersTag);
+        
+        // 保存vault物品数据
+        for (Map.Entry<UUID, List<ItemStack>> playerEntry : playerVaultItems.entrySet()) {
+            CompoundTag playerTag = new CompoundTag();
+            playerTag.putUUID("playerUUID", playerEntry.getKey());
+
+            ListTag itemsTag = new ListTag();
+            for (ItemStack stack : playerEntry.getValue()) {
+                itemsTag.add(stack.saveOptional(provider));
+            }
+            playerTag.put("vaultItems", itemsTag);
+            vaultItemTags.add(playerTag);
+        }
+        
+        // 保存容器物品数据
+        for (ItemStack stack : containerItems) {
+            containerItemTags.add(stack.saveOptional(provider));
+        }
+        
+        tag.put(DEATH_ITEMS_KEY, deathItemTags);
+        tag.put(VAULT_ITEMS_KEY, vaultItemTags);
+        tag.put(CONTAINER_ITEMS_KEY, containerItemTags);
     }
 
     @Override
     public void loadAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
-        this.powerLevel = tag.getInt(POWER_LEVEL_KEY);
-        this.dimension = tag.getString(DIMENSION_KEY);
+        playerDeathItems.clear();
+        playerVaultItems.clear();
         
         // 加载玩家死亡物品数据
-        playerDeathItems.clear();
-        if (tag.contains(PLAYER_ITEMS_KEY, Tag.TAG_LIST)) {
-            ListTag playersTag = tag.getList(PLAYER_ITEMS_KEY, Tag.TAG_COMPOUND);
-            
+        if (tag.contains(DEATH_ITEMS_KEY, Tag.TAG_LIST)) {
+            ListTag playersTag = tag.getList(DEATH_ITEMS_KEY, Tag.TAG_COMPOUND);
+
             for (Tag playerTag : playersTag) {
                 CompoundTag playerCompound = (CompoundTag) playerTag;
                 UUID playerUUID = playerCompound.getUUID("playerUUID");
-                
+
                 List<ItemStack> items = new ArrayList<>();
-                ListTag itemsTag = playerCompound.getList("items", Tag.TAG_COMPOUND);
-                
+                ListTag itemsTag = playerCompound.getList("deathItems", Tag.TAG_COMPOUND);
+
                 for (Tag itemTag : itemsTag) {
                     CompoundTag itemCompound = (CompoundTag) itemTag;
-                    items.add(ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY));
+                    ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
+                    if (stack.isEmpty()) continue;
+                    items.add(stack);
                 }
                 playerDeathItems.put(playerUUID, items);
             }
         }
+        
+        // 加载vault物品数据
+        if (tag.contains(VAULT_ITEMS_KEY, Tag.TAG_LIST)) {
+            ListTag playersTag = tag.getList(VAULT_ITEMS_KEY, Tag.TAG_COMPOUND);
+
+            for (Tag playerTag : playersTag) {
+                CompoundTag playerCompound = (CompoundTag) playerTag;
+                UUID playerUUID = playerCompound.getUUID("playerUUID");
+
+                List<ItemStack> items = new ArrayList<>();
+                ListTag itemsTag = playerCompound.getList("vaultItems", Tag.TAG_COMPOUND);
+
+                for (Tag itemTag : itemsTag) {
+                    CompoundTag itemCompound = (CompoundTag) itemTag;
+                    ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
+                    if (stack.isEmpty()) continue;
+                    items.add(stack);
+                }
+                playerVaultItems.put(playerUUID, items);
+            }
+        }
+        
+        // 加载容器物品数据
+        if (tag.contains(CONTAINER_ITEMS_KEY, Tag.TAG_LIST)) {
+            ListTag itemsTag = tag.getList(CONTAINER_ITEMS_KEY, Tag.TAG_COMPOUND);
+            for (int i = 0; i < Math.min(containerItems.size(), itemsTag.size()); i++) {
+                CompoundTag itemCompound = itemsTag.getCompound(i);
+                if (itemCompound.isEmpty()) continue;
+                ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
+                if (stack.isEmpty()) continue;
+                containerItems.set(i, stack);
+            }
+        }
     }
 
-    // 获取能量等级
-    public int getPowerLevel() {
-        return powerLevel;
+    @Override
+    protected @NotNull Component getDefaultName() {
+        return Component.literal("虚空锚");
     }
 
-    public void setPowerLevel(int powerLevel) {
-        this.powerLevel = powerLevel;
-        this.setChanged();
+    @Override
+    protected @NotNull NonNullList<ItemStack> getItems() {
+        return containerItems;
     }
 
-    // 获取维度
-    public String getDimension() {
-        return dimension;
+    @Override
+    protected void setItems(@NotNull NonNullList<ItemStack> items) {
+        for (int i = 0; i < Math.min(containerItems.size(), items.size()); i++) {
+            containerItems.set(i, items.get(i));
+        }
     }
 
-    // 设置维度
-    public void setDimension(String dimension) {
-        this.dimension = dimension;
-        this.setChanged();
+    // 实现必要的容器方法
+    @Override
+    public @NotNull ItemStack getItem(int index) {
+        if (index >= 0 && index < containerItems.size()) {
+            return containerItems.get(index);
+        }
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public @NotNull ItemStack removeItem(int index, int count) {
+        if (index >= 0 && index < containerItems.size()) {
+            ItemStack stack = containerItems.get(index);
+            if (!stack.isEmpty()) {
+                if (stack.getCount() <= count) {
+                    containerItems.set(index, ItemStack.EMPTY);
+                    return stack;
+                } else {
+                    ItemStack split = stack.split(count);
+                    if (stack.isEmpty()) {
+                        containerItems.set(index, ItemStack.EMPTY);
+                    }
+                    return split;
+                }
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void setItem(int index, @NotNull ItemStack stack) {
+        if (index >= 0 && index < containerItems.size()) {
+            containerItems.set(index, stack);
+            if (stack.getCount() > getMaxStackSize()) {
+                stack.setCount(getMaxStackSize());
+            }
+        }
+    }
+
+    @Override
+    public void clearContent() {
+        Collections.fill(containerItems, ItemStack.EMPTY);
+    }
+
+    @Override
+    protected @NotNull AbstractContainerMenu createMenu(int i, @NotNull Inventory inventory) {
+        return ChestMenu.sixRows(i, inventory, this);
+    }
+
+    @Override
+    public boolean stillValid(@NotNull Player player) {
+        if (this.level == null || this.level.getBlockEntity(this.worldPosition) != this) return false;
+        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5D,
+                (double)this.worldPosition.getY() + 0.5D,
+                (double)this.worldPosition.getZ() + 0.5D) <= 64.0D;
+    }
+
+    @Override
+    public boolean canOpen(@NotNull Player player) {
+        return player.level().getBlockState(this.worldPosition).getValue(VoidAnchorBlock.POWER_LEVEL) != 0;
     }
 
     /**
@@ -113,19 +229,8 @@ public class VoidAnchorBlockEntity extends BlockEntity {
     public void savePlayerDeathItems(ServerPlayer player) {
         UUID playerUUID = player.getUUID();
         
-        // 获取玩家背包中的所有物品
-        List<ItemStack> items = new ArrayList<>();
-        Inventory inventory = player.getInventory();
-        
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack stack = inventory.getItem(i);
-            if (!stack.isEmpty()) {
-                items.add(stack.copy());
-            }
-        }
-        
-        // 保存到锚点的玩家物品栏
-        playerDeathItems.put(playerUUID, items);
+        // 保存到锚点的物品栏
+        playerDeathItems.put(playerUUID, player.getInventory().items);
         this.setChanged(); // 标记为需要保存
     }
 
@@ -136,9 +241,7 @@ public class VoidAnchorBlockEntity extends BlockEntity {
         UUID playerUUID = player.getUUID();
         List<ItemStack> items = playerDeathItems.get(playerUUID);
         
-        if (items == null || items.isEmpty()) {
-            return false;
-        }
+        if (items == null || items.isEmpty()) return false;
         
         // 将物品添加到玩家背包
         Inventory inventory = player.getInventory();
@@ -167,25 +270,13 @@ public class VoidAnchorBlockEntity extends BlockEntity {
     }
 
     public static VoidAnchorBlockEntity[] getAllBlockEntity(ServerLevel level) {
-        List<CompoundTag> tags = DimensionData.getServerData(level.getServer()).anchorList;
+        List<CompoundTag> tags = DimensionData.getAnchorList(level);
         VoidAnchorBlockEntity[] entities = new VoidAnchorBlockEntity[tags.size()];
-        String dimension = level.dimension().location().toString();
-        ServerLevel dimension2 = dimension.equals("void_dimension:void_dimension") ? level.getServer().overworld() : level;
         for (CompoundTag tag : tags) {
+            ServerLevel serverLevel = VoidDimensionType.getLevelFromDim(level, tag.getString("dim"));
             BlockPos pos = BlockPos.of(tag.getLong("pos"));
-            if (tag.getString("dim").equals(dimension) && BlockPos.of(tag.getLong("pos")).equals(pos)) {
-                VoidAnchorBlockEntity entity = (VoidAnchorBlockEntity) level.getBlockEntity(pos);
-                if (entity == null) continue;
-                entities[tags.indexOf(tag)] = entity;
-                entity.setDimension(dimension);
-            }
-            else if (tag.getString("dim").equals(dimension2.dimension().location().toString()) && BlockPos.of(tag.getLong("pos")).equals(pos)) {
-                VoidAnchorBlockEntity entity = (VoidAnchorBlockEntity) dimension2.getBlockEntity(pos);
-                if (entity != null) {
-                    entities[tags.indexOf(tag)] = entity;
-                    entity.setDimension(dimension2.dimension().location().toString());
-                }
-            }
+            VoidAnchorBlockEntity entity = (VoidAnchorBlockEntity) serverLevel.getBlockEntity(pos);
+            if (entity != null) entities[tags.indexOf(tag)] = entity;
         }
         return entities;
     }
@@ -198,5 +289,10 @@ public class VoidAnchorBlockEntity extends BlockEntity {
             }
         }
         return null;
+    }
+
+    @Override
+    public int getContainerSize() {
+        return 54;
     }
 }

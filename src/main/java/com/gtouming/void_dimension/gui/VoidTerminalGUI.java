@@ -51,7 +51,9 @@ public class VoidTerminalGUI extends Screen {
         this.tag = VoidTerminal.get(terminalStack, player.getUUID());
         
         // 从物品堆栈恢复上次打开的页面
-        this.currentPage = tag.getInt("current_page");
+        if (tag != null) {
+            this.currentPage = tag.getInt("current_page");
+        }
     }
 
     // 在VoidTerminal中调用此方法打开GUI

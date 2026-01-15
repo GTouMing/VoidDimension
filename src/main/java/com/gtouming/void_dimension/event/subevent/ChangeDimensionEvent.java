@@ -38,11 +38,8 @@ public class ChangeDimensionEvent {
         // 检查玩家是否蹲下且双手没有物品
         if (!player.isCrouching() || !isPlayerHandsEmpty(player)) return;
 
-        // 检查点击的方块是否为虚空锚点
-        BlockState clickedBlockState = event.getLevel().getBlockState(event.getPos());
-        if (!clickedBlockState.is(ModBlocks.VOID_ANCHOR_BLOCK)) return;
-
-        if (clickedBlockState.getValue(VoidAnchorBlock.POWER_LEVEL) == 0) return;
+        // 检查点击的方块是否为虚空锚点,锚点能量是否为空
+        if (VoidAnchorBlock.getPowerLevel(serverLevel, event.getPos()) == 0) return;
 
         // 处理虚空锚点传送逻辑
         handleVoidAnchorTeleport((ServerPlayer) player, event.getPos(), serverLevel);
@@ -56,10 +53,8 @@ public class ChangeDimensionEvent {
 
         if (!useClickTypeMap.contains(player.getUUID())) return;
 
-        // 检查下方方块是否为虚空锚点
-        BlockState clickedBlockState = level.getBlockState(player.blockPosition().below());
-        if (!clickedBlockState.is(ModBlocks.VOID_ANCHOR_BLOCK) ||
-                clickedBlockState.getValue(VoidAnchorBlock.POWER_LEVEL) == 0) {
+        // 检查下方方块是否为虚空锚点,锚点能量是否为空
+        if (VoidAnchorBlock.getPowerLevel(level, player.blockPosition().below()) == 0) {
             pastSeconds = 0;
             return;
         }
@@ -114,13 +109,9 @@ public class ChangeDimensionEvent {
     }
 
     private static BlockPos findOrCreateVoidAnchor(ServerLevel targetLevel, BlockPos sourcePos, ServerLevel currentLevel) {
-        int targetX = sourcePos.getX();
-        int targetY = sourcePos.getY();
-        int targetZ = sourcePos.getZ();
-
         // 在y轴方向上寻找现有的虚空锚点
         for (int y = 320; y >= -64; y--) {
-            BlockPos checkPos = new BlockPos(targetX, y, targetZ);
+            BlockPos checkPos = sourcePos.atY(y);
             BlockState blockState = targetLevel.getBlockState(checkPos);
 
             // 检查是否为虚空锚点
@@ -129,23 +120,16 @@ public class ChangeDimensionEvent {
                 return checkPos; // 找到现有锚点，返回其位置
             }
         }
-
-        // 没有找到现有锚点，创建新的锚点
-        BlockPos createPos = new BlockPos(targetX, targetY, targetZ);
         
         // 检查目标位置是否可放置
-        if (canThanPlaceAnchor(targetLevel, createPos)) {
-            powerFloat(currentLevel, sourcePos, targetLevel, createPos);
-            PlatformGenerator.generatePlatformAroundAnchor(targetLevel, createPos);
-            return createPos;
+        if (canThanPlaceAnchor(currentLevel, sourcePos, targetLevel, sourcePos)) {
+            return sourcePos;
         }
 
         // 如果目标位置不可放置，尝试在y轴方向上寻找可放置的位置
         for (int y = -64; y <= 320; y++) {
-            BlockPos tryPos = new BlockPos(targetX, y, targetZ);
-            if (canThanPlaceAnchor(targetLevel, tryPos)) {
-                powerFloat(currentLevel, sourcePos, targetLevel, tryPos);
-                PlatformGenerator.generatePlatformAroundAnchor(targetLevel, tryPos);
+            BlockPos tryPos = sourcePos.atY(y);
+            if (canThanPlaceAnchor(currentLevel, sourcePos, targetLevel, tryPos)) {
                 return tryPos;
             }
         }
@@ -158,14 +142,16 @@ public class ChangeDimensionEvent {
         return mainHand.isEmpty() && offHand.isEmpty();
     }
 
-    private static boolean canThanPlaceAnchor(ServerLevel level, BlockPos pos) {
+    private static boolean canThanPlaceAnchor(ServerLevel currentLevel, BlockPos sourcePos, ServerLevel targetLevel, BlockPos newPos) {
         for (int i = 0; i < 3; i++) {
-            if (!level.isEmptyBlock(pos.above(i))) {
+            if (!targetLevel.isEmptyBlock(newPos.above(i))) {
                 return false;
             }
         }
         BlockState newAnchorState = ModBlocks.VOID_ANCHOR_BLOCK.get().defaultBlockState();
-        level.setBlock(pos, newAnchorState, 3);
+        targetLevel.setBlock(newPos, newAnchorState, 3);
+        powerFloat(currentLevel, sourcePos, targetLevel, newPos);
+        PlatformGenerator.generatePlatformAroundAnchor(targetLevel, newPos);
         return true;
     }
 

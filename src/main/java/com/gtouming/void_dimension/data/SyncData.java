@@ -23,26 +23,21 @@ public class SyncData {
     public static void sumTotalPower(ServerTickEvent event) {
         if ((event.getServer().getTickCount() % 200 > 0) && !needsSum) return;// 每10秒同步一次
         ServerLevel level = event.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
-        if (level == null) return;
+        if(level == null) return;
         totalPower = 0;
-        for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
+        for (CompoundTag tag : DimensionData.getAnchorList(level)) {
             if (tag == null || !tag.getString("dim").equals("void_dimension:void_dimension")) continue;
             totalPower += level.getBlockState(BlockPos.of(tag.getLong("pos"))).getValue(VoidAnchorBlock.POWER_LEVEL);
         }
-        CompoundTag tag = new CompoundTag();
-        tag.putLong("total_power", totalPower);
-        S2CTagPacket.sendToAllPlayers(tag);
+        S2CTagPacket.sendLongToAllPlayers("total_power", totalPower);
         needsSum = false;
     }
 
     public static void broadcastAllPlayer(ServerTickEvent event) {
         if ((event.getServer().getTickCount() % 200 > 0) && !needBroadcast) return;// 每十秒同步一次
-        ServerLevel level = event.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
-        if (level == null) return;
-        CompoundTag change = new CompoundTag();
-        change.putBoolean("change", true);
-        S2CTagPacket.sendToAllPlayers(change);
-        for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
+        ServerLevel level = event.getServer().overworld();
+        S2CTagPacket.sendBooleanToAllPlayers("change", true);
+        for (CompoundTag tag : DimensionData.getAnchorList(level)) {
             S2CTagPacket.sendToAllPlayers(tag);
         }
         needBroadcast = false;

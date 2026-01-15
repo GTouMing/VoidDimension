@@ -14,14 +14,15 @@ import java.util.List;
 * 存储所有虚空锚的坐标以及维度信息
 * */
 public class DimensionData extends SavedData {
-    public static final String DATA_NAME = "void_dimension_data";
-
-    public long gameTime = 0L;
-    public long dayTime = 0L;
-
+    private static final String DATA_NAME = "void_dimension_data";
     public static List<CompoundTag> clientAnchorList = new ArrayList<>();
     //必须是tag，保存坐标以及维度信息
-    public List<CompoundTag> anchorList = new ArrayList<>();
+    private final List<CompoundTag> anchorList = new ArrayList<>();
+    public long dayTime = 0L;
+    public int clearTime = 0;
+    public int weatherTime = 0;
+    public boolean isRaining = false;
+    public boolean isThundering = false;
 
     DimensionData() {}
 
@@ -31,8 +32,11 @@ public class DimensionData extends SavedData {
                 anchorList.add(tag.getCompound(String.valueOf(i)));
             }
         }
-        gameTime = tag.getLong("gameTime");
         dayTime = tag.getLong("dayTime");
+        clearTime = tag.getInt("clearTime");
+        weatherTime = tag.getInt("weatherTime");
+        isRaining = tag.getBoolean("isRaining");
+        isThundering = tag.getBoolean("isThundering");
     }
 
     @Override
@@ -40,8 +44,11 @@ public class DimensionData extends SavedData {
         for (int i = 0; i < anchorList.size(); i++) {
             tag.put(String.valueOf(i), anchorList.get(i));
         }
-        tag.putLong("gameTime", gameTime);
         tag.putLong("dayTime", dayTime);
+        tag.putInt("clearTime", clearTime);
+        tag.putInt("weatherTime", weatherTime);
+        tag.putBoolean("isRaining", isRaining);
+        tag.putBoolean("isThundering", isThundering);
         return tag;
     }
     

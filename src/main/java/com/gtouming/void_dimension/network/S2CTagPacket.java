@@ -40,4 +40,16 @@ public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static void sendToAllPlayers(CompoundTag tag) {
         PacketDistributor.sendToAllPlayers(new S2CTagPacket(tag));
     }
+
+    public static void sendLongToAllPlayers(String key, long value) {
+        CompoundTag tag = new CompoundTag();
+        tag.putLong(key, value);
+        sendToAllPlayers(tag);
+    }
+
+    public static void sendBooleanToAllPlayers(String key, boolean value) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(key, value);
+        sendToAllPlayers(tag);
+    }
 }

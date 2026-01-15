@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 
@@ -37,13 +38,13 @@ public class TerminalPage1 extends BTerminalPage {
         widgets.add(statusLabel);
 
         // 总能量显示
-        StringWidget powerLabel = new StringWidget(xOffset, yOffset + 30, 100, 20,
+        StringWidget powerLabel = new StringWidget(xOffset, yOffset + 30, 180, 20,
                 Component.literal("§6虚空维度总能量等级: §b" + SyncData.getClientTotalPower()),
                 font).alignLeft();
         widgets.add(powerLabel);
 
-        StringWidget dimLabel = new StringWidget(xOffset, yOffset + 45, 180, 20,
-                Component.literal("§6当前维度: §d" + VoidTerminal.getBoundDim(player.getMainHandItem())),
+        StringWidget dimLabel = new StringWidget(xOffset, yOffset + 45, 200, 20,
+                Component.literal("§6绑定锚点维度: §d" + ((Objects.equals(VoidTerminal.getBoundDim(player.getMainHandItem()), "void_dimension:void_dimension")) ? "虚空维度" : "主世界")),
                 font).alignLeft();
         widgets.add(dimLabel);
 

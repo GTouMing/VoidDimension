@@ -77,10 +77,12 @@ public class VoidTerminal extends Item {
         BlockState state = level.getBlockState(pos);
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
-
+    
         if (level.isClientSide() || player == null) return InteractionResult.PASS;
+        
         // 检查是否为虚空锚点
         if (VoidAnchorBlock.noAnchor(level, pos)) return InteractionResult.PASS;
+        
         int powerLevel = state.getValue(VoidAnchorBlock.POWER_LEVEL);
         if (stack.get(BOUND_DATA) == null) {
             // 绑定到锚点
@@ -103,7 +105,6 @@ public class VoidTerminal extends Item {
            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide());
-
     }
 
     /**
@@ -263,7 +264,7 @@ public class VoidTerminal extends Item {
         if (boundPos == null) return;
 
         CompoundTag boundData = stack.get(BOUND_DATA);
-        for (CompoundTag tag : DimensionData.getServerData(level.getServer()).anchorList) {
+        for (CompoundTag tag : DimensionData.getAnchorList(level)) {
             assert boundData != null;
             if (tag.getString("dim").equals(boundData.getString("dim"))
                 && tag.getLong("pos") == boundPos.asLong()) {

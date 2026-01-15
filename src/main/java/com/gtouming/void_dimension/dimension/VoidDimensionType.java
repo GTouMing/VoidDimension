@@ -3,6 +3,7 @@ package com.gtouming.void_dimension.dimension;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.Level;
@@ -48,5 +49,9 @@ public class VoidDimensionType {
                         ConstantInt.of(0),
                         0)
         );
+    }
+
+    public static ServerLevel getLevelFromDim(ServerLevel level, String dim) {
+        return level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(dim)));
     }
 }

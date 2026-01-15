@@ -1,7 +1,7 @@
 package com.gtouming.void_dimension.network;
 
 import com.gtouming.void_dimension.event.subevent.ChangeDimensionEvent;
-import com.gtouming.void_dimension.util.DimTimeInterface;
+import com.gtouming.void_dimension.util.DimRuleInvoker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -14,6 +14,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.GUI_STATE_DATA;
 
@@ -39,16 +41,31 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 if (packet.tag.contains("toggle_teleport_type")) {
                     ChangeDimensionEvent.updateUseClickTypeList(packet.tag.getUUID("toggle_teleport_type"), packet.tag.getBoolean("add"));
                 }
-                if (packet.tag.contains("set_day_time")) {
-                    DimTimeInterface.setVoidDimensionDayTime((ServerLevel) serverPlayer.level(), packet.tag.getLong("set_day_time"));
-                }
+
                 if (packet.tag.contains("set_respawn_point")) {
                     serverPlayer.setRespawnPosition(serverPlayer.level().dimension(), BlockPos.of(packet.tag.getLong("set_respawn_point")).above(), 0.0f, true, true);
                     serverPlayer.sendSystemMessage(Component.literal("已设置锚点坐标为重生点"));
                     serverPlayer.sendSystemMessage(Component.literal(serverPlayer.level().dimension().toString()));
                 }
+
                 if (packet.tag.contains(serverPlayer.getUUID().toString())) {
                     serverPlayer.getMainHandItem().set(GUI_STATE_DATA, packet.tag);
+                }
+
+                if (packet.tag.contains("set_day_time")) {
+                    DimRuleInvoker.setVoidDimensionDayTime((ServerLevel) serverPlayer.level(), packet.tag.getLong("set_day_time"));
+                }
+
+                if (packet.tag.contains("set_weather")) {
+                    // 直接从服务器获取虚空维度实例，避免跨维度同步问题
+                    ServerLevel voidLevel = Objects.requireNonNull(serverPlayer.getServer()).getLevel(com.gtouming.void_dimension.dimension.VoidDimensionType.VOID_DIMENSION);
+                    if (voidLevel != null) {
+                        switch ((int) packet.tag.getDouble("set_weather")) {
+                            case 0 -> DimRuleInvoker.setVDWeatherClear(voidLevel, -1);
+                            case 1 -> DimRuleInvoker.setVDWeatherRain(voidLevel, -1);
+                            case 2 -> DimRuleInvoker.setVDWeatherThunder(voidLevel, -1);
+                        }
+                    }
                 }
             }
         });
@@ -56,5 +73,11 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
     public static void sendToServer(CompoundTag tag) {
         PacketDistributor.sendToServer(new C2STagPacket(tag));
+    }
+
+    public static void sendLongToServer(String key, long value) {
+        CompoundTag tag = new CompoundTag();
+        tag.putLong(key, value);
+        sendToServer(tag);
     }
 }

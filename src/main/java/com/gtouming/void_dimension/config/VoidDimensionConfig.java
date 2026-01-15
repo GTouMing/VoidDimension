@@ -174,6 +174,10 @@ public class VoidDimensionConfig {
     public static int getChargePower(String itemId) {
         return chargeItems.getOrDefault(itemId, 0);
     }
+
+    public static boolean isChargeItem(String itemId) {
+        return chargeItems.containsKey(itemId);
+    }
     
     /**
      * 获取平台结构类型
