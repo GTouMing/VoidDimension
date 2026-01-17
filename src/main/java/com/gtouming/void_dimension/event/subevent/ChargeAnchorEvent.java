@@ -31,6 +31,8 @@ public class ChargeAnchorEvent {
 
         int currentPower = VoidAnchorBlock.getPowerLevel(level, event.getPos());
 
+        if (currentPower >= maxPowerLevel) return;
+
         int newPower = Math.min(maxPowerLevel, currentPower + addPower);
 
         VoidAnchorBlock.setPowerLevel(level, event.getPos(), newPower);

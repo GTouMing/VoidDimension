@@ -30,11 +30,6 @@ public class CommonEvent {
 
         ChangeDimensionEvent.changeDimensionByRightClick(event);
 
-//        if (!VoidAnchorBlock.noAnchor(event.getLevel(), event.getPos())) {
-//            if (event.getEntity().getMainHandItem().is(ModItems.VOID_TERMINAL) || event.getEntity().getOffhandItem().is(ModItems.VOID_TERMINAL)) {
-//                event.setCancellationResult(InteractionResult.FAIL);
-//            }
-//        }
     }
 
     @SubscribeEvent

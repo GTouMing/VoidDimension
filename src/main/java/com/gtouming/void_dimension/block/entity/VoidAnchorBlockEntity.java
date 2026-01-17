@@ -36,6 +36,8 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     private final Map<UUID, List<ItemStack>> playerVaultItems = new HashMap<>();
     private final NonNullList<ItemStack> containerItems = NonNullList.withSize(54, ItemStack.EMPTY);
 
+
+
     public VoidAnchorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VOID_ANCHOR_BLOCK_ENTITY.get(), pos, state);
     }
@@ -168,6 +170,41 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
             return containerItems.get(index);
         }
         return ItemStack.EMPTY;
+    }
+
+    public void addItem(@NotNull ItemStack stack) {
+        boolean added = false;
+
+        // 遍历锚点容器的所有槽位
+        for (int i = 0; i < getContainerSize(); i++) {
+            ItemStack slotStack = getItem(i);
+
+            // 如果槽位为空
+            if (slotStack.isEmpty()) {
+                setItem(i, stack.copyAndClear());
+                added = true;
+                break;
+            }
+            // 如果槽位中的物品与掉落物相同且可以合并
+            else if (ItemStack.isSameItemSameComponents(slotStack, stack)) {
+                int remainingSpace = slotStack.getMaxStackSize() - slotStack.getCount();
+                if (remainingSpace > 0) {
+                    int transferAmount = Math.min(remainingSpace, stack.getCount());
+                    slotStack.grow(transferAmount);
+                    stack.shrink(transferAmount);
+                    if (stack.isEmpty()) {
+                        added = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 如果物品被完全收集，移除物品实体
+        if (added && stack.isEmpty()) {
+            // 标记锚点为已更改
+            setChanged();
+        }
     }
 
     @Override

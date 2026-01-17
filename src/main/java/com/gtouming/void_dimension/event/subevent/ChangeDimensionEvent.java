@@ -2,6 +2,7 @@ package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.dimension.generator.PlatformGenerator;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
@@ -12,6 +13,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -26,7 +29,7 @@ import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWai
 
 public class ChangeDimensionEvent {
     public static List<UUID> useClickTypeMap = new ArrayList<>();
-    private static long pastSeconds = 0;
+    private static int pastSeconds = 0;
 
 
     public static void changeDimensionByRightClick(PlayerInteractEvent.RightClickBlock event) {
@@ -105,6 +108,10 @@ public class ChangeDimensionEvent {
             double centerZ = targetAnchorPos.getZ() + 0.5;
 
             player.teleportTo(targetLevel, centerX, centerY, centerZ, player.getYRot(), player.getXRot());
+            Block block = currentLevel.getBlockState(sourcePos).getBlock();
+            if (block instanceof VoidAnchorBlock anchorBlock) {
+                anchorBlock.setCantOpen(false);
+            }
         }
     }
 

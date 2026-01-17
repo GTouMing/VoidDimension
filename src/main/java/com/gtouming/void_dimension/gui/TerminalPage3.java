@@ -21,6 +21,7 @@ public class TerminalPage3 extends BTerminalPage {
     CompoundTag tag;
     boolean ct;
     boolean rs;
+    boolean gi;
     int weather;
     
     @Override
@@ -30,12 +31,13 @@ public class TerminalPage3 extends BTerminalPage {
         if (tag != null) {
             ct = tag.getBoolean("teleport_mode");
             rs = tag.getBoolean("respawn_set");
+            gi = tag.getBoolean("gather_items");
             weather = player.level().isRaining() ? player.level().isThundering() ? 2 : 1 : 0;
         }
 
         
         // 第三页：高级功能
-        int yOffset = topPos + 10;
+        int yOffset = topPos;
         int xOffset = leftPos + 50;
 
         // 标题
@@ -71,21 +73,20 @@ public class TerminalPage3 extends BTerminalPage {
 
 
         StringWidget resetAnchorLabel = new StringWidget(xOffset + 15, yOffset + 40, 150, 20,
-                Component.literal(rs ? "§a重生点已设置" : "§6将绑定的锚点设置为重生点"), font).alignLeft();
+                Component.literal("§6重生点为锚点: " + (rs ? "§a已设置" : "§6未设置")), font).alignLeft();
         Button resetAnchorButton = Button.builder(
                 Component.literal(""),
                 button -> {
             // 重置锚点逻辑
-            C2STagPacket.sendLongToServer("set_respawn_point",
-                Objects.requireNonNull(getBoundPos(player.getMainHandItem())).asLong());
-
-
+            C2STagPacket.sendAnyToServer("set_respawn_point", false, "dim", getBoundDim(player.getMainHandItem()),
+                    "pos", Objects.requireNonNull(getBoundPos(player.getMainHandItem())).asLong());
 
             // 更新物品堆栈中的重生点状态
             tag.putBoolean("respawn_set", true);
             set(player.getMainHandItem(), player.getUUID(), tag);
-            player.sendSystemMessage(Component.literal("§a重生点已设置为绑定锚点"));
-            resetAnchorLabel.setMessage(Component.literal("§a重生点已设置"));
+            rs = true;
+            player.sendSystemMessage(Component.literal("§a重生点已设置"));
+            resetAnchorLabel.setMessage(Component.literal("§6重生点为锚点: §a已设置"));
             button.active = false;
         }).bounds(xOffset, yOffset + 45, 10, 10).build();
         // 如果重生点已设置，禁用按钮
@@ -93,11 +94,28 @@ public class TerminalPage3 extends BTerminalPage {
         widgets.add(resetAnchorLabel);
         widgets.add(resetAnchorButton);
 
-
+        StringWidget gatherItemsLabel = new StringWidget(xOffset + 15, yOffset + 55, 150, 20,
+                Component.literal("§6收集模式: " + (gi ? "§a开启" : "§c关闭")), font).alignLeft();
+        Button gatherItemsButton = Button.builder(
+                Component.literal(""),
+                button -> {
+            // 切换收集物品逻辑
+            boolean newGi = !gi;
+            gi = newGi;
+            C2STagPacket.sendAnyToServer("set_gather_items", newGi, "dim", getBoundDim(player.getMainHandItem()),
+                    "pos", Objects.requireNonNull(getBoundPos(player.getMainHandItem())).asLong());
+            // 更新物品堆栈中的收集物品状态
+            tag.putBoolean("gather_items", newGi);
+            set(player.getMainHandItem(), player.getUUID(), tag);
+            player.sendSystemMessage(Component.literal("§a收集模式已切换为" + (newGi ? "§a开启" : "§c关闭")));
+            gatherItemsLabel.setMessage(Component.literal("§6收集模式: " + (newGi ? "§a开启" : "§c关闭")));
+                }).bounds(xOffset, yOffset + 60, 10, 10).build();
+        widgets.add(gatherItemsLabel);
+        widgets.add(gatherItemsButton);
 
         // 天气下拉选择按钮
         String[] weatherOptions = {"§a晴", "§6雨天", "§c雷暴"};
-        StringWidget weatherLabel = new StringWidget(xOffset + 15, yOffset + 55, 150, 20,
+        StringWidget weatherLabel = new StringWidget(xOffset + 15, yOffset + 70, 150, 20,
                 Component.literal("§6天气: " + weatherOptions[weather]), font).alignLeft();
 
         Button weatherDropdownButton = Button.builder(
@@ -111,7 +129,7 @@ public class TerminalPage3 extends BTerminalPage {
                     C2STagPacket.sendLongToServer("set_weather", weather);
                     weatherLabel.setMessage(Component.literal("§6天气: " + weatherOptions[weather]));
                     player.sendSystemMessage(Component.literal("§a天气已切换为" + weatherOptions[weather]));
-                }).bounds(xOffset, yOffset + 60, 10, 10).build();
+                }).bounds(xOffset, yOffset + 75, 10, 10).build();
 
         if (!player.level().dimension().location().toString().equals("void_dimension:void_dimension"))
             weatherDropdownButton.active = false;
@@ -120,7 +138,7 @@ public class TerminalPage3 extends BTerminalPage {
 
 
         int dayTime = (int)player.level().getDayTime();
-        AbstractSliderButton dayTimeSlider = new AbstractSliderButton(xOffset, yOffset + 75, 150, 20,
+        AbstractSliderButton dayTimeSlider = new AbstractSliderButton(xOffset, yOffset + 90, 150, 20,
                 Component.literal("维度时间: " + (dayTime < 0 ? (Integer.MAX_VALUE + dayTime) + 11647: dayTime) % 24000), player.level().getDayTime()/24000.0) {
             @Override
             protected void updateMessage() {

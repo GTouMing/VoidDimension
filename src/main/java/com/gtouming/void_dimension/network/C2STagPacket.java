@@ -1,5 +1,7 @@
 package com.gtouming.void_dimension.network;
 
+import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.event.subevent.ChangeDimensionEvent;
 import com.gtouming.void_dimension.util.DimRuleInvoker;
 import net.minecraft.core.BlockPos;
@@ -43,8 +45,8 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 }
 
                 if (packet.tag.contains("set_respawn_point")) {
-                    serverPlayer.setRespawnPosition(serverPlayer.level().dimension(), BlockPos.of(packet.tag.getLong("set_respawn_point")).above(), 0.0f, true, true);
-                    serverPlayer.sendSystemMessage(Component.literal("已设置锚点坐标为重生点"));
+                    serverPlayer.setRespawnPosition(VoidDimensionType.getLevelFromDim((ServerLevel) serverPlayer.level(), packet.tag.getString("dim")).dimension(), BlockPos.of(packet.tag.getLong("pos")).above(), 0.0f, true, true);
+                    serverPlayer.sendSystemMessage(Component.literal("已设置绑定锚点坐标为重生点"));
                     serverPlayer.sendSystemMessage(Component.literal(serverPlayer.level().dimension().toString()));
                 }
 
@@ -67,6 +69,13 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                         }
                     }
                 }
+
+                if (packet.tag.contains("set_gather_items")) {
+                            if (VoidDimensionType.getLevelFromDim((ServerLevel) serverPlayer.level(), packet.tag.getString("dim")).getBlockState(BlockPos.of(packet.tag.getLong("pos"))).getBlock() instanceof VoidAnchorBlock anchorBlock) {
+                                anchorBlock.setGatherItems(packet.tag.getBoolean("set_gather_items"));
+                            }
+
+                }
             }
         });
     }
@@ -78,6 +87,14 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static void sendLongToServer(String key, long value) {
         CompoundTag tag = new CompoundTag();
         tag.putLong(key, value);
+        sendToServer(tag);
+    }
+
+    public static void sendAnyToServer(String bKey, boolean bValue, String sKey, String sValue, String lKey, long lValue) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(bKey, bValue);
+        tag.putString(sKey, sValue);
+        tag.putLong(lKey, lValue);
         sendToServer(tag);
     }
 }

@@ -157,6 +157,7 @@ public class VoidTerminal extends Item {
             tagB.putInt("current_page", 0);
             tagB.putBoolean("teleport_mode", false);
             tagB.putBoolean("respawn_set", false);
+            tagB.putBoolean("gather_items", false);
             tagA.put(playerUUID.toString(), tagB);
             stack.set(GUI_STATE_DATA, tagA);
         }
