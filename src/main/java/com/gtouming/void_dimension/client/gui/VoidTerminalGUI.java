@@ -1,4 +1,4 @@
-package com.gtouming.void_dimension.gui;
+package com.gtouming.void_dimension.client.gui;
 
 import com.gtouming.void_dimension.item.VoidTerminal;
 import net.minecraft.client.Minecraft;

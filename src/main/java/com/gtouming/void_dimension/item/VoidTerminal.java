@@ -2,7 +2,7 @@ package com.gtouming.void_dimension.item;
 
 import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.gui.VoidTerminalGUI;
+import com.gtouming.void_dimension.client.gui.VoidTerminalGUI;
 import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;

@@ -6,6 +6,7 @@ import com.gtouming.void_dimension.network.S2CTagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 /*
 * 同步服务器获得的数据到客户端
@@ -27,7 +28,13 @@ public class SyncData {
         totalPower = 0;
         for (CompoundTag tag : DimensionData.getAnchorList(level)) {
             if (tag == null || !tag.getString("dim").equals("void_dimension:void_dimension")) continue;
-            totalPower += level.getBlockState(BlockPos.of(tag.getLong("pos"))).getValue(VoidAnchorBlock.POWER_LEVEL);
+            
+            BlockPos pos = BlockPos.of(tag.getLong("pos"));
+            BlockState state = level.getBlockState(pos);
+            
+            // 检查是否为虚空锚点方块，避免从空气方块获取属性
+            if (!(state.getBlock() instanceof VoidAnchorBlock)) continue;
+            totalPower += state.getValue(VoidAnchorBlock.POWER_LEVEL);
         }
         S2CTagPacket.sendLongToAllPlayers("total_power", totalPower);
         needsSum = false;

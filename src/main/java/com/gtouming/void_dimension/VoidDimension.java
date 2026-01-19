@@ -81,5 +81,4 @@ public class VoidDimension {
         ApplyCommand.register(event.getDispatcher());
         CheckCommand.register(event.getDispatcher());
     }
-
 }

@@ -1,4 +1,4 @@
-package com.gtouming.void_dimension.gui;
+package com.gtouming.void_dimension.client.gui;
 
 import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.client.gui.components.AbstractSliderButton;

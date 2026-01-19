@@ -1,4 +1,4 @@
-package com.gtouming.void_dimension.gui;
+package com.gtouming.void_dimension.client.gui;
 
 import net.minecraft.client.gui.components.*;
 import net.minecraft.network.chat.Component;

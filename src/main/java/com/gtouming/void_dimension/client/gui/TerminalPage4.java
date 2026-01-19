@@ -1,4 +1,4 @@
-package com.gtouming.void_dimension.gui;
+package com.gtouming.void_dimension.client.gui;
 
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.StringWidget;

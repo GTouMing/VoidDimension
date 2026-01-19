@@ -44,7 +44,9 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
                 .lightLevel(state -> state.getValue(POWER_LEVEL) > 0 ? 15 : 0)
                 .strength(50F, 1200F)
                 .requiresCorrectToolForDrops()
-                .pushReaction(PushReaction.BLOCK));
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion());
+
 
         this.registerDefaultState(this.stateDefinition.any().setValue(POWER_LEVEL, 0));
     }

@@ -2,7 +2,6 @@ package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.dimension.generator.PlatformGenerator;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
@@ -14,7 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;

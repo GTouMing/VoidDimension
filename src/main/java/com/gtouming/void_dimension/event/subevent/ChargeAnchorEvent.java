@@ -23,6 +23,12 @@ public class ChargeAnchorEvent {
 
         Item item = player.getMainHandItem().getItem();
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+
+        if (VoidAnchorBlock.noAnchor(level, event.getPos())) return;
+
+        VoidAnchorBlock anchorBlock = (VoidAnchorBlock)level.getBlockState(event.getPos()).getBlock();
+
+        anchorBlock.setCantOpen(false);
         
         // 使用配置中的充能物品设置
         int addPower = VoidDimensionConfig.getChargePower(itemId.toString());
