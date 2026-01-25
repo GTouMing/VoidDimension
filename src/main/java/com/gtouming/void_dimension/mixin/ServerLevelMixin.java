@@ -1,6 +1,5 @@
 package com.gtouming.void_dimension.mixin;
 
-import com.gtouming.void_dimension.data.DimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -33,6 +32,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import static net.minecraft.server.level.ServerLevel.*;
+import static com.gtouming.void_dimension.data.VoidDimensionData.*;
 
 @Mixin(value = ServerLevel.class, priority = 1145)
 public abstract class ServerLevelMixin extends Level {
@@ -54,21 +54,8 @@ public abstract class ServerLevelMixin extends Level {
     @Nonnull
     public abstract MinecraftServer getServer();
 
-    // 自定义字段 - 虚空维度的独立时间
-    @Unique
-    private long voidDimension$dimensionDayTime = 0L;
     @Unique
     private boolean voidDimension$timeInitialized = false;
-    @Unique
-    private int voidDimension$clearTime = 0;
-    @Unique
-    private int voidDimension$rainTime = 0;
-    @Unique
-    private int voidDimension$thunderTime = 0;
-    @Unique
-    private boolean voidDimension$isRaining = false;
-    @Unique
-    private boolean voidDimension$isThundering = false;
 
     // 构造器注入
     protected ServerLevelMixin(WritableLevelData levelData, ResourceKey<Level> dimension,
@@ -87,9 +74,10 @@ public abstract class ServerLevelMixin extends Level {
     protected void onTickTime(CallbackInfo ci) {
         if (this.tickTime && this.dimension().equals(VoidDimensionType.VOID_DIMENSION)) {
             ServerLevel level = (ServerLevel) (Object) this;
+            long dayTime = getVDayTime(level);
             // 确保时间已初始化
             if (!this.voidDimension$timeInitialized) {
-                this.voidDimension$dimensionDayTime = DimensionData.getServerData(level.getServer()).dayTime;
+                dayTime = getVDayTime(level);
                 this.voidDimension$timeInitialized = true;
             }
             // 处理计划事件
@@ -99,10 +87,11 @@ public abstract class ServerLevelMixin extends Level {
             );
 
             if (this.levelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
-                this.voidDimension$dimensionDayTime = (this.voidDimension$dimensionDayTime + 1L);
+                dayTime++;
 
                     // 直接设置白天时间
-                this.serverLevelData.setDayTime(this.voidDimension$dimensionDayTime);
+                this.serverLevelData.setDayTime(dayTime);
+                setVDayTime(level, dayTime);
             }
             ci.cancel(); // 取消原版时间更新
         }
@@ -118,32 +107,18 @@ public abstract class ServerLevelMixin extends Level {
                         LevelStem levelStem, ChunkProgressListener progressListener,
                         boolean isDebug, long seed, List<CustomSpawner> customSpawners,
                         boolean tickTime, RandomSequences randomSequences, CallbackInfo ci) {
-
+        ServerLevel level = (ServerLevel) (Object) this;
         // 如果是虚空维度，初始化独立时间系统
         if (dimensionKey.equals(VoidDimensionType.VOID_DIMENSION)) {
             // 只在第一次初始化时设置默认时间
             if (!this.voidDimension$timeInitialized) {
                 this.serverLevelData = serverLevelData;
-                this.voidDimension$dimensionDayTime = DimensionData.getServerData(server).dayTime;
                 this.voidDimension$timeInitialized = true;
                 // 立即设置初始时间
-                this.serverLevelData.setDayTime(this.voidDimension$dimensionDayTime);
+                this.serverLevelData.setDayTime(getVDayTime(level));
                 // 确保虚空维度的时间会流逝
                 this.tickTime = true;
             }
-        }
-    }
-
-    /**
-     * 覆盖 setDayTime 方法以支持虚空维度独立时间设置
-     */
-    @Inject(method = "setDayTime", at = @At("HEAD"), cancellable = true)
-    private void onSetDayTime(long dayTime, CallbackInfo ci) {
-        if (this.dimension().equals(VoidDimensionType.VOID_DIMENSION)) {
-            // 虚空维度使用独立的时间设置
-            this.voidDimension$dimensionDayTime = dayTime;
-            this.serverLevelData.setDayTime(dayTime);
-            ci.cancel(); // 取消原版方法执行
         }
     }
 
@@ -153,7 +128,7 @@ public abstract class ServerLevelMixin extends Level {
     @Override
     public long getDayTime() {
         if (this.dimension().equals(VoidDimensionType.VOID_DIMENSION)) {
-            return this.voidDimension$dimensionDayTime % 24000L;
+            return getVDayTime((ServerLevel) (Object) this) % 24000L;
         }
         return super.getDayTime();
     }
@@ -166,14 +141,14 @@ public abstract class ServerLevelMixin extends Level {
     public void onAdvanceWeatherCycle(CallbackInfo ci) {
         ServerLevel serverLevel = (ServerLevel) (Object) this;
         if (!serverLevel.dimension().equals(VoidDimensionType.VOID_DIMENSION)) return;
-        boolean flag = this.voidDimension$isRaining;
+        boolean flag = isVRaining(serverLevel);
         if (serverLevel.dimensionType().hasSkyLight()) {
             if (serverLevel.getGameRules().getBoolean(GameRules.RULE_WEATHER_CYCLE)) {
-                int i = this.voidDimension$clearTime;
-                int j = this.voidDimension$thunderTime;
-                int k = this.voidDimension$rainTime;
-                boolean flag1 = this.voidDimension$isThundering;
-                boolean flag2 = this.voidDimension$isRaining;
+                int i = getVClearTime(serverLevel);
+                int j = getVWeatherTime(serverLevel);
+                int k = getVWeatherTime(serverLevel);
+                boolean flag1 = isVThundering(serverLevel);
+                boolean flag2 = isVRaining(serverLevel);
                 if (i > 0) {
                     --i;
                     j = flag1 ? 0 : 1;
@@ -204,11 +179,11 @@ public abstract class ServerLevelMixin extends Level {
                     }
                 }
 
-                this.voidDimension$clearTime = i;
-                this.voidDimension$rainTime = k;
-                this.voidDimension$thunderTime = j;
-                this.voidDimension$isThundering = flag1;
-                this.voidDimension$isRaining = flag2;
+                setVClearTime(serverLevel, i);
+                setVWeatherTime(serverLevel, k);
+                setVWeatherTime(serverLevel, j);
+                setVThundering(serverLevel, flag1);
+                setVRaining(serverLevel, flag2);
 
                 this.serverLevelData.setThunderTime(j);
                 this.serverLevelData.setRainTime(k);
@@ -218,7 +193,7 @@ public abstract class ServerLevelMixin extends Level {
             }
 
             this.oThunderLevel = this.thunderLevel;
-            if (this.voidDimension$isThundering) {
+            if (isVThundering(serverLevel)) {
                 this.thunderLevel += 0.01F;
             } else {
                 this.thunderLevel -= 0.01F;
@@ -226,7 +201,7 @@ public abstract class ServerLevelMixin extends Level {
 
             this.thunderLevel = Mth.clamp(this.thunderLevel, 0.0F, 1.0F);
             this.oRainLevel = this.rainLevel;
-            if (this.voidDimension$isRaining) {
+            if (isVRaining(serverLevel)) {
                 this.rainLevel += 0.01F;
             } else {
                 this.rainLevel -= 0.01F;
@@ -243,7 +218,7 @@ public abstract class ServerLevelMixin extends Level {
             this.getServer().getPlayerList().broadcastAll(new ClientboundGameEventPacket(ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, this.thunderLevel), this.dimension());
         }
 
-        if (flag != this.voidDimension$isRaining) {
+        if (flag != isVRaining(serverLevel)) {
             if (flag) {
                 this.getServer().getPlayerList().broadcastAll(new ClientboundGameEventPacket(ClientboundGameEventPacket.STOP_RAINING, 0.0F), this.dimension());
             } else {
@@ -260,11 +235,11 @@ public abstract class ServerLevelMixin extends Level {
     public void onSetWeatherParameters(int clearTime, int weatherTime, boolean raining, boolean thundering, CallbackInfo ci) {
         ServerLevel serverLevel = (ServerLevel) (Object) this;
         if (!serverLevel.dimension().equals(VoidDimensionType.VOID_DIMENSION)) return;
-        this.voidDimension$clearTime = clearTime;
-        this.voidDimension$rainTime = weatherTime;
-        this.voidDimension$thunderTime = weatherTime;
-        this.voidDimension$isRaining = raining;
-        this.voidDimension$isThundering = thundering;
+        setVClearTime(serverLevel, clearTime);
+        setVWeatherTime(serverLevel, weatherTime);
+        setVWeatherTime(serverLevel, weatherTime);
+        setVRaining(serverLevel, raining);
+        setVThundering(serverLevel, thundering);
         this.serverLevelData.setClearWeatherTime(clearTime);
         this.serverLevelData.setThunderTime(weatherTime);
         this.serverLevelData.setRainTime(weatherTime);

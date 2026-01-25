@@ -1,6 +1,6 @@
 package com.gtouming.void_dimension.item;
 
-import com.gtouming.void_dimension.data.DimensionData;
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.client.gui.VoidTerminalGUI;
 import com.gtouming.void_dimension.network.C2STagPacket;
@@ -265,7 +265,7 @@ public class VoidTerminal extends Item {
         if (boundPos == null) return;
 
         CompoundTag boundData = stack.get(BOUND_DATA);
-        for (CompoundTag tag : DimensionData.getAnchorList(level)) {
+        for (CompoundTag tag : VoidDimensionData.getAnchorList(level)) {
             assert boundData != null;
             if (tag.getString("dim").equals(boundData.getString("dim"))
                 && tag.getLong("pos") == boundPos.asLong()) {

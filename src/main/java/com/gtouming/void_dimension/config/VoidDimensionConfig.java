@@ -3,6 +3,8 @@ package com.gtouming.void_dimension.config;
 import com.gtouming.void_dimension.VoidDimension;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
@@ -45,6 +47,25 @@ public class VoidDimensionConfig {
             .comment("自定义结构列表，格式: '方块ID@相对范围（中心为0,0,0）', 例如: minecraft:grass_block@-8,0,-8_8,0,8")
             .define("customStructures", List.of("minecraft:grass_block@-8,0,-8_8,0,8"), VoidDimensionConfig::validateCustomStructures);
 
+    public static final ModConfigSpec.BooleanValue ENABLE_MONSTER_SPAWNING = BUILDER
+            .comment("是否在虚空维度中启用怪物生成")
+            .define("enableMonsterSpawning", false);
+    // 添加刷怪配置
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> MONSTER_SPAWNERS = BUILDER
+            .comment("虚空维度刷怪列表，当前仅支持monster类型，数量范围[1, 10]，格式: '生物类型=权重,最小数量,最大数量', 例如: minecraft:zombie=100,4,4")
+            .define("monsterSpawners",
+                    List.of(
+                            "minecraft:spider=100,4,4",
+                            "minecraft:zombie=95,4,4",
+                            "minecraft:zombie_villager=5,1,1",
+                            "minecraft:skeleton=100,4,4",
+                            "minecraft:creeper=100,4,4",
+                            "minecraft:slime=100,4,4",
+                            "minecraft:enderman=10,1,4",
+                            "minecraft:witch=5,1,1"
+                    ), VoidDimensionConfig::validateSpawnerConfigs);
+
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean enableFallVoid = false;
@@ -56,6 +77,9 @@ public class VoidDimensionConfig {
     public static List<String> customStructures = new ArrayList<>(List.of("minecraft:grass_block@-8,0,-8_8,0,8"));
     public static boolean enableRandomBlocks = false;
     public static List<String> randomBlocks = new ArrayList<>(List.of("minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:end_stone", "minecraft:blackstone"));
+    // 添加刷怪配置变量
+    public static boolean enableMonsterSpawning = true;
+    public static List<String> monsterSpawners = new ArrayList<>(List.of("minecraft:zombie=100,4,4", "minecraft:skeleton=100,4,4", "minecraft:spider=100,4,4", "minecraft:enderman=10,1,4"));
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event){
@@ -65,6 +89,11 @@ public class VoidDimensionConfig {
         generateInitialPlatform = GENERATE_INITIAL_PLATFORM.get();
         platformStructure = PLATFORM_STRUCTURE.get();
         enableRandomBlocks = ENABLE_RANDOM_BLOCKS.get();
+        // 解析刷怪配置
+        enableMonsterSpawning = ENABLE_MONSTER_SPAWNING.get();
+        monsterSpawners.clear();
+        List<? extends String> spawners = MONSTER_SPAWNERS.get();
+        monsterSpawners.addAll(spawners);
 
         // 解析充能物品配置
         chargeItems.clear();
@@ -198,5 +227,100 @@ public class VoidDimensionConfig {
      */
     public static List<String> getRandomBlocks() {
         return randomBlocks;
+    }
+
+    /**
+     * 验证刷怪配置列表格式
+     */
+    private static boolean validateSpawnerConfigs(Object obj) {
+        if (!(obj instanceof List<?> configs)) return false;
+        for (Object configObj : configs) {
+            if (!(configObj instanceof String config)) return false;
+            String[] parts = config.split("=");
+            if (parts.length != 2) return false;
+            
+            // 验证生物类型
+            String entityType = parts[0].trim();
+            try {
+                ResourceLocation entityLocation = ResourceLocation.tryParse(entityType);
+                if (entityLocation == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(entityLocation)) {
+                    return false;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+            
+            // 验证权重和数量
+            String[] spawnParams = parts[1].split(",");
+            if (spawnParams.length != 3) return false;
+            try {
+                int weight = Integer.parseInt(spawnParams[0].trim()); // 权重
+                int minCount = Integer.parseInt(spawnParams[1].trim()); // 最小数量
+                int maxCount = Integer.parseInt(spawnParams[2].trim()); // 最大数量
+                
+                // 验证权重范围 (1-1000)
+                if (weight < 1 || weight > 1000) {
+                    VoidDimension.LOGGER.warn("刷怪配置权重超出范围 (1-1000): {}", config);
+                    return false;
+                }
+                
+                // 验证数量范围 (1-10)
+                if (minCount < 1 || minCount > 10) {
+                    VoidDimension.LOGGER.warn("刷怪配置最小数量超出范围 (1-10): {}", config);
+                    return false;
+                }
+                if (maxCount < 1 || maxCount > 10) {
+                    VoidDimension.LOGGER.warn("刷怪配置最大数量超出范围 (1-10): {}", config);
+                    return false;
+                }
+                
+                // 验证最小数量不大于最大数量
+                if (minCount > maxCount) {
+                    VoidDimension.LOGGER.warn("刷怪配置最小数量大于最大数量: {}", config);
+                    return false;
+                }
+            } catch (Exception e) {
+                VoidDimension.LOGGER.warn("刷怪配置解析失败: {}", config);
+                return false;
+            }
+        }
+        return true;
+    }
+    /**
+     * 根据配置生成刷怪设置
+     */
+    public static List<MobSpawnSettings.SpawnerData> getConfiguredSpawners() {
+        return getConfiguredSpawners(monsterSpawners);
+    }
+    
+    /**
+     * 根据配置列表生成刷怪设置
+     */
+    private static List<MobSpawnSettings.SpawnerData> getConfiguredSpawners(List<String> spawnerConfigs) {
+        List<MobSpawnSettings.SpawnerData> spawners = new ArrayList<>();
+
+        for (String spawnerConfig : spawnerConfigs) {
+            String[] parts = spawnerConfig.split("=");
+            if (parts.length == 2) {
+                try {
+                    String entityType = parts[0].trim();
+                    String[] params = parts[1].split(",");
+
+                    int weight = Integer.parseInt(params[0].trim());
+                    int minCount = Integer.parseInt(params[1].trim());
+                    int maxCount = Integer.parseInt(params[2].trim());
+
+                    ResourceLocation entityLocation = ResourceLocation.tryParse(entityType);
+                    if (entityLocation != null && BuiltInRegistries.ENTITY_TYPE.containsKey(entityLocation)) {
+                        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(entityLocation);
+                        spawners.add(new MobSpawnSettings.SpawnerData(type, weight, minCount, maxCount));
+                    }
+                } catch (Exception e) {
+                    // 忽略无效配置
+                }
+            }
+        }
+
+        return spawners;
     }
 }

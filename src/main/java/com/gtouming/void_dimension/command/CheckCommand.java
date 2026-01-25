@@ -1,7 +1,7 @@
 package com.gtouming.void_dimension.command;
 
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.data.DimensionData;
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.mojang.brigadier.CommandDispatcher;
@@ -51,7 +51,7 @@ public class CheckCommand {
      */
     private static int checkAnchorList(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        var anchorList = DimensionData.getAnchorList(source.getLevel());
+        var anchorList = VoidDimensionData.getAnchorList(source.getLevel());
         
         if (anchorList.isEmpty()) {
             source.sendSuccess(() -> Component.literal("§c所有维度都没有锚点"), false);

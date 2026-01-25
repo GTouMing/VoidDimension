@@ -1,6 +1,6 @@
 package com.gtouming.void_dimension.network;
 
-import com.gtouming.void_dimension.data.DimensionData;
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.data.SyncData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -29,9 +29,9 @@ public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
         context.enqueueWork(() -> {
             // 客户端处理
             if (context.flow().isClientbound()) {
-                if (packet.tag.getBoolean("change")) DimensionData.clientAnchorList.clear();
+                if (packet.tag.getBoolean("change")) VoidDimensionData.clientAnchorList.clear();
                 if (packet.tag.contains("change")) packet.tag.remove("change");
-                if (packet.tag.contains("dim")) DimensionData.clientAnchorList.add(packet.tag);
+                if (packet.tag.contains("dim")) VoidDimensionData.clientAnchorList.add(packet.tag);
                 if (packet.tag.contains("total_power")) SyncData.clientTotalPower = packet.tag.getLong("total_power");
             }
         });

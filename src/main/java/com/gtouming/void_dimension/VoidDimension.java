@@ -6,7 +6,9 @@ import com.gtouming.void_dimension.command.ApplyCommand;
 import com.gtouming.void_dimension.command.CheckCommand;
 import com.gtouming.void_dimension.component.ModDataComponents;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
+import com.gtouming.void_dimension.dimension.ModBiomeModifiers;
 import com.gtouming.void_dimension.dimension.ModDimensions;
+import com.gtouming.void_dimension.event.subevent.SaveTimeWeatherEvent;
 import com.gtouming.void_dimension.item.ModItems;
 import com.gtouming.void_dimension.network.C2STagPacket;
 import com.gtouming.void_dimension.network.S2CTagPacket;
@@ -43,7 +45,7 @@ public class VoidDimension {
 
         ModBlockEntities.register(modEventBus);
 
-        //ModMenus.register(modEventBus);
+        ModBiomeModifiers.BIOME_MODIFIER_SERIALIZERS.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(this);
 
@@ -56,7 +58,7 @@ public class VoidDimension {
      * 注册网络包处理器
      */
     void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.4");
+        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.5");
         registrar.playToClient(
                 S2CTagPacket.TYPE,
                 S2CTagPacket.STREAM_CODEC,
@@ -71,8 +73,9 @@ public class VoidDimension {
     }
 
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {}
-
+    public void onServerStarting(ServerStartingEvent event) {
+        SaveTimeWeatherEvent.setCurrentServer(event.getServer());
+    }
     /**
      * 注册命令
      */

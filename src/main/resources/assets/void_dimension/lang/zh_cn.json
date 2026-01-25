@@ -1,5 +1,5 @@
 {
-  "itemGroup.voiddimension": "虚空锚",
-  "block.voiddimension.void_anchor": "虚空锚",
-  "item.voiddimension.void_anchor": "虚空终端"
+  "itemGroup.void_dimension": "虚空维度",
+  "block.void_dimension.void_anchor": "虚空锚",
+  "item.void_dimension.void_terminal": "虚空终端"
 }

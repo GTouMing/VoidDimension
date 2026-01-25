@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /*
 * 禁用天空盒裁剪
 * */
-@Mixin(LevelRenderer.class)
+@Mixin(value = LevelRenderer.class, priority = 1145)
 public class LevelRendererMixin {
 
     @Inject(method = "renderSky",

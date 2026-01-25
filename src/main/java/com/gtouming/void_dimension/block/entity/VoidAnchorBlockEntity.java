@@ -1,7 +1,7 @@
 package com.gtouming.void_dimension.block.entity;
 
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.data.DimensionData;
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -265,9 +265,9 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
      */
     public void savePlayerDeathItems(ServerPlayer player) {
         UUID playerUUID = player.getUUID();
-        
+        NonNullList<ItemStack> playerItems = NonNullList.copyOf(player.getInventory().items);
         // 保存到锚点的物品栏
-        playerDeathItems.put(playerUUID, player.getInventory().items);
+        playerDeathItems.put(playerUUID, playerItems);
         this.setChanged(); // 标记为需要保存
     }
 
@@ -307,7 +307,7 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     }
 
     public static VoidAnchorBlockEntity[] getAllBlockEntity(ServerLevel level) {
-        List<CompoundTag> tags = DimensionData.getAnchorList(level);
+        List<CompoundTag> tags = VoidDimensionData.getAnchorList(level);
         VoidAnchorBlockEntity[] entities = new VoidAnchorBlockEntity[tags.size()];
         for (CompoundTag tag : tags) {
             ServerLevel serverLevel = VoidDimensionType.getLevelFromDim(level, tag.getString("dim"));

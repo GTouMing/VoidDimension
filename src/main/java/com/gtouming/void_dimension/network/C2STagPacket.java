@@ -1,13 +1,13 @@
 package com.gtouming.void_dimension.network;
 
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.event.subevent.ChangeDimensionEvent;
 import com.gtouming.void_dimension.util.DimRuleInvoker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -40,14 +40,13 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
         context.enqueueWork(() -> {
             if(context.flow().isServerbound()) {
                 ServerPlayer serverPlayer = (ServerPlayer) context.player();
+                ServerLevel level = serverPlayer.serverLevel();
                 if (packet.tag.contains("toggle_teleport_type")) {
                     ChangeDimensionEvent.updateUseClickTypeList(packet.tag.getUUID("toggle_teleport_type"), packet.tag.getBoolean("add"));
                 }
 
                 if (packet.tag.contains("set_respawn_point")) {
-                    serverPlayer.setRespawnPosition(VoidDimensionType.getLevelFromDim((ServerLevel) serverPlayer.level(), packet.tag.getString("dim")).dimension(), BlockPos.of(packet.tag.getLong("pos")).above(), 0.0f, true, true);
-                    serverPlayer.sendSystemMessage(Component.literal("已设置绑定锚点坐标为重生点"));
-                    serverPlayer.sendSystemMessage(Component.literal(serverPlayer.level().dimension().toString()));
+                    serverPlayer.setRespawnPosition(VoidDimensionType.getLevelFromDim(level, packet.tag.getString("dim")).dimension(), BlockPos.of(packet.tag.getLong("pos")).above(), 0.0f, true, true);
                 }
 
                 if (packet.tag.contains(serverPlayer.getUUID().toString())) {
@@ -55,7 +54,9 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 }
 
                 if (packet.tag.contains("set_day_time")) {
-                    DimRuleInvoker.setVoidDimensionDayTime((ServerLevel) serverPlayer.level(), packet.tag.getLong("set_day_time"));
+                    long dayTime = packet.tag.getLong("set_day_time");
+                    DimRuleInvoker.setVoidDimensionDayTime(level, dayTime);
+                    VoidDimensionData.setVDayTime(level, dayTime);
                 }
 
                 if (packet.tag.contains("set_weather")) {

@@ -1,5 +1,5 @@
 {
-  "itemGroup.voiddimension": "Void Anchor",
-  "block.voiddimension.void_anchor": "Void Anchor",
-  "item.voiddimension.void_anchor": "Void Terminal"
+  "itemGroup.void_dimension": "Void Dimension",
+  "block.void_dimension.void_anchor": "Void Anchor",
+  "item.void_dimension.void_terminal": "Void Terminal"
 }

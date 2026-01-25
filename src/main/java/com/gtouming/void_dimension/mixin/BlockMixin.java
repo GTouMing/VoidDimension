@@ -1,6 +1,6 @@
 package com.gtouming.void_dimension.mixin;
 
-import com.gtouming.void_dimension.data.DimensionData;
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -13,13 +13,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
-@Mixin(Block.class)
+@Mixin(value = Block.class, priority = 1145)
 public class BlockMixin {
 
     @Inject(method = "destroy", at = @At("HEAD"))
     public void destroy(LevelAccessor level, BlockPos pos, BlockState state, CallbackInfo ci) {
         if (!(level instanceof ServerLevel serverLevel)) return;
         if (VoidAnchorBlock.noAnchor(state)) return;
-        DimensionData.changePos(pos, serverLevel, false);
+        VoidDimensionData.changePos(pos, serverLevel, false);
     }
 }

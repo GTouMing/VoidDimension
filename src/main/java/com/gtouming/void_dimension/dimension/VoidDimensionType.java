@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.dimension.DimensionType;
 
 import java.util.OptionalLong;
@@ -18,7 +19,8 @@ public class VoidDimensionType {
     // 虚空维度资源键
     public static final ResourceKey<Level> VOID_DIMENSION = ResourceKey.create(Registries.DIMENSION,
             ResourceLocation.fromNamespaceAndPath("void_dimension", "void_dimension"));
-
+    public static final ResourceKey<Biome> VOID_BIOME = ResourceKey.create(Registries.BIOME,
+            ResourceLocation.fromNamespaceAndPath("void_dimension", "void_biome"));
     /**
      * 创建虚空维度类型
  * 该方法用于创建一个自定义的维度类型，模拟虚空环境
@@ -47,11 +49,20 @@ public class VoidDimensionType {
                         true,
                         true,
                         ConstantInt.of(0),
-                        0)
+                        7)
         );
     }
 
     public static ServerLevel getLevelFromDim(ServerLevel level, String dim) {
         return level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(dim)));
+    }
+
+    public static boolean isVoidDimension(ServerLevel level) {
+        return level.dimension().equals(VOID_DIMENSION);
+    }
+
+    public static boolean isVoidDimension(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) return false;
+        return isVoidDimension(serverLevel);
     }
 }

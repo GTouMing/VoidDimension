@@ -26,7 +26,7 @@ public class SyncData {
         ServerLevel level = event.getServer().getLevel(VoidDimensionType.VOID_DIMENSION);
         if(level == null) return;
         totalPower = 0;
-        for (CompoundTag tag : DimensionData.getAnchorList(level)) {
+        for (CompoundTag tag : VoidDimensionData.getAnchorList(level)) {
             if (tag == null || !tag.getString("dim").equals("void_dimension:void_dimension")) continue;
             
             BlockPos pos = BlockPos.of(tag.getLong("pos"));
@@ -44,7 +44,7 @@ public class SyncData {
         if ((event.getServer().getTickCount() % 200 > 0) && !needBroadcast) return;// 每十秒同步一次
         ServerLevel level = event.getServer().overworld();
         S2CTagPacket.sendBooleanToAllPlayers("change", true);
-        for (CompoundTag tag : DimensionData.getAnchorList(level)) {
+        for (CompoundTag tag : VoidDimensionData.getAnchorList(level)) {
             S2CTagPacket.sendToAllPlayers(tag);
         }
         needBroadcast = false;

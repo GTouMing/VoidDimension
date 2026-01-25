@@ -8,6 +8,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -22,7 +24,6 @@ public class CommonEvent {
 
     @SubscribeEvent
     static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
-        ForbidPlaceOpenEvent.forbidPlaceOpen(event);
 
         ReturnDeathItemEvent.returnDeathItem(event);
 
@@ -35,9 +36,13 @@ public class CommonEvent {
     @SubscribeEvent
     static void onPlayerTick(PlayerTickEvent.Pre event) {
 
-        ChangeDimensionEvent.changeDimensionBySeconds(event);
-
         FallInVoidEvent.onFallInVoid(event);
+    }
+
+    @SubscribeEvent
+    static void onEntityTick(EntityTickEvent.Pre event) {
+
+        ChangeDimensionEvent.changeDimensionBySeconds(event);
     }
 
     @SubscribeEvent

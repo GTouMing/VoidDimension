@@ -9,17 +9,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
@@ -43,19 +46,19 @@ public class ChangeDimensionEvent {
         if (VoidAnchorBlock.getPowerLevel(serverLevel, event.getPos()) == 0) return;
 
         // 处理虚空锚点传送逻辑
-        handleVoidAnchorTeleport((ServerPlayer) player, event.getPos(), serverLevel);
+        handleVoidAnchorTeleport(player, event.getPos(), serverLevel);
 
     }
-    public static void changeDimensionBySeconds(PlayerTickEvent.Pre event) {
+    public static void changeDimensionBySeconds(EntityTickEvent.Pre event) {
 
-        Player player = Objects.requireNonNull(event.getEntity());
+        Entity entity = Objects.requireNonNull(event.getEntity());
 
-        if (!(player.level() instanceof ServerLevel level)) return;
+        if (!(entity.level() instanceof ServerLevel level)) return;
 
-        if (!useClickTypeMap.contains(player.getUUID())) return;
+        if (entity instanceof Player player && !useClickTypeMap.contains(player.getUUID())) return;
 
         // 检查下方方块是否为虚空锚点,锚点能量是否为空
-        if (VoidAnchorBlock.getPowerLevel(level, player.blockPosition().below()) == 0) {
+        if (VoidAnchorBlock.getPowerLevel(level, entity.blockPosition().below()) == 0) {
             pastSeconds = 0;
             return;
         }
@@ -64,13 +67,15 @@ public class ChangeDimensionEvent {
         if (pastSeconds != tickRate * teleportWaitTime) {
             if (pastSeconds % tickRate == 0) {
                 float progress = teleportWaitTime - pastSeconds / tickRate;
-                player.displayClientMessage(Component.literal("§" + (int) progress % 10 + "倒计时：" + (int) progress), true);
+                if (entity instanceof ServerPlayer player) {
+                    player.displayClientMessage(Component.literal("§" + (int) progress % 10 + "倒计时：" + (int) progress), true);
+                }
             }
             pastSeconds++;
             return;
         }
 
-        handleVoidAnchorTeleport((ServerPlayer) player, player.blockPosition().below(), level);
+        handleVoidAnchorTeleport(entity, entity.blockPosition().below(), level);
 
         pastSeconds = 0;
     }
@@ -78,16 +83,16 @@ public class ChangeDimensionEvent {
     /**
      * 处理虚空锚点传送逻辑
      */
-    private static void handleVoidAnchorTeleport(ServerPlayer player, BlockPos sourcePos, ServerLevel currentLevel) {
+    private static void handleVoidAnchorTeleport(Entity entity, BlockPos sourcePos, ServerLevel currentLevel) {
         ServerLevel targetLevel;
 
         // 判断当前所在维度
         if (currentLevel.dimension() == Level.OVERWORLD) {
             // 当前在主世界，传送到虚空维度
-            targetLevel = player.server.getLevel(VoidDimensionType.VOID_DIMENSION);
+            targetLevel = Objects.requireNonNull(entity.getServer()).getLevel(VoidDimensionType.VOID_DIMENSION);
         } else if (currentLevel.dimension() == VoidDimensionType.VOID_DIMENSION) {
             // 当前在虚空维度，传送到主世界
-            targetLevel = player.server.getLevel(Level.OVERWORLD);
+            targetLevel = Objects.requireNonNull(entity.getServer()).getLevel(Level.OVERWORLD);
         } else {
             return; // 不在支持的维度
         }
@@ -97,15 +102,17 @@ public class ChangeDimensionEvent {
             BlockPos targetAnchorPos = findOrCreateVoidAnchor(targetLevel, sourcePos, currentLevel);
 
             if (targetAnchorPos == null) {
-                player.displayClientMessage(Component.literal("§c目标位置无效！"), true);
+                if (entity instanceof ServerPlayer player) {
+                    player.displayClientMessage(Component.literal("§c目标位置无效！"), true);
+                }
                 return;
             }
-            // 传送玩家到锚点方块中心上方
+            // 传送实体到锚点方块中心上方
             double centerX = targetAnchorPos.getX() + 0.5;
             double centerY = targetAnchorPos.getY() + 1.0; // 传送到方块上方
             double centerZ = targetAnchorPos.getZ() + 0.5;
 
-            player.teleportTo(targetLevel, centerX, centerY, centerZ, player.getYRot(), player.getXRot());
+            entity.teleportTo(targetLevel, centerX, centerY, centerZ, Set.of(RelativeMovement.X_ROT, RelativeMovement.Y_ROT), entity.getYRot(), entity.getXRot());
             Block block = currentLevel.getBlockState(sourcePos).getBlock();
             if (block instanceof VoidAnchorBlock anchorBlock) {
                 anchorBlock.setCantOpen(false);
