@@ -1,25 +1,34 @@
 package com.gtouming.void_dimension.network;
 
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
-import com.gtouming.void_dimension.event.subevent.ChangeDimensionEvent;
+import com.gtouming.void_dimension.item.VoidTerminal;
 import com.gtouming.void_dimension.util.DimRuleInvoker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.gtouming.void_dimension.component.ModDataComponents.GUI_STATE_DATA;
+import static com.gtouming.void_dimension.component.ModDataComponents.PLAYER_GUI_DATA;
+import static com.gtouming.void_dimension.component.TagKeyName.*;
+import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
+import static com.gtouming.void_dimension.item.VoidTerminal.getBoundDim;
+import static com.gtouming.void_dimension.item.VoidTerminal.getBoundPos;
 
 public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<C2STagPacket> TYPE =
@@ -41,41 +50,68 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
             if(context.flow().isServerbound()) {
                 ServerPlayer serverPlayer = (ServerPlayer) context.player();
                 ServerLevel level = serverPlayer.serverLevel();
-                if (packet.tag.contains("toggle_teleport_type")) {
-                    ChangeDimensionEvent.updateUseClickTypeList(packet.tag.getUUID("toggle_teleport_type"), packet.tag.getBoolean("add"));
-                }
 
-                if (packet.tag.contains("set_respawn_point")) {
-                    serverPlayer.setRespawnPosition(VoidDimensionType.getLevelFromDim(level, packet.tag.getString("dim")).dimension(), BlockPos.of(packet.tag.getLong("pos")).above(), 0.0f, true, true);
-                }
+                if (!(serverPlayer.getMainHandItem().getItem() instanceof VoidTerminal)) return;
+                ItemStack terminal = serverPlayer.getMainHandItem();
+                ServerLevel tagLevel = getLevelFromDim(level, getBoundDim(terminal));
+                BlockPos pos = getBoundPos(terminal);
 
-                if (packet.tag.contains(serverPlayer.getUUID().toString())) {
-                    serverPlayer.getMainHandItem().set(GUI_STATE_DATA, packet.tag);
-                }
+                if (packet.tag.contains(serverPlayer.getUUID().toString()))
+                    terminal.set(PLAYER_GUI_DATA, packet.tag);
 
-                if (packet.tag.contains("set_day_time")) {
-                    long dayTime = packet.tag.getLong("set_day_time");
-                    DimRuleInvoker.setVoidDimensionDayTime(level, dayTime);
-                    VoidDimensionData.setVDayTime(level, dayTime);
-                }
+                {
+                    // 虚空维度相关设置
+                    if (packet.tag.contains(SET_DAY_TIME) && powerEnough(serverPlayer, 2560, 256000)) {
+                        long dayTime = packet.tag.getLong(SET_DAY_TIME);
+                        DimRuleInvoker.setVoidDimensionDayTime(level, dayTime);
+                        VoidDimensionData.setVDayTime(level, dayTime);
+                        decreasePower(tagLevel, pos, 2560);
+                    }
 
-                if (packet.tag.contains("set_weather")) {
-                    // 直接从服务器获取虚空维度实例，避免跨维度同步问题
-                    ServerLevel voidLevel = Objects.requireNonNull(serverPlayer.getServer()).getLevel(com.gtouming.void_dimension.dimension.VoidDimensionType.VOID_DIMENSION);
-                    if (voidLevel != null) {
-                        switch ((int) packet.tag.getDouble("set_weather")) {
-                            case 0 -> DimRuleInvoker.setVDWeatherClear(voidLevel, -1);
-                            case 1 -> DimRuleInvoker.setVDWeatherRain(voidLevel, -1);
-                            case 2 -> DimRuleInvoker.setVDWeatherThunder(voidLevel, -1);
+                    if (packet.tag.contains(SET_WEATHER) && powerEnough(serverPlayer, 2560, 256000)) {
+                        // 直接从服务器获取虚空维度实例，避免跨维度同步问题
+                        ServerLevel voidLevel = Objects.requireNonNull(serverPlayer.getServer()).getLevel(VoidDimensionType.VOID_DIMENSION);
+                        if (voidLevel != null) {
+                            switch ((int) packet.tag.getDouble(SET_WEATHER)) {
+                                case 0 -> DimRuleInvoker.setVDWeatherClear(voidLevel, -1);
+                                case 1 -> DimRuleInvoker.setVDWeatherRain(voidLevel, -1);
+                                case 2 -> DimRuleInvoker.setVDWeatherThunder(voidLevel, -1);
+                            }
+                            decreasePower(tagLevel, pos, 2560);
                         }
                     }
                 }
 
-                if (packet.tag.contains("set_gather_items")) {
-                            if (VoidDimensionType.getLevelFromDim((ServerLevel) serverPlayer.level(), packet.tag.getString("dim")).getBlockState(BlockPos.of(packet.tag.getLong("pos"))).getBlock() instanceof VoidAnchorBlock anchorBlock) {
-                                anchorBlock.setGatherItems(packet.tag.getBoolean("set_gather_items"));
-                            }
+                {
+                    // 玩家相关设置
+                    if (packet.tag.contains(SET_RESPAWN_POINT) && tagLevel != null && powerEnough(serverPlayer, 128, 256)) {
+                        serverPlayer.setRespawnPosition(tagLevel.dimension(), pos.above(), 0.0f, true, true);
+                        decreasePower(tagLevel, pos, 128);
+                    }
 
+                    if (packet.tag.contains(TELEPORT_TO_ANCHOR) && tagLevel != null && powerEnough(serverPlayer, 128, 256)) {
+                        serverPlayer.teleportTo(tagLevel, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0.0f, 0.0f);
+                        decreasePower(tagLevel, pos, 128);
+                    }
+                }
+
+                // 虚空锚相关设置
+                if (tagLevel != null && (tagLevel.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor)) {
+                    if (packet.tag.contains(SET_GATHER_ITEMS) && powerEnough(serverPlayer, 16, 256)) {
+                        anchor.setGatherItem(packet.tag.getBoolean(SET_GATHER_ITEMS));
+                        decreasePower(tagLevel, pos, 16);
+                    }
+                    if (packet.tag.contains(SET_TELEPORT_TYPE) && powerEnough(serverPlayer, 16, 256)) {
+                        anchor.setUseRightClickTeleport(packet.tag.getBoolean(SET_TELEPORT_TYPE));
+                        decreasePower(tagLevel, pos, 16);
+                    }
+                    if (packet.tag.contains(OPEN_CONTAINER) && powerEnough(serverPlayer, 1, 256)) {
+                        if (anchor.getLevel() == serverPlayer.serverLevel()) {
+                            serverPlayer.openMenu(anchor);
+                            decreasePower(tagLevel, pos, 1);
+                        }
+                        else serverPlayer.sendSystemMessage(Component.literal("乂，虚空锚不在当前维度"));
+                    }
                 }
             }
         });
@@ -91,11 +127,28 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
         sendToServer(tag);
     }
 
+    public static void sendBooleanToServer(String key, boolean value) {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean(key, value);
+        sendToServer(tag);
+    }
     public static void sendAnyToServer(String bKey, boolean bValue, String sKey, String sValue, String lKey, long lValue) {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean(bKey, bValue);
         tag.putString(sKey, sValue);
         tag.putLong(lKey, lValue);
         sendToServer(tag);
+    }
+
+    private static void decreasePower(ServerLevel level, BlockPos pos, int power) {
+        BlockState blockState = level.getBlockState(pos);
+        if(!(blockState.getBlock() instanceof VoidAnchorBlock)) return;
+        level.setBlock(pos, blockState.setValue(VoidAnchorBlock.POWER_LEVEL, blockState.getValue(VoidAnchorBlock.POWER_LEVEL) - power), 3);
+
+
+    }
+
+    public static boolean powerEnough(ServerPlayer player, int requiredPower, int requiredTotalPower) {
+        return VoidTerminal.getBoundPowerLevel(player.getMainHandItem()) >= requiredPower && SyncData.getClientTotalPower() >= requiredTotalPower;
     }
 }

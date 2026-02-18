@@ -12,6 +12,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -31,6 +32,12 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     private static final String DEATH_ITEMS_KEY = "death_items";
     private static final String VAULT_ITEMS_KEY = "vault_items";
     private static final String CONTAINER_ITEMS_KEY = "container_items";
+
+    //所有block是同一个实例，要检测不同锚点上方实体的倒计时，需要在此定义映射
+    private final Map<Entity, Float> waitTimeMap = new HashMap<>();
+    private boolean useRightClickTeleport = true;
+    private boolean gatherItem = false;
+    private boolean cantOpen = false;
 
     private final Map<UUID, List<ItemStack>> playerDeathItems = new HashMap<>();
     private final Map<UUID, List<ItemStack>> playerVaultItems = new HashMap<>();
@@ -249,10 +256,10 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
 
     @Override
     public boolean stillValid(@NotNull Player player) {
-        if (this.level == null || this.level.getBlockEntity(this.worldPosition) != this) return false;
-        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5D,
-                (double)this.worldPosition.getY() + 0.5D,
-                (double)this.worldPosition.getZ() + 0.5D) <= 64.0D;
+        return this.level != null && this.level.getBlockEntity(this.worldPosition) == this;
+//        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5D,
+//                (double)this.worldPosition.getY() + 0.5D,
+//                (double)this.worldPosition.getZ() + 0.5D) <= 64.0D;
     }
 
     @Override
@@ -331,5 +338,35 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     @Override
     public int getContainerSize() {
         return 54;
+    }
+
+    public Map<Entity, Float> waitTimeMap() {
+        return waitTimeMap;
+    }
+    public boolean useRightClickTeleport() {
+        return useRightClickTeleport;
+    }
+
+    public void setUseRightClickTeleport(boolean useRightClickTeleport) {
+        this.useRightClickTeleport = useRightClickTeleport;
+    }
+
+    public boolean isGatherItem() {
+        return gatherItem;
+    }
+    public void setGatherItem(boolean gatherItem) {
+        this.gatherItem = gatherItem;
+    }
+
+
+    public boolean isCantOpen() {
+        if (cantOpen) {
+            cantOpen = false;
+            return true;
+        }
+        return false;
+    }
+    public void setCantOpen(boolean cantOpen) {
+        this.cantOpen = cantOpen;
     }
 }

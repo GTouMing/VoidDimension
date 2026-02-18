@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -19,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class VoidAnchorRenderer implements BlockEntityRenderer<VoidAnchorBlockEntity> {
 
-    public VoidAnchorRenderer(BlockEntityRendererProvider.Context context) {
-        // 渲染器初始化
-    }
 
     @Override
     public void render(VoidAnchorBlockEntity blockEntity, float partialTicks, @NotNull PoseStack poseStack,
@@ -35,7 +31,6 @@ public class VoidAnchorRenderer implements BlockEntityRenderer<VoidAnchorBlockEn
         if (VoidAnchorBlock.noAnchor(state)) return;
 
         int powerLevel = state.getValue(VoidAnchorBlock.POWER_LEVEL);
-        // 取消能量为0的限制，只要有能量就显示颜色过渡
         if (powerLevel <= 0) return;
 
         // 计算动态颜色
@@ -44,10 +39,11 @@ public class VoidAnchorRenderer implements BlockEntityRenderer<VoidAnchorBlockEn
         // 渲染纯色立方体
         renderSolidColorCube(poseStack, bufferSource, color, packedLight, packedOverlay);
     }
+
     /**
      * 计算cube颜色 - 平滑循环版本（修复红色到蓝色跳变）
      */
-    private float[] calculateCubeColor(int powerLevel, long gameTime, float partialTicks) {
+    protected static float[] calculateCubeColor(int powerLevel, long gameTime, float partialTicks) {
         float time = (gameTime + partialTicks) * 0.05f;
         float pulse = Mth.sin(time) * 0.2f + 0.8f; // 脉动效果
 
@@ -84,59 +80,66 @@ public class VoidAnchorRenderer implements BlockEntityRenderer<VoidAnchorBlockEn
 
     /**
      * 渲染纯色立方体
+ * 该方法用于渲染一个具有指定颜色的立方体，通过传入的PoseStack和MultiBufferSource进行渲染
+ *
+ * @param poseStack 用于处理3D变换的堆栈，包括位置、旋转和缩放
+ * @param bufferSource 提供顶点缓冲区的源，用于渲染操作
+ * @param color 包含RGB颜色值的数组，范围通常为0.0-1.0
+ * @param packedLight 打包的光照信息，影响立方体的明暗效果
+ * @param packedOverlay 打包的覆盖信息，用于纹理叠加效果
      */
-    private void renderSolidColorCube(PoseStack poseStack, MultiBufferSource bufferSource,
+    protected static void renderSolidColorCube(PoseStack poseStack, MultiBufferSource bufferSource,
                                       float[] color, int packedLight, int packedOverlay) {
 
-        poseStack.pushPose();
-        poseStack.translate(0.5, 0.5, 0.5); // 调整到方块中心位置
+        poseStack.pushPose(); // 保存当前的变换状态
+        poseStack.translate(0.5, 0.5, 0.5); // 调整到方块中心位置，确保立方体位于原点
 
-        float r = color[0];
-        float g = color[1];
-        float b = color[2];
-        float a = 1.0f; // 不透明
+        float r = color[0]; // 获取红色分量
+        float g = color[1]; // 获取绿色分量
+        float b = color[2]; // 获取蓝色分量
+        float a = 1.0f; // 不透明度设置为完全不透明
 
-        // 使用实体渲染类型确保纯色
+        // 使用实体渲染类型确保纯色渲染
         var vertexConsumer = bufferSource.getBuffer(RenderType.lightning());
 
-        float size = 0.499f; // 立方体大小
+        float size = 0.499f; // 立方体大小，略小于0.5以避免渲染问题
 
         // 渲染立方体的六个面，每个面使用正确的法线
         renderCubeFace(vertexConsumer, poseStack,
                 -size, -size, -size, size, -size, -size, size, size, -size, -size, size, -size,
-                0, 0, -1, r, g, b, a, packedLight, packedOverlay); // 前面
+                0, 0, -1, r, g, b, a, packedLight, packedOverlay); // 前面，法线指向Z轴负方向
 
         renderCubeFace(vertexConsumer, poseStack,
                 -size, -size, size, -size, size, size, size, size, size, size, -size, size,
-                0, 0, 1, r, g, b, a, packedLight, packedOverlay); // 后面
+                0, 0, 1, r, g, b, a, packedLight, packedOverlay); // 后面，法线指向Z轴正方向
 
         renderCubeFace(vertexConsumer, poseStack,
                 -size, -size, -size, -size, size, -size, -size, size, size, -size, -size, size,
-                -1, 0, 0, r, g, b, a, packedLight, packedOverlay); // 左面
+                -1, 0, 0, r, g, b, a, packedLight, packedOverlay); // 左面，法线指向X轴负方向
 
         renderCubeFace(vertexConsumer, poseStack,
                 size, -size, -size, size, -size, size, size, size, size, size, size, -size,
-                1, 0, 0, r, g, b, a, packedLight, packedOverlay); // 右面
+                1, 0, 0, r, g, b, a, packedLight, packedOverlay); // 右面，法线指向X轴正方向
 
         renderCubeFace(vertexConsumer, poseStack,
                 -size, size, -size, size, size, -size, size, size, size, -size, size, size,
-                0, 1, 0, r, g, b, a, packedLight, packedOverlay); // 上面
+                0, 1, 0, r, g, b, a, packedLight, packedOverlay); // 上面，法线指向Y轴正方向
 
         renderCubeFace(vertexConsumer, poseStack,
                 -size, -size, -size, -size, -size, size, size, -size, size, size, -size, -size,
-                0, -1, 0, r, g, b, a, packedLight, packedOverlay); // 下面
+                0, -1, 0, r, g, b, a, packedLight, packedOverlay); // 下面，法线指向Y轴负方向
 
-        poseStack.popPose();
+        poseStack.popPose(); // 恢复之前的变换状态
     }
 
     /**
      * 渲染立方体面（修复法线问题）
      */
-    private void renderCubeFace(VertexConsumer consumer, PoseStack poseStack,
-                                float x1, float y1, float z1, float x2, float y2, float z2,
-                                float x3, float y3, float z3, float x4, float y4, float z4,
-                                float nx, float ny, float nz,
-                                float r, float g, float b, float a, int packedLight, int packedOverlay) {
+    private static void renderCubeFace(VertexConsumer consumer, PoseStack poseStack,
+                                       float x1, float y1, float z1, float x2, float y2, float z2,
+                                       float x3, float y3, float z3, float x4, float y4, float z4,
+                                       float nx, float ny, float nz,
+                                       float r, float g, float b, float a, int packedLight, int packedOverlay) {
 
         var pose = poseStack.last();
 

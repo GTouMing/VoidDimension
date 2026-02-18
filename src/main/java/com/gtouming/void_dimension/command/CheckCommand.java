@@ -63,7 +63,7 @@ public class CheckCommand {
                 ServerLevel level = VoidDimensionType.getLevelFromDim(source.getLevel(), tag.getString("dim"));
                 BlockPos pos = BlockPos.of(tag.getLong("pos"));
                 BlockState state = level.getBlockState(pos);
-                if (!VoidAnchorBlock.noAnchor(state)) continue;
+                if (VoidAnchorBlock.noAnchor(state)) continue;
                 source.sendSuccess(() -> Component.literal(
                         (index + 1) + ". §e"
                         + tag.getString("dim") + ", "

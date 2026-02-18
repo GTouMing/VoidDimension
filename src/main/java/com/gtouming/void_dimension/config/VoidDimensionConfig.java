@@ -23,7 +23,7 @@ public class VoidDimensionConfig {
 
     public static final ModConfigSpec.IntValue TELEPORT_WAIT_TIME = BUILDER.comment("虚空锚传送等待时间（秒），范围: 0-60").defineInRange("teleportWaitTime", 5, 0, 60);
 
-    public static final ModConfigSpec.IntValue MAX_POWER_LEVEL = BUILDER.comment("虚空锚点最大能量上限，范围: 1-10240").defineInRange("maxPowerLevel", 256, 1, 10240);
+    //public static final ModConfigSpec.IntValue MAX_POWER_LEVEL = BUILDER.comment("虚空锚点最大能量上限，范围: 1-10240").defineInRange("maxPowerLevel", 256, 1, 10240);
     
     public static final ModConfigSpec.ConfigValue<List<? extends String>> CHARGE_ITEMS = BUILDER
             .comment("充能物品配置列表，格式: '物品ID=能量值'，例如: minecraft:ender_pearl=8, minecraft:nether_star=256")
@@ -69,7 +69,8 @@ public class VoidDimensionConfig {
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean enableFallVoid = false;
-    public static int maxPowerLevel = 256;
+    //byd不能在配置中修改能量上限
+    public static int maxPowerLevel = 2560;
     public static int teleportWaitTime = 5;
     public static Map<String, Integer> chargeItems = new HashMap<>();
     public static boolean generateInitialPlatform = false;
@@ -84,7 +85,7 @@ public class VoidDimensionConfig {
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event){
         enableFallVoid = ENABLE_FALL_VOID.get();
-        maxPowerLevel = MAX_POWER_LEVEL.get();
+        //maxPowerLevel = MAX_POWER_LEVEL.get();
         teleportWaitTime = TELEPORT_WAIT_TIME.get();
         generateInitialPlatform = GENERATE_INITIAL_PLATFORM.get();
         platformStructure = PLATFORM_STRUCTURE.get();

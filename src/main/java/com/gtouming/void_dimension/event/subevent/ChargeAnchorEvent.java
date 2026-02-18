@@ -1,6 +1,7 @@
 package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -29,15 +30,15 @@ public class ChargeAnchorEvent {
 
         if (addPower == 0) return;
 
+        if (VoidAnchorBlock.noAnchor(level, event.getPos())) return;
+
+        if (!(level.getBlockEntity(event.getPos()) instanceof VoidAnchorBlockEntity anchor)) return;
+
         int currentPower = VoidAnchorBlock.getPowerLevel(level, event.getPos());
 
         if (currentPower >= maxPowerLevel) return;
 
         int newPower = Math.min(maxPowerLevel, currentPower + addPower);
-
-        if (VoidAnchorBlock.noAnchor(level, event.getPos())) return;
-
-        VoidAnchorBlock anchorBlock = (VoidAnchorBlock)level.getBlockState(event.getPos()).getBlock();
 
         VoidAnchorBlock.setPowerLevel(level, event.getPos(), newPower);
 
@@ -45,6 +46,6 @@ public class ChargeAnchorEvent {
 
         if (!player.getMainHandItem().isEmpty()) return;
 
-        anchorBlock.setCantOpen(false);
+        anchor.setCantOpen(false);
     }
 }

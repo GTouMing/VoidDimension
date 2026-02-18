@@ -7,10 +7,11 @@
     "BlockMixin",
     "EnderpearlItemMixin",
     "LevelMixin",
-    "ServerLevelMixin",
-    "MonsterMixin"
+    "MonsterMixin",
+    "ServerLevelMixin"
   ],
   "client": [
+    "ItemRendererMixin",
     "LevelRendererMixin"
   ],
   "injectors": {

@@ -29,26 +29,20 @@ public class DimRuleInvoker {
     }
 
     public static void setVDWeatherClear(ServerLevel level, int time) {
-        setVoidDimensionWeather(level, getDuration(level, time, ServerLevel.RAIN_DELAY), 0, false, false);
+        if (!VoidDimensionType.isVoidDimension(level)) return;
+        level.setWeatherParameters(getDuration(level, time, ServerLevel.RAIN_DELAY), 0, false, false);
     }
 
      public static void setVDWeatherRain(ServerLevel level, int time) {
-        setVoidDimensionWeather(level, 0, getDuration(level, time, ServerLevel.RAIN_DURATION), true, false);
+         if (!VoidDimensionType.isVoidDimension(level)) return;
+        level.setWeatherParameters(0, getDuration(level, time, ServerLevel.RAIN_DURATION), true, false);
     }
 
     public static void setVDWeatherThunder(ServerLevel level, int time) {
-        setVoidDimensionWeather(level, 0, getDuration(level, time, ServerLevel.THUNDER_DURATION), true, true);
+        if (!VoidDimensionType.isVoidDimension(level)) return;
+        level.setWeatherParameters(0, getDuration(level, time, ServerLevel.THUNDER_DURATION), true, true);
     }
 
-    private static void setVoidDimensionWeather(ServerLevel level, int clearTime, int weatherTime, boolean raining, boolean thundering) {
-        if (level.dimension().equals(VoidDimensionType.VOID_DIMENSION)) {
-            try {
-                level.setWeatherParameters(clearTime, weatherTime, raining, thundering);
-            } catch (Exception e) {
-                System.err.println("设置虚空维度天气时出错: " + e.getMessage());
-            }
-        }
-    }
     private static int getDuration(ServerLevel level, int time, IntProvider timeProvider) {
         return time == -1 ? timeProvider.sample(Objects.requireNonNull(level.getServer().getLevel(VoidDimensionType.VOID_DIMENSION)).getRandom()) : time;
     }

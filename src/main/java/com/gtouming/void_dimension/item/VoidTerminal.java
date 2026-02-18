@@ -1,15 +1,13 @@
 package com.gtouming.void_dimension.item;
 
+import com.gtouming.void_dimension.client.gui.VoidTerminalScreen;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.client.gui.VoidTerminalGUI;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -33,7 +31,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
-import static com.gtouming.void_dimension.component.ModDataComponents.GUI_STATE_DATA;
+import static com.gtouming.void_dimension.component.ModDataComponents.PLAYER_GUI_DATA;
+import static com.gtouming.void_dimension.component.TagKeyName.*;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 
 /**
@@ -130,7 +129,7 @@ public class VoidTerminal extends Item {
         if (isBound(stack)) {
             // 初始化或获取GUI状态
             initOrGetGUIState(stack, player);
-            VoidTerminalGUI.open(player, stack);
+            VoidTerminalScreen.open(player, stack);
         } else {
             player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
         }
@@ -144,42 +143,44 @@ public class VoidTerminal extends Item {
      * 不同玩家：重新初始化状态
      */
     private void initOrGetGUIState(ItemStack stack, Player player) {
-        if (stack.get(GUI_STATE_DATA) == null) {
-            stack.set(GUI_STATE_DATA, new CompoundTag());
+        if (stack.get(PLAYER_GUI_DATA) == null) {
+            stack.set(PLAYER_GUI_DATA, new CompoundTag());
         }
-        CompoundTag tagA = stack.get(GUI_STATE_DATA);
+        CompoundTag tagA = stack.get(PLAYER_GUI_DATA);
+        CompoundTag boundTag = stack.get(BOUND_DATA);
         UUID playerUUID = player.getUUID();
 
-        assert tagA != null;
+        assert tagA != null && boundTag != null;
         if (!tagA.contains(playerUUID.toString())) {
-            // 首次使用，创建新的GUI状态
+            // 面向不同玩家
             CompoundTag tagB = new CompoundTag();
-            tagB.putInt("current_page", 0);
-            tagB.putBoolean("teleport_mode", false);
-            tagB.putBoolean("respawn_set", false);
-            tagB.putBoolean("gather_items", false);
+            tagB.putInt(CURRENT_PAGE, 0);
+            tagB.putBoolean(SET_TELEPORT_TYPE, boundTag.getBoolean(SET_TELEPORT_TYPE));
+            tagB.putBoolean(SET_GATHER_ITEMS, boundTag.getBoolean(SET_GATHER_ITEMS));
+            tagB.putBoolean(SET_RESPAWN_POINT, false);
             tagA.put(playerUUID.toString(), tagB);
-            stack.set(GUI_STATE_DATA, tagA);
+            stack.set(PLAYER_GUI_DATA, tagA);
         }
     }
 
-    public static CompoundTag get(ItemStack stack, UUID playerUUID){
-        CompoundTag guiStateData = stack.get(GUI_STATE_DATA);
+    public static CompoundTag getState(ItemStack stack, UUID playerUUID){
+        CompoundTag guiStateData = stack.get(PLAYER_GUI_DATA);
         if (guiStateData == null) {
             return null;
         }
         return (CompoundTag) guiStateData.get(playerUUID.toString());
     }
 
-    public static void set(ItemStack stack, UUID playerUUID, CompoundTag playerDataValue){
-        CompoundTag tagA = stack.get(GUI_STATE_DATA);
+    public static void setState(ItemStack stack, UUID playerUUID, CompoundTag playerDataValue){
+        CompoundTag tagA = stack.get(PLAYER_GUI_DATA);
         if (tagA == null) return;
         CompoundTag tagB = tagA.getCompound(playerUUID.toString());
-        tagB.putInt("current_page", playerDataValue.getInt("current_page"));
-        tagB.putBoolean("teleport_mode", playerDataValue.getBoolean("teleport_mode"));
-        tagB.putBoolean("respawn_set", playerDataValue.getBoolean("respawn_set"));
+        tagB.putInt(CURRENT_PAGE, playerDataValue.getInt(CURRENT_PAGE));
+        tagB.putBoolean(SET_TELEPORT_TYPE, playerDataValue.getBoolean(SET_TELEPORT_TYPE));
+        tagB.putBoolean(SET_GATHER_ITEMS, playerDataValue.getBoolean(SET_GATHER_ITEMS));
+        tagB.putBoolean(SET_RESPAWN_POINT, playerDataValue.getBoolean(SET_RESPAWN_POINT));
         tagA.put(playerUUID.toString(), tagB);
-        stack.set(GUI_STATE_DATA, tagA);
+        stack.set(PLAYER_GUI_DATA, tagA);
         C2STagPacket.sendToServer(tagA);
     }
     /**
@@ -192,7 +193,7 @@ public class VoidTerminal extends Item {
             if (pos == null) return;
             tooltip.add(Component.literal("§a已绑定锚点: " + " " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
             tooltip.add(Component.literal("§a绑定锚点所在维度: " + getBoundDim(stack)));
-            tooltip.add(Component.literal("§a当前能量: " + (maxPowerLevel - stack.getDamageValue()) + "/" + maxPowerLevel)); // 使用配置中的能量上限
+            tooltip.add(Component.literal("§a当前能量: " + getBoundPowerLevel(stack) + "/" + maxPowerLevel)); // 使用配置中的能量上限
         } else {
             tooltip.add(Component.literal("§c未绑定锚点"));
         }
@@ -212,7 +213,7 @@ public class VoidTerminal extends Item {
      */
     @Override
     public int getBarColor(@NotNull ItemStack stack) {
-        int powerLevel = isBound(stack) ? maxPowerLevel - stack.getDamageValue() : 0;
+        int powerLevel = isBound(stack) ? getBoundPowerLevel(stack) : 0;
         float ratio = powerLevel / (float) maxPowerLevel; // 使用配置中的能量上限
 
         if (ratio < 0.25f) return 0xFF5555; // 红色（低充能）
@@ -225,26 +226,21 @@ public class VoidTerminal extends Item {
      * 绑定到锚点
      */
     private void bindToAnchor(Level level, ItemStack stack, BlockPos pos, int powerLevel) {
-        stack.setDamageValue(maxPowerLevel - powerLevel);
-
         CompoundTag boundData = new CompoundTag();
 
         // 存储绑定位置
-        boundData.putLong("pos", pos.asLong());
         boundData.putString("dim", level.dimension().location().toString());
+        boundData.putLong("pos", pos.asLong());
+        boundData.putInt("power_level", powerLevel);
+//        if (level.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor) {
+//            boundData.putBoolean(SET_TELEPORT_TYPE, anchor.useRightClickTeleport());
+//            boundData.putBoolean(SET_GATHER_ITEMS, anchor.isGatherItem());
+//        }
         stack.set(BOUND_DATA, boundData);
     }
 
     private boolean isBound(ItemStack stack) {
         return stack.get(BOUND_DATA) != null;
-    }
-
-    public static BlockPos getBoundPos(ItemStack stack) {
-        CompoundTag boundData = stack.get(BOUND_DATA);
-        if (boundData != null) {
-            return BlockPos.of(boundData.getLong("pos"));
-        }
-        return null;
     }
 
     public static String getBoundDim(ItemStack stack) {
@@ -253,6 +249,22 @@ public class VoidTerminal extends Item {
             return boundData.getString("dim");
         }
         return null;
+    }
+
+    public static BlockPos getBoundPos(ItemStack stack) {
+        CompoundTag boundData = stack.get(BOUND_DATA);
+        if (boundData != null) {
+            return BlockPos.of(boundData.getLong("pos"));
+        }
+        return BlockPos.ZERO;
+    }
+
+    public static int getBoundPowerLevel(ItemStack stack) {
+        CompoundTag boundData = stack.get(BOUND_DATA);
+        if (boundData != null) {
+            return boundData.getInt("power_level");
+        }
+        return 0;
     }
 
     /**
@@ -269,13 +281,15 @@ public class VoidTerminal extends Item {
             assert boundData != null;
             if (tag.getString("dim").equals(boundData.getString("dim"))
                 && tag.getLong("pos") == boundPos.asLong()) {
-                BlockState anchorState = Objects.requireNonNull(level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(boundData.getString("dim"))))).getBlockState(boundPos);
+                BlockState anchorState = VoidDimensionType.getLevelFromDim(level, boundData.getString("dim")).getBlockState(boundPos);
                 int powerLevel = 0;
                 if (anchorState.getBlock() instanceof VoidAnchorBlock) {
                     powerLevel = anchorState.getValue(VoidAnchorBlock.POWER_LEVEL);
                 }
                 // 更新终端耐久度
+                boundData.putInt("power_level", powerLevel);
                 stack.setDamageValue(maxPowerLevel - powerLevel);
+                stack.set(BOUND_DATA, boundData);
                 return;
             }
         }

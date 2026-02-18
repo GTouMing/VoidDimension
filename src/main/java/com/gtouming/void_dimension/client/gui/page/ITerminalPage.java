@@ -1,7 +1,8 @@
-package com.gtouming.void_dimension.client.gui;
+package com.gtouming.void_dimension.client.gui.page;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public interface ITerminalPage {
      * @param topPos GUI顶坐标
      * @return 组件列表
      */
-    List<AbstractWidget> initComponents(Player player, Font font, int leftPos, int topPos);
+    List<AbstractWidget> initComponents(Player player, Font font, int leftPos, int topPos, CompoundTag tag);
 
+    default void tick() {}
 }

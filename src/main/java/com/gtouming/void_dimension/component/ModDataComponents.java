@@ -26,7 +26,7 @@ public class ModDataComponents {
                             .build());
 
     // 注册GUI状态数据组件（存储每个玩家的界面状态）
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> GUI_STATE_DATA =
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> PLAYER_GUI_DATA =
             DATA_COMPONENT_TYPES.register("gui_state_data",
                     () -> DataComponentType.<CompoundTag>builder()
                             .persistent(CompoundTag.CODEC)

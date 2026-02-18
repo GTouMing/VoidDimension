@@ -29,7 +29,7 @@ public class ModItems {
                 "void_anchor",
                 () -> CreativeModeTab.builder().title(
                         Component.translatable(
-                                "itemGroup.voiddimension")).withTabsBefore(
+                                "itemGroup.void_dimension")).withTabsBefore(
                         CreativeModeTabs.COMBAT).icon(
                         () -> VOID_ANCHOR_ITEM.get().getDefaultInstance()).displayItems(
                         (

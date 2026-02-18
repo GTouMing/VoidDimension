@@ -1,5 +1,6 @@
 package com.gtouming.void_dimension.command;
 
+import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.util.DimRuleInvoker;
 import com.mojang.brigadier.CommandDispatcher;
@@ -20,6 +21,9 @@ public class ApplyCommand {
                         .then(Commands.literal("thunder")
                                 .executes(context -> applyWeather(context.getSource(), "thunder")))
                         )
+                    .then(Commands.literal("anchorlist")
+                        .    then(Commands.literal("clear")
+                                .executes(context -> applyAnchorList(context.getSource(), "clear"))))
         );
 
     }
@@ -42,6 +46,16 @@ public class ApplyCommand {
             case "thunder":
                 DimRuleInvoker.setVDWeatherThunder(voidDimension, -1);
                 source.sendSuccess(() -> Component.literal("Weather set to thunder"), true);
+                break;
+        }
+        return 1;
+    }
+
+    private static int applyAnchorList(CommandSourceStack source, String action) {
+        switch (action) {
+            case "clear":
+                VoidDimensionData.getAnchorList(source.getLevel()).clear();
+                source.sendSuccess(() -> Component.literal("Anchor list cleared"), true);
                 break;
         }
         return 1;

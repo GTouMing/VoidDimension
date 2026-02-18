@@ -16,7 +16,10 @@ public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
             new Type<>(ResourceLocation.fromNamespaceAndPath("void_dimension", "dimension_data_sync"));
     public static final StreamCodec<? super RegistryFriendlyByteBuf, S2CTagPacket> STREAM_CODEC = StreamCodec.of(
             (buf, packet) -> buf.writeNbt(packet.tag),
-            buf -> new S2CTagPacket(buf.readNbt())
+            buf -> {
+                CompoundTag readTag = buf.readNbt();
+                return new S2CTagPacket(readTag == null ? new CompoundTag() : readTag);
+            }
     );
 
     @Override

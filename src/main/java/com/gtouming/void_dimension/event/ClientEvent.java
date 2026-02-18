@@ -24,6 +24,6 @@ public class ClientEvent {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         // 注册虚空锚点方块实体渲染器
         event.registerBlockEntityRenderer(ModBlockEntities.VOID_ANCHOR_BLOCK_ENTITY.get(),
-                VoidAnchorRenderer::new);
+                (context -> new VoidAnchorRenderer()));
     }
 }

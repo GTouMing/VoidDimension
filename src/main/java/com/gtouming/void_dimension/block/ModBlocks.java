@@ -6,7 +6,9 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
-
+/*
+* 方块注册
+* */
 public class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
     // 虚空传送门方块
