@@ -1,5 +1,9 @@
 {
   "itemGroup.void_dimension": "Void Dimension",
   "block.void_dimension.void_anchor": "Void Anchor",
-  "item.void_dimension.void_terminal": "Void Terminal"
+  "item.void_dimension.void_terminal": "Void Terminal",
+  "gui.void_dimension.terminal.status": "§6Anchor Status: %s",
+  "gui.void_dimension.terminal.total_power": "Void Dimension Total Power Level: %d",
+  "gui.void_dimension.terminal.status,running": "Running",
+  "gui.void_dimension.terminal.status.disabled": "Disabled"
 }

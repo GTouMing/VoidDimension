@@ -1,14 +1,15 @@
 package com.gtouming.void_dimension.item;
 
-import com.gtouming.void_dimension.client.gui.VoidTerminalScreen;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.dimension.VoidDimensionType;
+import com.gtouming.void_dimension.menu.TerminalMenu;
 import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -21,6 +22,7 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -28,12 +30,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
 import static com.gtouming.void_dimension.component.ModDataComponents.PLAYER_GUI_DATA;
 import static com.gtouming.void_dimension.component.TagKeyName.*;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
+import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
 
 /**
  * 虚空终端物品
@@ -112,8 +114,8 @@ public class VoidTerminal extends Item {
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide()) return InteractionResultHolder.fail(stack);
+        if (!(stack.getItem() instanceof VoidTerminal))return InteractionResultHolder.fail(stack);
+        if (!((level instanceof ServerLevel serverLevel) && player instanceof ServerPlayer serverPlayer)) return InteractionResultHolder.fail(stack);
 
         HitResult hitResult = player.pick(player.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE), 0.0F, false);
 
@@ -127,61 +129,37 @@ public class VoidTerminal extends Item {
         }
 
         if (isBound(stack)) {
-            // 初始化或获取GUI状态
-            initOrGetGUIState(stack, player);
-            VoidTerminalScreen.open(player, stack);
+            BlockEntity entity = getLevelFromDim(serverLevel, getBoundDim(stack)).getBlockEntity(getBoundPos(stack));
+            if (!(entity instanceof VoidAnchorBlockEntity anchor)) return InteractionResultHolder.fail(stack);
+            serverPlayer.openMenu(anchor.getMenuProvider(), TerminalMenu.writeBuf(anchor));
         } else {
             player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
         }
 
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        return InteractionResultHolder.sidedSuccess(stack, !level.isClientSide());
     }
 
-    /**
-     * 初始化或获取GUI状态
-     * 同一个玩家：返回上次的状态
-     * 不同玩家：重新初始化状态
-     */
-    private void initOrGetGUIState(ItemStack stack, Player player) {
-        if (stack.get(PLAYER_GUI_DATA) == null) {
-            stack.set(PLAYER_GUI_DATA, new CompoundTag());
-        }
-        CompoundTag tagA = stack.get(PLAYER_GUI_DATA);
-        CompoundTag boundTag = stack.get(BOUND_DATA);
-        UUID playerUUID = player.getUUID();
-
-        assert tagA != null && boundTag != null;
-        if (!tagA.contains(playerUUID.toString())) {
-            // 面向不同玩家
-            CompoundTag tagB = new CompoundTag();
-            tagB.putInt(CURRENT_PAGE, 0);
-            tagB.putBoolean(SET_TELEPORT_TYPE, boundTag.getBoolean(SET_TELEPORT_TYPE));
-            tagB.putBoolean(SET_GATHER_ITEMS, boundTag.getBoolean(SET_GATHER_ITEMS));
-            tagB.putBoolean(SET_RESPAWN_POINT, false);
-            tagA.put(playerUUID.toString(), tagB);
-            stack.set(PLAYER_GUI_DATA, tagA);
-        }
+    public static CompoundTag getState(ItemStack stack, String playerUUID){
+        CompoundTag guiStateData = stack.getOrDefault(PLAYER_GUI_DATA, new CompoundTag());
+        CompoundTag boundTag = stack.getOrDefault(BOUND_DATA, new CompoundTag());
+        if (guiStateData.get(playerUUID) == null) return new CompoundTag();
+        return boundTag.merge((CompoundTag) guiStateData.get(playerUUID));
     }
 
-    public static CompoundTag getState(ItemStack stack, UUID playerUUID){
-        CompoundTag guiStateData = stack.get(PLAYER_GUI_DATA);
-        if (guiStateData == null) {
-            return null;
-        }
-        return (CompoundTag) guiStateData.get(playerUUID.toString());
-    }
-
-    public static void setState(ItemStack stack, UUID playerUUID, CompoundTag playerDataValue){
-        CompoundTag tagA = stack.get(PLAYER_GUI_DATA);
-        if (tagA == null) return;
-        CompoundTag tagB = tagA.getCompound(playerUUID.toString());
+    public static void setState(ItemStack stack, String playerUUID, CompoundTag playerDataValue){
+        CompoundTag tagA = stack.getOrDefault(PLAYER_GUI_DATA, new CompoundTag());
+        CompoundTag tagB = tagA.getCompound(playerUUID);
         tagB.putInt(CURRENT_PAGE, playerDataValue.getInt(CURRENT_PAGE));
-        tagB.putBoolean(SET_TELEPORT_TYPE, playerDataValue.getBoolean(SET_TELEPORT_TYPE));
-        tagB.putBoolean(SET_GATHER_ITEMS, playerDataValue.getBoolean(SET_GATHER_ITEMS));
         tagB.putBoolean(SET_RESPAWN_POINT, playerDataValue.getBoolean(SET_RESPAWN_POINT));
-        tagA.put(playerUUID.toString(), tagB);
+        tagA.put(playerUUID, tagB);
         stack.set(PLAYER_GUI_DATA, tagA);
         C2STagPacket.sendToServer(tagA);
+
+        CompoundTag boundTag = stack.getOrDefault(BOUND_DATA, new CompoundTag());
+        boundTag.putBoolean(SET_TELEPORT_TYPE, playerDataValue.getBoolean(SET_TELEPORT_TYPE));
+        boundTag.putBoolean(SET_GATHER_ITEMS, playerDataValue.getBoolean(SET_GATHER_ITEMS));
+        stack.set(BOUND_DATA, boundTag);
+        C2STagPacket.sendToServer(boundTag);
     }
     /**
      * 添加物品提示信息
@@ -281,7 +259,7 @@ public class VoidTerminal extends Item {
             assert boundData != null;
             if (tag.getString("dim").equals(boundData.getString("dim"))
                 && tag.getLong("pos") == boundPos.asLong()) {
-                BlockState anchorState = VoidDimensionType.getLevelFromDim(level, boundData.getString("dim")).getBlockState(boundPos);
+                BlockState anchorState = getLevelFromDim(level, boundData.getString("dim")).getBlockState(boundPos);
                 int powerLevel = 0;
                 if (anchorState.getBlock() instanceof VoidAnchorBlock) {
                     powerLevel = anchorState.getValue(VoidAnchorBlock.POWER_LEVEL);

@@ -1,15 +1,18 @@
 package com.gtouming.void_dimension.client.gui;
 
 import com.gtouming.void_dimension.client.gui.page.*;
+import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
 import com.gtouming.void_dimension.item.VoidTerminal;
+import com.gtouming.void_dimension.menu.TerminalMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +23,7 @@ import java.util.List;
 import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
 import static com.gtouming.void_dimension.component.TagKeyName.CURRENT_PAGE;
 
-public class VoidTerminalScreen extends Screen {
+public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/terminal_gui_background.png");
 
     public static final int GUI_WIDTH = 256;
@@ -38,30 +41,23 @@ public class VoidTerminalScreen extends Screen {
     };
     private int currentPage;
 
-    private List<AbstractWidget> navigationButtons = new ArrayList<>();
-    private List<AbstractWidget> currentPageWidgets = new ArrayList<>();
+    private List<TickAbstractWidget> navigationButtons = new ArrayList<>();
+    private List<TickAbstractWidget> currentPageWidgets = new ArrayList<>();
 
 
     // 玩家对象和物品堆栈
     private final Player player;
     private final ItemStack terminalStack;
     private final CompoundTag tag;
+    private final TerminalMenu terminalMenu;
 
-    public VoidTerminalScreen(Player player, ItemStack terminalStack) {
-        super(Component.literal("§a§l虚空终端控制面板"));
-        this.player = player;
-        this.terminalStack = terminalStack;
-        this.tag = VoidTerminal.getState(terminalStack, player.getUUID());
-        
-        // 从物品堆栈恢复上次打开的页面
-        if (tag != null) {
-            this.currentPage = tag.getInt(CURRENT_PAGE);
-        }
-    }
-
-    // 在VoidTerminal中调用此方法打开GUI
-    public static void open(Player player, ItemStack terminalStack) {
-        Minecraft.getInstance().setScreen(new VoidTerminalScreen(player, terminalStack));
+    public TerminalScreen(TerminalMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
+        this.player = Minecraft.getInstance().player;
+        this.terminalStack = player == null ? ItemStack.EMPTY : player.getMainHandItem();
+        this.tag = player == null ? new CompoundTag() : VoidTerminal.getState(terminalStack, player.getStringUUID());
+        this.currentPage = tag.getInt(CURRENT_PAGE);
+        this.terminalMenu = menu;
     }
 
     private void showCurrentPage() {
@@ -75,14 +71,14 @@ public class VoidTerminalScreen extends Screen {
 
         // 获取当前页面的组件
         ITerminalPage currentPage = pages[this.currentPage];
-        currentPageWidgets = currentPage.initComponents(player, this.font, leftPos, topPos, tag);
+        currentPageWidgets = currentPage.initComponents(player, this.font, leftPos, topPos, tag, terminalMenu);
         // 显示当前页面的组件
         for (AbstractWidget widget : currentPageWidgets) {
             addRenderableWidget(widget);
         }
         // 保存当前页面到物品堆栈
         tag.putInt(CURRENT_PAGE, this.currentPage);
-        VoidTerminal.setState(terminalStack, player.getUUID(), tag);
+        VoidTerminal.setState(terminalStack, player.getStringUUID(), tag);
     }
 
     private void showNavigationButton() {
@@ -98,7 +94,7 @@ public class VoidTerminalScreen extends Screen {
             this.currentPage = ccb;
             showCurrentPage();
         });
-        this.navigationButtons = navigationPage.initComponents(player, this.font, leftPos, topPos, tag);
+        this.navigationButtons = navigationPage.initComponents(player, this.font, leftPos, topPos, tag, terminalMenu);
 
         // 显示当前页面的组件
         for (AbstractWidget widget : navigationButtons) {
@@ -119,9 +115,8 @@ public class VoidTerminalScreen extends Screen {
         showNavigationButton();
     }
 
-    @Override
-    public void tick() {
-        super.tick();
+    public void containerTick() {
+        super.containerTick();
         pages[currentPage].tick();
     }
 
@@ -145,11 +140,9 @@ public class VoidTerminalScreen extends Screen {
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // 渲染GUI背景
-//        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 0.5F);
         guiGraphics.blit(GUI_TEXTURE, leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
-//        guiGraphics.fill(leftPos, topPos, leftPos + GUI_WIDTH, topPos + GUI_HEIGHT, 0x801A1A2E);
-//        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        
+
+
         // 渲染标题
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, topPos + 10, 0xFFFFFF);
 
@@ -171,6 +164,10 @@ public class VoidTerminalScreen extends Screen {
 
         // 渲染滚动条轨道
         pages[currentPage].renderScrollbar(guiGraphics);
+    }
+
+    @Override
+    protected void renderBg(@NotNull GuiGraphics guiGraphics, float v, int i, int i1) {
     }
 
     @Override

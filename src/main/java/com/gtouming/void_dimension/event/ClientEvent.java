@@ -2,12 +2,15 @@ package com.gtouming.void_dimension.event;
 
 import com.gtouming.void_dimension.VoidDimension;
 import com.gtouming.void_dimension.block.entity.ModBlockEntities;
+import com.gtouming.void_dimension.client.gui.TerminalScreen;
 import com.gtouming.void_dimension.client.renderer.VoidAnchorRenderer;
+import com.gtouming.void_dimension.menu.ModMenus;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /**
  * 客户端主类 - 注册渲染器和客户端相关功能
@@ -26,4 +29,11 @@ public class ClientEvent {
         event.registerBlockEntityRenderer(ModBlockEntities.VOID_ANCHOR_BLOCK_ENTITY.get(),
                 (context -> new VoidAnchorRenderer()));
     }
+
+    @SubscribeEvent
+    public static void registerMenuScreens(RegisterMenuScreensEvent event) {
+        // 注册终端菜单屏幕
+        event.register(ModMenus.TERMINAL_MENU.get(), TerminalScreen::new);
+    }
+
 }

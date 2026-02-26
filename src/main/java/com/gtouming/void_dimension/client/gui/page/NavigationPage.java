@@ -1,15 +1,14 @@
 package com.gtouming.void_dimension.client.gui.page;
 
-import net.minecraft.client.gui.components.AbstractWidget;
+import com.gtouming.void_dimension.client.gui.widget.FlashString;
+import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
 import com.gtouming.void_dimension.client.gui.widget.Button;
-import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static com.gtouming.void_dimension.component.TagKeyName.CURRENT_PAGE;
 import static com.gtouming.void_dimension.item.VoidTerminal.getState;
 
 /**
@@ -44,30 +43,23 @@ public class NavigationPage extends BTerminalPage {
     /**
      * 更新按钮状态
      */
-    private void updateButtonStates() {
+    private boolean updateButtonStates(int pageIndex) {
+        if (pageChangeCallback != null) pageChangeCallback.onPageChanged(currentPage);
         for (int i = 0; i < pageButtons.length; i++) {
-            if (pageButtons[i] != null) {
-                // 当前页面按钮不可触发，其他按钮可触发
-                pageButtons[i].active = (i != currentPage);
-            }
+            if (pageButtons[i] != null) pageButtons[i].setActive(i != currentPage);// 当前页面按钮不可触发，其他按钮可触发
         }
-
-        if (pageChangeCallback != null) {
-            pageChangeCallback.onPageChanged(currentPage);
-        }
+        return pageIndex != currentPage;
     }
 
     /**
      * 创建页面切换按钮
      */
     @Override
-    protected List<AbstractWidget> createComponents() {
-        List<AbstractWidget> navigationWidgets = new ArrayList<>();
+    protected List<TickAbstractWidget> createComponents() {
         // 如果currentPage未被设置，则从物品堆栈中读取
         if (currentPage < 0 || currentPage > 3) {
-            CompoundTag tag = getState(player.getMainHandItem(), player.getUUID());
-            if (tag != null)
-                currentPage = tag.getInt("current_page");
+            CompoundTag tag = getState(player.getMainHandItem(), player.getStringUUID());
+            currentPage = tag.getInt(CURRENT_PAGE);
         }
 
         // 按钮纵向排列参数
@@ -82,23 +74,18 @@ public class NavigationPage extends BTerminalPage {
             final int pageIndex = i;
             String buttonText = getButtonText(i);
 
-            pageButtons[i] = Button.builder(Component.literal(buttonText), button -> {
-                // 切换到对应页面
-                currentPage = pageIndex;
-                updateButtonStates(); // 更新所有按钮状态
-            }).bounds(startX, startY + (buttonHeight + buttonSpacing) * i,
-                     buttonWidth, buttonHeight).build();
+            pageButtons[i] = Button.builder(
+                    button -> currentPage = pageIndex,// 切换到对应页面
+                    () -> updateButtonStates(pageIndex)
+            ).bounds(startX, startY + (buttonHeight + buttonSpacing) * i,
+                     buttonWidth, buttonHeight, buttonText).build();
 
-            navigationWidgets.add(pageButtons[i]);
+            widgets.add(pageButtons[i]);
         }
-        StringWidget tipLabel = new StringWidget(startX + 48, startY+90, 256, 20,
-                Component.literal("§e" + randomTip), font).alignLeft();
-        navigationWidgets.add(tipLabel);
+        FlashString tipLabel = new FlashString(startX + 48, startY+90, 224, "§e" + randomTip, font).alignLeft();
+        widgets.add(tipLabel);
 
-        // 初始化按钮状态
-        updateButtonStates();
-
-        return navigationWidgets;
+        return widgets;
     }
 
     private String getButtonText(int index) {

@@ -1,7 +1,7 @@
 package com.gtouming.void_dimension.component;
 
 public class TagKeyName {
-    public static String UPDATE_TAG = "update_tag";
+    public static String CHANGE_SETTING = "change_setting";
     public static String CURRENT_PAGE = "current_page";
 
     public static String SET_DAY_TIME = "set_day_time";

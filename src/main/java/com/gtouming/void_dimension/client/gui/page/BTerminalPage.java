@@ -1,13 +1,16 @@
 package com.gtouming.void_dimension.client.gui.page;
 
+import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
 import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.item.VoidTerminal;
+import com.gtouming.void_dimension.menu.TerminalMenu;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,6 +20,8 @@ public abstract class BTerminalPage implements ITerminalPage {
     protected Player player;
     protected Font font;
     protected CompoundTag tag;
+    protected TerminalMenu terminalMenu;
+    protected List<TickAbstractWidget> widgets = new ArrayList<>();
     protected int leftPos;
     protected int topPos;
 
@@ -37,24 +42,17 @@ public abstract class BTerminalPage implements ITerminalPage {
     /**
      * 初始化通用参数
      */
-    protected void initCommonParams(Player player, Font font, int leftPos, int topPos, CompoundTag tag) {
+    protected void initCommonParams(Player player, Font font, int leftPos, int topPos, CompoundTag tag, TerminalMenu terminalMenu) {
         this.player = player;
         this.font = font;
         this.leftPos = leftPos;
         this.topPos = topPos;
         this.tag = tag;
-    }
-
-    protected boolean get(String key) {
-        return tag.getBoolean(key);
-    }
-
-    protected void set(String key, boolean value) {
-        tag.putBoolean(key, value);
+        this.terminalMenu = terminalMenu;
     }
 
     public boolean powerEnough(int requiredPower, int requiredTotalPower) {
-        return VoidTerminal.getBoundPowerLevel(player.getMainHandItem()) >= requiredPower && SyncData.getClientTotalPower() >= requiredTotalPower;
+        return terminalMenu.getAnchorPowerLevel() >= requiredPower && terminalMenu.getTotalPowerLevel() >= requiredTotalPower;
     }
 
     /**
@@ -73,11 +71,12 @@ public abstract class BTerminalPage implements ITerminalPage {
     /**
      * 抽象方法，子类实现具体的组件初始化逻辑
      */
-    protected abstract List<AbstractWidget> createComponents();
+    protected abstract List<TickAbstractWidget> createComponents();
 
      @Override
-    public List<AbstractWidget> initComponents(Player player, Font font, int leftPos, int topPos, CompoundTag tag) {
-        initCommonParams(player, font, leftPos, topPos, tag);
+    public List<TickAbstractWidget> initComponents(Player player, Font font, int leftPos, int topPos, CompoundTag tag, TerminalMenu terminalMenu) {
+        initCommonParams(player, font, leftPos, topPos, tag, terminalMenu);
+        widgets.clear();
         return createComponents();
     }
 
@@ -173,5 +172,11 @@ public abstract class BTerminalPage implements ITerminalPage {
 
         // 绘制滚动条
         guiGraphics.fill(scrollbarX, scrollbarCurrentY, scrollbarX + SCROLLBAR_WIDTH, scrollbarCurrentY + scrollbarHeight, 0x80808080);
+    }
+
+    @Override
+    public void tick() {
+        if (widgets.isEmpty()) return;
+        widgets.forEach(TickAbstractWidget::onTick);
     }
 }

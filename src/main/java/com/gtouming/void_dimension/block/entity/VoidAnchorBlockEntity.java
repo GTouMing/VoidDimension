@@ -3,6 +3,7 @@ package com.gtouming.void_dimension.block.entity;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
+import com.gtouming.void_dimension.menu.TerminalMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -12,11 +13,12 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,6 +37,7 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
 
     //所有block是同一个实例，要检测不同锚点上方实体的倒计时，需要在此定义映射
     private final Map<Entity, Float> waitTimeMap = new HashMap<>();
+    private final ContainerData data = new SimpleContainerData(5);
     private boolean useRightClickTeleport = true;
     private boolean gatherItem = false;
     private boolean cantOpen = false;
@@ -159,7 +162,8 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     }
 
     @Override
-    protected @NotNull NonNullList<ItemStack> getItems() {
+    @NotNull
+    public NonNullList<ItemStack> getItems() {
         return containerItems;
     }
 
@@ -257,9 +261,6 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     @Override
     public boolean stillValid(@NotNull Player player) {
         return this.level != null && this.level.getBlockEntity(this.worldPosition) == this;
-//        return player.distanceToSqr((double)this.worldPosition.getX() + 0.5D,
-//                (double)this.worldPosition.getY() + 0.5D,
-//                (double)this.worldPosition.getZ() + 0.5D) <= 64.0D;
     }
 
     @Override
@@ -311,6 +312,15 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     public boolean hasPlayerDeathItems(Player player) {
         List<ItemStack> items = playerDeathItems.get(player.getUUID());
         return items != null && !items.isEmpty();
+    }
+
+    public MenuProvider getMenuProvider() {
+        return new SimpleMenuProvider(getMenuConstructor(), Component.literal("虚空终端"));
+    }
+
+
+    public MenuConstructor getMenuConstructor() {
+        return (containerId, inventory, player) -> new TerminalMenu(containerId, data);
     }
 
     public static VoidAnchorBlockEntity[] getAllBlockEntity(ServerLevel level) {
@@ -368,5 +378,17 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     }
     public void setCantOpen(boolean cantOpen) {
         this.cantOpen = cantOpen;
+    }
+
+    public Map<UUID, List<ItemStack>> getPlayerDeathItems() {
+        return playerDeathItems;
+    }
+
+    public Map<UUID, List<ItemStack>> getPlayerVaultItems() {
+        return playerVaultItems;
+    }
+
+    public ContainerData getData() {
+        return data;
     }
 }

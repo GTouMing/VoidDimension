@@ -15,7 +15,6 @@ import java.util.List;
 * */
 public class VoidDimensionData extends SavedData {
     private static final String DATA_NAME = "void_dimension_data";
-    public static List<CompoundTag> clientAnchorList = new ArrayList<>();
     //必须是tag，保存坐标以及维度信息
     private final List<CompoundTag> anchorList = new ArrayList<>();
     private int skyDarken = 0;
@@ -79,7 +78,6 @@ public class VoidDimensionData extends SavedData {
             getAnchorList(serverLevel).remove(tag);
         }
         getServerData(serverLevel.getServer()).setDirty();
-        SyncData.needsBroadcast();
         SyncData.needsSum();
     }
     public static int getVSkyDarken(ServerLevel level) {

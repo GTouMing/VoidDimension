@@ -31,12 +31,9 @@ public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static void handle(S2CTagPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             // 客户端处理
-            if (context.flow().isClientbound()) {
-                if (packet.tag.getBoolean("change")) VoidDimensionData.clientAnchorList.clear();
-                if (packet.tag.contains("change")) packet.tag.remove("change");
-                if (packet.tag.contains("dim")) VoidDimensionData.clientAnchorList.add(packet.tag);
-                if (packet.tag.contains("total_power")) SyncData.clientTotalPower = packet.tag.getLong("total_power");
-            }
+//            if (context.flow().isClientbound()) {
+//                if (packet.tag.contains("total_power")) SyncData.clientTotalPower = packet.tag.getLong("total_power");
+//            }
         });
     }
 

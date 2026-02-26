@@ -10,6 +10,7 @@ import com.gtouming.void_dimension.dimension.ModBiomeModifiers;
 import com.gtouming.void_dimension.dimension.ModDimensions;
 import com.gtouming.void_dimension.event.subevent.SaveTimeWeatherEvent;
 import com.gtouming.void_dimension.item.ModItems;
+import com.gtouming.void_dimension.menu.ModMenus;
 import com.gtouming.void_dimension.network.C2STagPacket;
 import com.gtouming.void_dimension.network.S2CTagPacket;
 import com.mojang.logging.LogUtils;
@@ -45,7 +46,9 @@ public class VoidDimension {
 
         ModBlockEntities.register(modEventBus);
 
-        ModBiomeModifiers.BIOME_MODIFIER_SERIALIZERS.register(modEventBus);
+        ModMenus.register(modEventBus);
+
+        ModBiomeModifiers.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(this);
 

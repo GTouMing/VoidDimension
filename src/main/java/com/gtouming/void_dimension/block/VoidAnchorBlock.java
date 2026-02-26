@@ -11,6 +11,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
@@ -20,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -28,6 +32,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -38,6 +43,8 @@ import java.util.*;
 
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWaitTime;
+import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
+import static com.gtouming.void_dimension.menu.TerminalMenu.*;
 
 /**
  * 虚空传送门方块
@@ -51,10 +58,87 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
                 .lightLevel(state -> state.getValue(POWER_LEVEL) > 0 ? 15 : 0)
                 .requiresCorrectToolForDrops()
                 .pushReaction(PushReaction.BLOCK)
-                .noOcclusion());
+                .noOcclusion()
+                .sound(SoundType.METAL)
+                .strength(5.0F, 10.0F)); // 添加硬度和抗性，使方块可以被破坏
 
 
         this.registerDefaultState(this.stateDefinition.any().setValue(POWER_LEVEL, 0));
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        super.animateTick(state, level, pos, random);
+//
+//        if (random.nextInt(100) < 50) {
+//            level.playLocalSound((double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, SoundEvents.PORTAL_AMBIENT, SoundSource.BLOCKS, 1F, random.nextFloat() * 0.4F + 0.8F, false);
+//        }
+    }
+
+    @Override
+    public void onRemove(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+        // 确保在服务端执行
+        if (!level.isClientSide && !state.is(newState.getBlock())) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof VoidAnchorBlockEntity anchorEntity) {
+                dropContents(level, pos, anchorEntity);
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    @Override
+    protected @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootParams.@NotNull Builder params) {
+        // 调用原版方法获取基础掉落
+        List<ItemStack> drops = super.getDrops(state, params);
+
+        // 如果原版方法没有返回掉落（例如战利品表为空），确保添加虚空锚点物品
+        boolean hasAnchorDrop = drops.stream().anyMatch(stack ->
+                stack.getItem() == ModItems.VOID_ANCHOR_ITEM.get()
+        );
+
+        if (!hasAnchorDrop) {
+            drops.add(new ItemStack(ModItems.VOID_ANCHOR_ITEM.get()));
+        }
+
+        return drops;
+    }
+
+    @Override
+    public void playerDestroy(@NotNull Level level, @NotNull Player player, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable BlockEntity blockEntity, @NotNull ItemStack stack) {
+        super.playerDestroy(level, player, pos, state, blockEntity, stack);
+    }
+
+    private void dropContents(Level level, BlockPos pos, VoidAnchorBlockEntity anchorEntity) {
+        // 掉落容器物品
+        for (ItemStack stack : anchorEntity.getItems()) {
+            if (!stack.isEmpty()) {
+                Block.popResource(level, pos.above(), stack);
+            }
+        }
+
+        // 掉落玩家死亡物品
+        for (List<ItemStack> items : anchorEntity.getPlayerDeathItems().values()) {
+            for (ItemStack stack : items) {
+                if (!stack.isEmpty()) {
+                    Block.popResource(level, pos.above(), stack);
+                }
+            }
+        }
+
+        // 掉落玩家 vault 物品
+        for (List<ItemStack> items : anchorEntity.getPlayerVaultItems().values()) {
+            for (ItemStack stack : items) {
+                if (!stack.isEmpty()) {
+                    Block.popResource(level, pos.above(), stack);
+                }
+            }
+        }
+
+        // 清空所有物品
+        anchorEntity.clearContent();
+        anchorEntity.getPlayerDeathItems().clear();
+        anchorEntity.getPlayerVaultItems().clear();
     }
 
     /**
@@ -166,6 +250,16 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
             if (!(level1 instanceof ServerLevel serverLevel)) return;
             if (VoidAnchorBlock.getPowerLevel(level, pos) == 0) return;
             if (!(t instanceof VoidAnchorBlockEntity anchor)) return;
+            {
+                if(getTotalPower() != (((long) anchor.getData().get(TOTAL_POWER_LEVEL_1) << 32) | (anchor.getData().get(TOTAL_POWER_LEVEL_2) & 0xFFFFFFFFL))) {
+                    anchor.getData().set(TOTAL_POWER_LEVEL_1, (int) (getTotalPower() >> 32));
+                    anchor.getData().set(TOTAL_POWER_LEVEL_2, (int) (getTotalPower() & 0xFFFFFFFFL));
+                }
+                if (anchor.getBlockState().getValue(POWER_LEVEL) != anchor.getData().get(ANCHOR_POWER_LEVEL)) anchor.getData().set(ANCHOR_POWER_LEVEL, anchor.getBlockState().getValue(POWER_LEVEL));
+                if (anchor.isGatherItem() != (anchor.getData().get(GATHER_ITEM) == 1)) anchor.getData().set(GATHER_ITEM, anchor.isGatherItem() ? 1 : 0);
+                if (anchor.useRightClickTeleport() != (anchor.getData().get(TELEPORT_TYPE) == 1)) anchor.getData().set(TELEPORT_TYPE, anchor.useRightClickTeleport() ? 1 : 0);
+
+            }
             {//漏斗功能
                 if (anchor.isGatherItem()) {
                     // 计算锚点上方的收集范围：X和Z方向各7格（总共15格），Y方向为锚点上方1格

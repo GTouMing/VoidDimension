@@ -26,6 +26,7 @@ import java.util.Objects;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.PLAYER_GUI_DATA;
 import static com.gtouming.void_dimension.component.TagKeyName.*;
+import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
 import static com.gtouming.void_dimension.item.VoidTerminal.getBoundDim;
 import static com.gtouming.void_dimension.item.VoidTerminal.getBoundPos;
@@ -53,11 +54,15 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
                 if (!(serverPlayer.getMainHandItem().getItem() instanceof VoidTerminal)) return;
                 ItemStack terminal = serverPlayer.getMainHandItem();
-                ServerLevel tagLevel = getLevelFromDim(level, getBoundDim(terminal));
+                ServerLevel boundLevel = getLevelFromDim(level, getBoundDim(terminal));
                 BlockPos pos = getBoundPos(terminal);
 
-                if (packet.tag.contains(serverPlayer.getUUID().toString()))
+                if (packet.tag.contains(serverPlayer.getStringUUID())) {
                     terminal.set(PLAYER_GUI_DATA, packet.tag);
+                    return;
+                }
+
+                if (!packet.tag.contains(CHANGE_SETTING)) return;
 
                 {
                     // 虚空维度相关设置
@@ -65,50 +70,50 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                         long dayTime = packet.tag.getLong(SET_DAY_TIME);
                         DimRuleInvoker.setVoidDimensionDayTime(level, dayTime);
                         VoidDimensionData.setVDayTime(level, dayTime);
-                        decreasePower(tagLevel, pos, 2560);
+                        decreasePower(boundLevel, pos, 2560);
                     }
 
                     if (packet.tag.contains(SET_WEATHER) && powerEnough(serverPlayer, 2560, 256000)) {
                         // 直接从服务器获取虚空维度实例，避免跨维度同步问题
                         ServerLevel voidLevel = Objects.requireNonNull(serverPlayer.getServer()).getLevel(VoidDimensionType.VOID_DIMENSION);
                         if (voidLevel != null) {
-                            switch ((int) packet.tag.getDouble(SET_WEATHER)) {
+                            switch (packet.tag.getInt(SET_WEATHER)) {
                                 case 0 -> DimRuleInvoker.setVDWeatherClear(voidLevel, -1);
                                 case 1 -> DimRuleInvoker.setVDWeatherRain(voidLevel, -1);
                                 case 2 -> DimRuleInvoker.setVDWeatherThunder(voidLevel, -1);
                             }
-                            decreasePower(tagLevel, pos, 2560);
+                            decreasePower(boundLevel, pos, 2560);
                         }
                     }
                 }
 
                 {
                     // 玩家相关设置
-                    if (packet.tag.contains(SET_RESPAWN_POINT) && tagLevel != null && powerEnough(serverPlayer, 128, 256)) {
-                        serverPlayer.setRespawnPosition(tagLevel.dimension(), pos.above(), 0.0f, true, true);
-                        decreasePower(tagLevel, pos, 128);
+                    if (packet.tag.contains(SET_RESPAWN_POINT) && boundLevel != null && powerEnough(serverPlayer, 128, 256)) {
+                        serverPlayer.setRespawnPosition(boundLevel.dimension(), pos.above(), 0.0f, true, true);
+                        decreasePower(boundLevel, pos, 128);
                     }
 
-                    if (packet.tag.contains(TELEPORT_TO_ANCHOR) && tagLevel != null && powerEnough(serverPlayer, 128, 256)) {
-                        serverPlayer.teleportTo(tagLevel, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0.0f, 0.0f);
-                        decreasePower(tagLevel, pos, 128);
+                    if (packet.tag.contains(TELEPORT_TO_ANCHOR) && boundLevel != null && powerEnough(serverPlayer, 128, 256)) {
+                        serverPlayer.teleportTo(boundLevel, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0.0f, 0.0f);
+                        decreasePower(boundLevel, pos, 128);
                     }
                 }
 
                 // 虚空锚相关设置
-                if (tagLevel != null && (tagLevel.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor)) {
+                if (boundLevel != null && (boundLevel.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor)) {
                     if (packet.tag.contains(SET_GATHER_ITEMS) && powerEnough(serverPlayer, 16, 256)) {
                         anchor.setGatherItem(packet.tag.getBoolean(SET_GATHER_ITEMS));
-                        decreasePower(tagLevel, pos, 16);
+                        decreasePower(boundLevel, pos, 16);
                     }
                     if (packet.tag.contains(SET_TELEPORT_TYPE) && powerEnough(serverPlayer, 16, 256)) {
                         anchor.setUseRightClickTeleport(packet.tag.getBoolean(SET_TELEPORT_TYPE));
-                        decreasePower(tagLevel, pos, 16);
+                        decreasePower(boundLevel, pos, 16);
                     }
-                    if (packet.tag.contains(OPEN_CONTAINER) && powerEnough(serverPlayer, 1, 256)) {
+                    if (packet.tag.contains(OPEN_CONTAINER) && powerEnough(serverPlayer, 1, 1)) {
                         if (anchor.getLevel() == serverPlayer.serverLevel()) {
                             serverPlayer.openMenu(anchor);
-                            decreasePower(tagLevel, pos, 1);
+                            decreasePower(boundLevel, pos, 1);
                         }
                         else serverPlayer.sendSystemMessage(Component.literal("乂，虚空锚不在当前维度"));
                     }
@@ -129,14 +134,8 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
     public static void sendBooleanToServer(String key, boolean value) {
         CompoundTag tag = new CompoundTag();
+        tag.putString(CHANGE_SETTING, "");
         tag.putBoolean(key, value);
-        sendToServer(tag);
-    }
-    public static void sendAnyToServer(String bKey, boolean bValue, String sKey, String sValue, String lKey, long lValue) {
-        CompoundTag tag = new CompoundTag();
-        tag.putBoolean(bKey, bValue);
-        tag.putString(sKey, sValue);
-        tag.putLong(lKey, lValue);
         sendToServer(tag);
     }
 
@@ -149,6 +148,6 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     }
 
     public static boolean powerEnough(ServerPlayer player, int requiredPower, int requiredTotalPower) {
-        return VoidTerminal.getBoundPowerLevel(player.getMainHandItem()) >= requiredPower && SyncData.getClientTotalPower() >= requiredTotalPower;
+        return VoidTerminal.getBoundPowerLevel(player.getMainHandItem()) >= requiredPower && getTotalPower() >= requiredTotalPower;
     }
 }

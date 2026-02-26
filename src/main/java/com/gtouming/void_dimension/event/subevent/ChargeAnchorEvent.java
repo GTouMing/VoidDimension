@@ -6,6 +6,8 @@ import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -42,10 +44,20 @@ public class ChargeAnchorEvent {
 
         VoidAnchorBlock.setPowerLevel(level, event.getPos(), newPower);
 
-        player.getMainHandItem().shrink(1);
+        if (!player.isCreative()) player.getMainHandItem().shrink(1);
 
+        level.playSound(
+                null,
+                (double)event.getPos().getX() + 0.5,
+                (double)event.getPos().getY() + 0.5,
+                (double)event.getPos().getZ() + 0.5,
+                SoundEvents.RESPAWN_ANCHOR_CHARGE,
+                SoundSource.BLOCKS,
+                1.0F,
+                1.0F
+        );
         if (!player.getMainHandItem().isEmpty()) return;
 
-        anchor.setCantOpen(false);
+        anchor.setCantOpen(true);
     }
 }

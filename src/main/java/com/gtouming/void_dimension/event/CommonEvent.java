@@ -38,8 +38,6 @@ public class CommonEvent {
     static void onServerTick(ServerTickEvent.Pre event) {
 
         SyncData.sumTotalPower(event);
-
-        SyncData.broadcastAllPlayer(event);
     }
 
     @SubscribeEvent
