@@ -96,7 +96,7 @@ public class TickString extends TickAbstractWidget {
     public TickString updateMessage(@NotNull Supplier<Component> message) {
         setMessage(message.get());
         this.tickable = () -> {
-            if (this.message.equals(message)) return;
+            if (this.message.equals(message.get())) return;
             this.message = message.get();
             this.setMessage(message.get());
         };
