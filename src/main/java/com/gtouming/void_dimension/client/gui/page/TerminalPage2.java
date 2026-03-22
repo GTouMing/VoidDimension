@@ -1,85 +1,87 @@
 package com.gtouming.void_dimension.client.gui.page;
 
-import com.gtouming.void_dimension.client.gui.widget.Button;
-import com.gtouming.void_dimension.client.gui.widget.FlashString;
-import com.gtouming.void_dimension.client.gui.widget.Slider;
-import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
+import com.gtouming.void_dimension.client.gui.widget.*;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.network.C2STagPacket;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-import static com.gtouming.void_dimension.component.TagKeyName.SET_DAY_TIME;
 import static com.gtouming.void_dimension.component.TagKeyName.SET_WEATHER;
 
 /**
  * 第二页 - 世界相关设置
  */
 public class TerminalPage2 extends BTerminalPage {
-    private Slider dayTimeSlider;
+    int weather;
 
     @Override
     protected List<TickAbstractWidget> createComponents() {
-        int yOffset = topPos + 30;
-        int xOffset = leftPos + 60;
-        int yStep = 15;
-        // ==================== 世界分类 ====================
-        // 天气下拉选择按钮
-        String[] weatherOptions = {"§a晴", "§6雨天", "§c雷暴"};
-        final int[] weather = {player.level().isRaining() ? player.level().isThundering() ? 2 : 1 : 0};
-        FlashString weatherLabel = new FlashString(xOffset + 15, yOffset, 150, "§6天气: " + weatherOptions[weather[0]], font).alignLeft();
+        int yOffset = topPos + 40;
+        int xOffset = leftPos + 70;
+        int settingY = topPos + S_B_Y;
+        int settingX = leftPos + S_B_X;
 
-        Button weatherDropdownButton = Button.builder(
+        // ==================== 世界分类 ====================
+        weather =  player.level().isRaining() ? player.level().isThundering() ? 2 : 1 : 0;
+        AbstractButton weatherButton = SettingButton.builder(
                 button -> {
                     // 循环切换天气
-                    weather[0] = (weather[0] + 1) % 3;
+                    weather = (weather + 1) % 3;
                     // 发送天气设置到服务器
-                    C2STagPacket.sendLongToServer(SET_WEATHER, weather[0]);
+                    C2STagPacket.sendLongToServer(SET_WEATHER, weather);
                 }, () -> powerEnough(2560, 256000) && player.level().dimension().equals(VoidDimensionType.VOID_DIMENSION))
-                .bounds(xOffset, yOffset + 4).build();
-
-        FlashString weatherPowerLabel = new FlashString(xOffset + 140, yOffset, "§a2560§r/§c256000", font).alignRight();
-        widgets.add(weatherPowerLabel);
-        widgets.add(weatherLabel);
-        widgets.add(weatherDropdownButton);
+                .settingBounds(settingX, settingY).build(SettingButton::new);
 
 
 
-//        dayTimeSlider = new AbstractSliderButton(xOffset, yOffset + yStep + 5, 140, 20,
-//                Component.literal("维度时间: " + dayTime()), dayTime()) {
-//            @Override
-//            protected void updateMessage() {
-//                this.setMessage(Component.literal("维度时间: " + (int) (this.value * 24000)));
-//            }
-//
-//            @Override
-//            protected void applyValue() {
-//                C2STagPacket.sendLongToServer(SET_DAY_TIME, (long) (this.value * 24000));
-//            }
-//        };
-        dayTimeSlider = new Slider(
-                xOffset, yOffset + yStep + 5, 140, Component.literal("维度时间: " + dayTime()),
-                () -> C2STagPacket.sendLongToServer(SET_DAY_TIME, (long) (dayTimeSlider.getValue() * 24000)),
-                () -> dayTimeSlider.setMessage(Component.literal("维度时间: " + (int) (dayTimeSlider.getValue() * 24000))),
-                () -> powerEnough(2560, 256000) && player.level().dimension().equals(VoidDimensionType.VOID_DIMENSION));
+        TickAbstractWidget dayTimeSliderButton = new SliderButton(settingX, settingY + S_B_S, Component.literal("维度时间: " + dayTime()),
+                () -> powerEnough(2560, 256000) && player.level().dimension().equals(VoidDimensionType.VOID_DIMENSION)) {
+            @Override
+            public void applyValue() {
+                //this.value = (double) dayTime() / 24000;
+            }
 
-        FlashString dayTimePowerLabel = new FlashString(xOffset + 140, yOffset + yStep + 5,"§a2560§r/§c256000", font).alignRight();
-        widgets.add(dayTimePowerLabel);
-        widgets.add(dayTimeSlider);
+            @Override
+            public void updateMessage() {
+
+            }
+        };
+        dayTimeSliderButton.setTooltip(Tooltip.create(Component.translatable("gui.void_dimension.terminal.page2.daytime_slider.tooltip", dayTime())));
+
+
+
+
+        FlashString textLabel = new FlashString(xOffset, yOffset, font).updateMessage(
+                () -> {
+                    if (weatherButton.isHovered()) {
+                        weatherButton.setCustomHovered(true);
+                        dayTimeSliderButton.setCustomHovered(false);
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.weather");
+                    }
+                    if (dayTimeSliderButton.isHovered()) {
+                        weatherButton.setCustomHovered(false);
+                        dayTimeSliderButton.setCustomHovered(true);
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.daytime");
+                    }
+                    return currentMessage;
+                });
+
+        widgets.add(weatherButton);
+        widgets.add(dayTimeSliderButton);
+        widgets.add(textLabel);
         return widgets;
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (player != null && dayTimeSlider != null) {
-            dayTimeSlider.setMessage(Component.literal("维度时间: " + dayTime()));
-        }
     }
 
     private long dayTime() {
         long dayTime = player.level().getDayTime();
         return (dayTime < 0 ? (Integer.MAX_VALUE + dayTime) + 11647: dayTime) % 24000;
+    }
+    
+    private Component getWeather(int weather) {
+        if (weather == 2) return Component.translatable("gui.void_dimension.terminal.page2.text.weather");
+        else if (weather == 1) return Component.translatable("gui.void_dimension.terminal.page2.text.weather");
+        else return Component.translatable("gui.void_dimension.terminal.page2.text.weather");
     }
 }

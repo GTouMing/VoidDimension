@@ -4,7 +4,6 @@ import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.menu.TerminalMenu;
-import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -32,8 +31,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
-import static com.gtouming.void_dimension.component.ModDataComponents.PLAYER_GUI_DATA;
-import static com.gtouming.void_dimension.component.TagKeyName.*;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
 
@@ -131,35 +128,12 @@ public class VoidTerminal extends Item {
         if (isBound(stack)) {
             BlockEntity entity = getLevelFromDim(serverLevel, getBoundDim(stack)).getBlockEntity(getBoundPos(stack));
             if (!(entity instanceof VoidAnchorBlockEntity anchor)) return InteractionResultHolder.fail(stack);
-            serverPlayer.openMenu(anchor.getMenuProvider(), TerminalMenu.writeBuf(anchor));
+            serverPlayer.openMenu(anchor.getMenuProvider(), TerminalMenu.writeBuf(anchor, serverPlayer));
         } else {
             player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
         }
 
         return InteractionResultHolder.sidedSuccess(stack, !level.isClientSide());
-    }
-
-    public static CompoundTag getState(ItemStack stack, String playerUUID){
-        CompoundTag guiStateData = stack.getOrDefault(PLAYER_GUI_DATA, new CompoundTag());
-        CompoundTag boundTag = stack.getOrDefault(BOUND_DATA, new CompoundTag());
-        if (guiStateData.get(playerUUID) == null) return new CompoundTag();
-        return boundTag.merge((CompoundTag) guiStateData.get(playerUUID));
-    }
-
-    public static void setState(ItemStack stack, String playerUUID, CompoundTag playerDataValue){
-        CompoundTag tagA = stack.getOrDefault(PLAYER_GUI_DATA, new CompoundTag());
-        CompoundTag tagB = tagA.getCompound(playerUUID);
-        tagB.putInt(CURRENT_PAGE, playerDataValue.getInt(CURRENT_PAGE));
-        tagB.putBoolean(SET_RESPAWN_POINT, playerDataValue.getBoolean(SET_RESPAWN_POINT));
-        tagA.put(playerUUID, tagB);
-        stack.set(PLAYER_GUI_DATA, tagA);
-        C2STagPacket.sendToServer(tagA);
-
-        CompoundTag boundTag = stack.getOrDefault(BOUND_DATA, new CompoundTag());
-        boundTag.putBoolean(SET_TELEPORT_TYPE, playerDataValue.getBoolean(SET_TELEPORT_TYPE));
-        boundTag.putBoolean(SET_GATHER_ITEMS, playerDataValue.getBoolean(SET_GATHER_ITEMS));
-        stack.set(BOUND_DATA, boundTag);
-        C2STagPacket.sendToServer(boundTag);
     }
     /**
      * 添加物品提示信息
@@ -210,10 +184,6 @@ public class VoidTerminal extends Item {
         boundData.putString("dim", level.dimension().location().toString());
         boundData.putLong("pos", pos.asLong());
         boundData.putInt("power_level", powerLevel);
-//        if (level.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor) {
-//            boundData.putBoolean(SET_TELEPORT_TYPE, anchor.useRightClickTeleport());
-//            boundData.putBoolean(SET_GATHER_ITEMS, anchor.isGatherItem());
-//        }
         stack.set(BOUND_DATA, boundData);
     }
 

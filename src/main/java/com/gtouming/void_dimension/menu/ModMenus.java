@@ -16,7 +16,6 @@ public class ModMenus {
 
     public static final Supplier<MenuType<TerminalMenu>> TERMINAL_MENU = MENUS.register(
             "terminal_menu",
-            /*注册菜单类型，因为传输额外数据，所以此处的菜单构建器用不上*/
             () -> IMenuTypeExtension.create((containerId, inventory, buf) -> new TerminalMenu(containerId, buf))
     );
 

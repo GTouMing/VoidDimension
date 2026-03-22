@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
+import static com.gtouming.void_dimension.menu.TerminalMenu.*;
+
 /**
  * 虚空锚点方块实体
  * 管理锚点的状态和数据
@@ -315,11 +318,16 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     }
 
     public MenuProvider getMenuProvider() {
-        return new SimpleMenuProvider(getMenuConstructor(), Component.literal("虚空终端"));
+        return new SimpleMenuProvider(getMenuConstructor(), Component.translatable("item.void_dimension.void_terminal"));
     }
 
 
     public MenuConstructor getMenuConstructor() {
+        data.set(TOTAL_POWER_LEVEL_1, (int) (getTotalPower() >> 32));
+        data.set(TOTAL_POWER_LEVEL_2, (int) (getTotalPower() & 0xFFFFFFFFL));
+        data.set(ANCHOR_POWER_LEVEL, this.getBlockState().getValue(VoidAnchorBlock.POWER_LEVEL));
+        data.set(GATHER_ITEM, this.isGatherItem() ? 1 : 0);
+        data.set(TELEPORT_TYPE, this.useRightClickTeleport() ? 1 : 0);
         return (containerId, inventory, player) -> new TerminalMenu(containerId, data);
     }
 

@@ -1,0 +1,22 @@
+{
+  "gui_open": {
+    "subtitle": "sound.void_dimension.gui_open",
+    "sounds": [
+      {
+        "name": "void_dimension:gui_open",
+        "pitch": 1,
+        "volume": 1
+      }
+    ]
+  },
+    "button_release": {
+    "subtitle": "sound.void_dimension.button_release",
+    "sounds": [
+      {
+        "name": "void_dimension:button_release",
+        "pitch": 1,
+        "volume": 1
+      }
+    ]
+  }
+}

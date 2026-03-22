@@ -1,5 +1,12 @@
 {
   "itemGroup.void_dimension": "虚空维度",
   "block.void_dimension.void_anchor": "虚空锚",
-  "item.void_dimension.void_terminal": "虚空终端"
+  "item.void_dimension.void_terminal": "虚空终端",
+  "gui.void_dimension.terminal.disabled": "§c未运行",
+  "gui.void_dimension.terminal.running": "§a运行中",
+  "gui.void_dimension.terminal.page1.status": "§6锚点状态: %s",
+  "gui.void_dimension.terminal.page1.total_power": "§6虚空维度总能量: %d",
+  "gui.void_dimension.terminal.page1.bound_dim_key": "§6锚点所在维度:",
+  "gui.void_dimension.terminal.page1.bound_anchor_pos": "§6绑定锚点坐标: §cx:%d, §ay:%d, §9z:%d",
+  "gui.void_dimension.terminal.page1.bound_anchor_power_level": "§6绑定锚点能量等级: %d"
 }

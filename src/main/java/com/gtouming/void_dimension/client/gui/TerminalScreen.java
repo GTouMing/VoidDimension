@@ -2,29 +2,29 @@ package com.gtouming.void_dimension.client.gui;
 
 import com.gtouming.void_dimension.client.gui.page.*;
 import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
-import com.gtouming.void_dimension.item.VoidTerminal;
+import com.gtouming.void_dimension.client.sound.ModSounds;
 import com.gtouming.void_dimension.menu.TerminalMenu;
+import com.gtouming.void_dimension.network.C2STagPacket;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
 import static com.gtouming.void_dimension.component.TagKeyName.CURRENT_PAGE;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
-    private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/terminal_gui_background.png");
+    //private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/terminal_gui_background.png");
 
     public static final int GUI_WIDTH = 256;
     public static final int GUI_HEIGHT = 166;
@@ -39,25 +39,20 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         new TerminalPage3(),
         new TerminalPage4()
     };
+    private final Player player;
     private int currentPage;
 
     private List<TickAbstractWidget> navigationButtons = new ArrayList<>();
     private List<TickAbstractWidget> currentPageWidgets = new ArrayList<>();
 
-
-    // 玩家对象和物品堆栈
-    private final Player player;
-    private final ItemStack terminalStack;
-    private final CompoundTag tag;
     private final TerminalMenu terminalMenu;
 
     public TerminalScreen(TerminalMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.player = Minecraft.getInstance().player;
-        this.terminalStack = player == null ? ItemStack.EMPTY : player.getMainHandItem();
-        this.tag = player == null ? new CompoundTag() : VoidTerminal.getState(terminalStack, player.getStringUUID());
-        this.currentPage = tag.getInt(CURRENT_PAGE);
         this.terminalMenu = menu;
+        this.player = inventory.player;
+        this.currentPage = menu.currentPage;
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.GUI_OPEN.get(), 1, 0.5F));
     }
 
     private void showCurrentPage() {
@@ -71,14 +66,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
         // 获取当前页面的组件
         ITerminalPage currentPage = pages[this.currentPage];
-        currentPageWidgets = currentPage.initComponents(player, this.font, leftPos, topPos, tag, terminalMenu);
+        currentPageWidgets = currentPage.initComponents(this.font, leftPos, topPos, terminalMenu, player);
         // 显示当前页面的组件
         for (AbstractWidget widget : currentPageWidgets) {
             addRenderableWidget(widget);
         }
-        // 保存当前页面到物品堆栈
-        tag.putInt(CURRENT_PAGE, this.currentPage);
-        VoidTerminal.setState(terminalStack, player.getStringUUID(), tag);
     }
 
     private void showNavigationButton() {
@@ -89,12 +81,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         }
         navigationButtons.clear();
 
-        NavigationPage navigationPage = new NavigationPage();
+        NavigationPage navigationPage = new NavigationPage(currentPage);
         navigationPage.setPageChangeCallback(ccb -> {
             this.currentPage = ccb;
             showCurrentPage();
         });
-        this.navigationButtons = navigationPage.initComponents(player, this.font, leftPos, topPos, tag, terminalMenu);
+        this.navigationButtons = navigationPage.initComponents(this.font, leftPos, topPos, terminalMenu, player);
 
         // 显示当前页面的组件
         for (AbstractWidget widget : navigationButtons) {
@@ -117,7 +109,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     public void containerTick() {
         super.containerTick();
-        pages[currentPage].tick();
+        for (TickAbstractWidget widget : navigationButtons) {
+            widget.onTick();
+        }
+        for (TickAbstractWidget widget : currentPageWidgets) {
+            widget.onTick();
+        }
     }
 
     @Override
@@ -140,13 +137,27 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // 渲染GUI背景
-        guiGraphics.blit(GUI_TEXTURE, leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
+//        guiGraphics.blit(GUI_TEXTURE, leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/gui_background.png"), leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
+        RenderSystem.disableBlend();
+
+        guiGraphics.fill(leftPos + 247, topPos + 66, leftPos + 252, topPos + 100, terminalMenu.getAnchorPowerLevel() > 0 ? 0xAA55FF55 : 0xAAFF5555); // 标题背景
+
+        guiGraphics.fill(leftPos + 19, topPos + 152 - 91 * terminalMenu.getAnchorPowerLevel() / 2560, leftPos + 22, topPos + 152, 0xFF55FFFF); // 标题背景
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/gui_frame.png"), leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
+
+        RenderSystem.disableBlend();
 
 
         // 渲染标题
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, topPos + 10, 0xFFFFFF);
+        guiGraphics.drawCenteredString(this.font, this.title, leftPos + 80, topPos + 7, 0x55FFFF);
 
-        int clipTop = topPos + 30; // 标题区域下方
+        int clipTop = topPos; // 标题区域下方
         int clipBottom = topPos + GUI_HEIGHT - 9; // GUI底部
         int clipLeft = leftPos; // 内容区域左侧
         int clipRight = leftPos + GUI_WIDTH; // 内容区域右侧
@@ -161,9 +172,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
         // 禁用裁剪
         guiGraphics.disableScissor();
-
-        // 渲染滚动条轨道
-        pages[currentPage].renderScrollbar(guiGraphics);
     }
 
     @Override
@@ -175,51 +183,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         return false; // 游戏不会暂停
     }
 
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        BTerminalPage page = pages[currentPage];
-        if (page.isEnabled()) {
-            // 根据滚动方向更新偏移量
-            int newOffset = page.scrollOffset - (int)(verticalAmount * BTerminalPage.SCROLL_SPEED);
-            // 限制滚动范围
-            int maxOffset = Math.max(0, BTerminalPage.CONTENT_HEIGHT - page.viewportHeight);
-            newOffset = Math.max(0, Math.min(newOffset, maxOffset));
-            page.scrollOffset = newOffset;
-            // 重新初始化组件以应用新的滚动偏移
-            showCurrentPage();
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
-    }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        BTerminalPage page = pages[currentPage];
-            return page.mouseClickedScrollbar((int)mouseX, (int)mouseY) ||
-                page.mouseClickedScrollbarTrack((int)mouseX, (int)mouseY) ||
-                super.mouseClicked(mouseX, mouseY, button);
+    public void onClose() {
+        super.onClose();
+        C2STagPacket.sendIntToServer(CURRENT_PAGE, currentPage);
     }
 
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        BTerminalPage page = pages[currentPage];
-        if (page.isEnabled())
-            if (page.isDraggingScrollbar) {
-                page.isDraggingScrollbar = false;
-                return true;
-            }
-        return super.mouseReleased(mouseX, mouseY, button);
-    }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        BTerminalPage page = pages[currentPage];
-        if (page.isEnabled())
-            if (page.isDraggingScrollbar) {
-                page.updateScrollFromMouseY((int)mouseY);
-                showCurrentPage();
-                return true;
-            }
+        currentPageWidgets.forEach(widget -> widget.mouseDragged(mouseX, mouseY, button, dragX, dragY));
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 }

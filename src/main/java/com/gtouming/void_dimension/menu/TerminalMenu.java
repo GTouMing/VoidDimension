@@ -3,8 +3,8 @@ package com.gtouming.void_dimension.menu;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.item.VoidTerminal;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -14,14 +14,23 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.IContainerFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 
 public class TerminalMenu extends AbstractContainerMenu implements IContainerFactory<TerminalMenu> {
+    public static final Map<UUID, Integer> CP = new HashMap<>();
+    public static final Map<UUID, Boolean> RS = new HashMap<>();
+    public int currentPage;
+    public boolean respawnSet;
+
     public static final int TOTAL_POWER_LEVEL_1 = 0;
     public static final int TOTAL_POWER_LEVEL_2 = 1;
+
     public static final int ANCHOR_POWER_LEVEL = 2;
     public static final int GATHER_ITEM = 3;
     public static final int TELEPORT_TYPE = 4;
@@ -44,6 +53,8 @@ public class TerminalMenu extends AbstractContainerMenu implements IContainerFac
         data.set(ANCHOR_POWER_LEVEL, buf.readInt());
         data.set(GATHER_ITEM, buf.readInt());
         data.set(TELEPORT_TYPE, buf.readInt());
+        currentPage = buf.readInt();
+        respawnSet = buf.readBoolean();
     }
 
 
@@ -55,7 +66,7 @@ public class TerminalMenu extends AbstractContainerMenu implements IContainerFac
     @Override
     public boolean stillValid(@NotNull Player player) {
         if (player.getMainHandItem().getItem() instanceof VoidTerminal) {
-            return player.getMainHandItem().getOrDefault(BOUND_DATA, new CompoundTag()).getInt("power_level") > 0;
+            return player.getMainHandItem().get(BOUND_DATA) != null;
         }
         return false;
     }
@@ -76,23 +87,15 @@ public class TerminalMenu extends AbstractContainerMenu implements IContainerFac
         return data.get(GATHER_ITEM) == 1;
     }
 
-    public static ContainerData createContainerData(VoidAnchorBlockEntity anchor) {
-        SimpleContainerData data = new SimpleContainerData(5);
-        data.set(TOTAL_POWER_LEVEL_1, (int) (getTotalPower() >> 32));
-        data.set(TOTAL_POWER_LEVEL_2, (int) (getTotalPower() & 0xFFFFFFFFL));
-        data.set(ANCHOR_POWER_LEVEL, anchor.getBlockState().getValue(VoidAnchorBlock.POWER_LEVEL));
-        data.set(GATHER_ITEM, anchor.isGatherItem() ? 1 : 0);
-        data.set(TELEPORT_TYPE, anchor.useRightClickTeleport() ? 1 : 0);
-        return data;
-    }
-
-    public static Consumer<RegistryFriendlyByteBuf> writeBuf(VoidAnchorBlockEntity anchor) {
+    public static Consumer<RegistryFriendlyByteBuf> writeBuf(VoidAnchorBlockEntity anchor, ServerPlayer player) {
         return buf -> {
             buf.writeInt((int) (getTotalPower() >> 32));
             buf.writeInt((int) (getTotalPower() & 0xFFFFFFFFL));
             buf.writeInt(anchor.getBlockState().getValue(VoidAnchorBlock.POWER_LEVEL));
             buf.writeInt(anchor.isGatherItem() ? 1 : 0);
             buf.writeInt(anchor.useRightClickTeleport() ? 1 : 0);
+            buf.writeInt(CP.getOrDefault(player.getUUID(), 0));
+            buf.writeBoolean(RS.getOrDefault(player.getUUID(), false));
         };
     }
 

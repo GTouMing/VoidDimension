@@ -2,6 +2,7 @@ package com.gtouming.void_dimension;
 
 import com.gtouming.void_dimension.block.ModBlocks;
 import com.gtouming.void_dimension.block.entity.ModBlockEntities;
+import com.gtouming.void_dimension.client.sound.ModSounds;
 import com.gtouming.void_dimension.command.ApplyCommand;
 import com.gtouming.void_dimension.command.CheckCommand;
 import com.gtouming.void_dimension.component.ModDataComponents;
@@ -47,6 +48,8 @@ public class VoidDimension {
         ModBlockEntities.register(modEventBus);
 
         ModMenus.register(modEventBus);
+
+        ModSounds.register(modEventBus);
 
         ModBiomeModifiers.register(modEventBus);
 

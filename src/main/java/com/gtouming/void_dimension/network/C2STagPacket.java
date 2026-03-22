@@ -2,10 +2,10 @@ package com.gtouming.void_dimension.network;
 
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
-import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.item.VoidTerminal;
+import com.gtouming.void_dimension.menu.TerminalMenu;
 import com.gtouming.void_dimension.util.DimRuleInvoker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.gtouming.void_dimension.component.ModDataComponents.PLAYER_GUI_DATA;
 import static com.gtouming.void_dimension.component.TagKeyName.*;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
@@ -57,11 +56,7 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 ServerLevel boundLevel = getLevelFromDim(level, getBoundDim(terminal));
                 BlockPos pos = getBoundPos(terminal);
 
-                if (packet.tag.contains(serverPlayer.getStringUUID())) {
-                    terminal.set(PLAYER_GUI_DATA, packet.tag);
-                    return;
-                }
-
+                if (packet.tag.contains(CURRENT_PAGE)) TerminalMenu.CP.put(serverPlayer.getUUID(), packet.tag.getInt(CURRENT_PAGE));
                 if (!packet.tag.contains(CHANGE_SETTING)) return;
 
                 {
@@ -129,6 +124,12 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static void sendLongToServer(String key, long value) {
         CompoundTag tag = new CompoundTag();
         tag.putLong(key, value);
+        sendToServer(tag);
+    }
+
+    public static void sendIntToServer(String key, int value) {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt(key, value);
         sendToServer(tag);
     }
 

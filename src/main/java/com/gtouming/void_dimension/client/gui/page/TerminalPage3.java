@@ -1,9 +1,8 @@
 package com.gtouming.void_dimension.client.gui.page;
 
-import com.gtouming.void_dimension.client.gui.widget.FlashString;
-import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
+import com.gtouming.void_dimension.client.gui.widget.*;
 import com.gtouming.void_dimension.network.C2STagPacket;
-import com.gtouming.void_dimension.client.gui.widget.Button;
+import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
@@ -19,42 +18,44 @@ public class TerminalPage3 extends BTerminalPage {
         // 启用滚动条功能
         //enableScrollbar(leftPos + GUI_WIDTH - 6, topPos + 30);
 
-        int yOffset = topPos + 30/* - scrollOffset*/; // 应用滚动偏移
-        int xOffset = leftPos + 60;
-        int yStep = 15;
+        int yOffset = topPos + 40/* - scrollOffset*/; // 应用滚动偏移
+        int xOffset = leftPos + 70;
+        int settingY = topPos + S_B_Y;
+        int settingX = leftPos + S_B_X;
 
         // ==================== 玩家分类 ====================
-        boolean rp = tag.getBoolean(SET_RESPAWN_POINT);
-        FlashString resetAnchorLabel = new FlashString(
-                xOffset + 15, yOffset, 150, "§6设置绑定锚点为重生点: " + (rp ? "§a已设置" : "§6未设置"), font).alignLeft();
-
-        Button resetAnchorButton = Button.builder(
+        boolean rp = terminalMenu.respawnSet;
+        AbstractButton respawnAnchorButton = SettingButton.builder(
                 button -> C2STagPacket.sendBooleanToServer(SET_RESPAWN_POINT, true)
                 , () -> !rp && powerEnough(128, 256))
-                .bounds(xOffset, yOffset + 4).build();
-
-        FlashString respawnPowerLabel = new FlashString(
-                xOffset + 140, yOffset, "§a128/§c256", font).alignRight();
-        widgets.add(respawnPowerLabel);
-        widgets.add(resetAnchorLabel);
-        widgets.add(resetAnchorButton);
+                .settingBounds(settingX, settingY).build(SettingButton::new);
 
 
-        FlashString teleportAnchorLabel = new FlashString(
-                xOffset + 15, yOffset + yStep, 150, "§6传送至绑定锚点", font).alignLeft();
+        AbstractButton teleportAnchorButton = SettingButton.builder(
+                button -> C2STagPacket.sendBooleanToServer(TELEPORT_TO_ANCHOR, false),
+                        () -> powerEnough(128, 256))
+                .settingBounds(settingX, settingY + S_B_S).build(SettingButton::new);
 
-        Button teleportAnchorButton = Button.builder(
-                button -> {
-                    // 传送至锚点逻辑
-                    C2STagPacket.sendBooleanToServer(TELEPORT_TO_ANCHOR, false);
-                }, () -> powerEnough(128, 256))
-                .bounds(xOffset, yOffset + yStep + 4).build();
 
-        FlashString teleportPowerLabel = new FlashString(
-                xOffset + 140, yOffset + yStep, "§a128/§c256", font).alignRight();
-        widgets.add(teleportPowerLabel);
-        widgets.add(teleportAnchorLabel);
+        TickAbstractWidget textLabel = new FlashString(xOffset, yOffset, font).updateMessage(
+                () -> {
+                    if (respawnAnchorButton.isHovered()) {
+                        respawnAnchorButton.setCustomHovered(true);
+                        teleportAnchorButton.setCustomHovered(false);
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page3.respawn_set");
+                    }
+                    if (teleportAnchorButton.isHovered()) {
+                        respawnAnchorButton.setCustomHovered(false);
+                        teleportAnchorButton.setCustomHovered(true);
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page3.teleport_anchor");
+                    }
+                    return currentMessage;
+                }
+        );
+
+        widgets.add(respawnAnchorButton);
         widgets.add(teleportAnchorButton);
+        widgets.add(textLabel);
         return widgets;
     }
 }
