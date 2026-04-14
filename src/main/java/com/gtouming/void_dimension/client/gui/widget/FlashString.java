@@ -18,33 +18,30 @@ import java.util.function.Supplier;
 
 public class FlashString extends TickString {
     private List<FormattedChar> charList;
-    private int index = 0;
+    private int charIndex = 0;
 
     public FlashString(int x, int y, Font font) {
-        super(x, y, 160, 20, Component.empty(), font);
+        super(x, y, 150, 20, Component.empty(), font);
     }
 
     @Override
     public void renderWidget(@NotNull GuiGraphics graphics, int p_268221_, int p_268001_, float p_268214_) {
         Font font = this.getFont();
 
-        // 初始化字符列表（只在第一次或消息改变时）
-        if (charList == null || charList.isEmpty()) {
-            charList = getCharsWithFormat(this.getMessage());
-        }
-
         // 更新索引，确保不越界
         ClientLevel level = Minecraft.getInstance().level;
-        if (level != null && level.getGameTime() % 2 == 0) {
-            index = Math.min(index + 1, charList.size());
-            if (index != charList.size()) {
+        if (level != null && level.getGameTime() % 2 == 0 && charIndex != -1 && !charList.isEmpty()) {
+            charIndex = Math.min(charIndex + 1, charList.size());
+            if (charIndex != charList.size()) {
                 // 播放打字机声音
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.BUTTON_RELEASE.get(), 0.5F, 0.03F));
             }
         }
 
         // 构建当前要显示的组件
-        Component currentMessage = buildComponentFromChars(charList.subList(0, index));
+        if (charIndex > charList.size()) return;
+        if (charIndex == charList.size()) charIndex = -1;
+        Component currentMessage = buildComponentFromChars(charIndex == -1 ? charList : charList.subList(0, charIndex));
 
         graphics.drawWordWrap(font, currentMessage, this.getX(), this.getY(), this.getWidth(), this.getColor());
     }
@@ -96,12 +93,15 @@ public class FlashString extends TickString {
     @Override
     public FlashString updateMessage(@NotNull Supplier<Component> message) {
         setMessage(message.get());
+        charList = getCharsWithFormat(this.getMessage());
         this.tickable = () -> {
             if (this.message.equals(message.get())) return;
+
             this.message = message.get();
             this.setMessage(message.get());
-            index = 0;
-            if (charList != null) charList.clear();
+
+            charList = getCharsWithFormat(this.getMessage());
+            //if (charList != null) charList.clear();
         };
         return this;
     }

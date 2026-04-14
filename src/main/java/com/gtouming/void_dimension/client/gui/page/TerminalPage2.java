@@ -1,14 +1,12 @@
 package com.gtouming.void_dimension.client.gui.page;
 
 import com.gtouming.void_dimension.client.gui.widget.*;
-import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.network.C2STagPacket;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-import static com.gtouming.void_dimension.component.TagKeyName.SET_WEATHER;
+import static com.gtouming.void_dimension.component.TagKeyName.*;
 
 /**
  * 第二页 - 世界相关设置
@@ -25,63 +23,66 @@ public class TerminalPage2 extends BTerminalPage {
 
         // ==================== 世界分类 ====================
         weather =  player.level().isRaining() ? player.level().isThundering() ? 2 : 1 : 0;
-        AbstractButton weatherButton = SettingButton.builder(
+        AbstractButton weatherButton = (AbstractButton) SettingButton.builder(
                 button -> {
-                    // 循环切换天气
-                    weather = (weather + 1) % 3;
-                    // 发送天气设置到服务器
-                    C2STagPacket.sendLongToServer(SET_WEATHER, weather);
-                }, () -> powerEnough(2560, 256000) && player.level().dimension().equals(VoidDimensionType.VOID_DIMENSION))
-                .settingBounds(settingX, settingY).build(SettingButton::new);
+                    weather = (weather + 1) % 3;// 循环切换天气
+                    C2STagPacket.sendLongToServer(SET_WEATHER, weather);// 发送天气设置到服务器
+                }, () -> powerEnough(2560, 256000) && correctDimension())
+                .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 
 
 
-        TickAbstractWidget dayTimeSliderButton = new SliderButton(settingX, settingY + S_B_S, Component.literal("维度时间: " + dayTime()),
-                () -> powerEnough(2560, 256000) && player.level().dimension().equals(VoidDimensionType.VOID_DIMENSION)) {
+        TickAbstractWidget dayTimeSliderButton = new SliderButton(settingX, settingY + S_B_S, Component.empty(),
+                () -> powerEnough(2560, 256000) && correctDimension()) {
             @Override
             public void applyValue() {
-                //this.value = (double) dayTime() / 24000;
+                C2STagPacket.sendIntToServer(SET_DAY_TIME, (int) (this.value * 24000));
+//                C2STagPacket.sendBooleanToServer(CHANGE_SETTING, true);
             }
 
             @Override
             public void updateMessage() {
-
+                //滑动条没有需要更新的文本
             }
-        };
-        dayTimeSliderButton.setTooltip(Tooltip.create(Component.translatable("gui.void_dimension.terminal.page2.daytime_slider.tooltip", dayTime())));
+        }.setWidgetIndex(1).setIHasHovered(() -> index == 1);
 
+        ((SliderButton) (dayTimeSliderButton)).setInitializeValue((double) dayTime() / 24000);
+
+        widgets.add(weatherButton);
+        widgets.add(dayTimeSliderButton);
 
 
 
         FlashString textLabel = new FlashString(xOffset, yOffset, font).updateMessage(
                 () -> {
-                    if (weatherButton.isHovered()) {
-                        weatherButton.setCustomHovered(true);
-                        dayTimeSliderButton.setCustomHovered(false);
-                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.weather");
-                    }
-                    if (dayTimeSliderButton.isHovered()) {
-                        weatherButton.setCustomHovered(false);
-                        dayTimeSliderButton.setCustomHovered(true);
-                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.daytime");
-                    }
+                    widgetHasHovered();
+                    if (index == 0)
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.weather", getCurrentWeather(), 2560, 256000);
+                    if (index == 1)
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.daytime", dayTime(), 2560, 256000);
                     return currentMessage;
                 });
-
-        widgets.add(weatherButton);
-        widgets.add(dayTimeSliderButton);
         widgets.add(textLabel);
         return widgets;
     }
 
+    private Component getCurrentWeather() {
+        switch (weather) {
+            case 1 -> {
+                return Component.translatable("gui.void_dimension.terminal.page2.text.raining");
+            }
+            case 2 -> {
+                return Component.translatable("gui.void_dimension.terminal.page2.text.thundering");
+            }
+            default -> {
+                return Component.translatable("gui.void_dimension.terminal.page2.text.clear");
+            }
+        }
+    }
+
+
     private long dayTime() {
         long dayTime = player.level().getDayTime();
         return (dayTime < 0 ? (Integer.MAX_VALUE + dayTime) + 11647: dayTime) % 24000;
-    }
-    
-    private Component getWeather(int weather) {
-        if (weather == 2) return Component.translatable("gui.void_dimension.terminal.page2.text.weather");
-        else if (weather == 1) return Component.translatable("gui.void_dimension.terminal.page2.text.weather");
-        else return Component.translatable("gui.void_dimension.terminal.page2.text.weather");
     }
 }

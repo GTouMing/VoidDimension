@@ -25,36 +25,33 @@ public class TerminalPage3 extends BTerminalPage {
 
         // ==================== 玩家分类 ====================
         boolean rp = terminalMenu.respawnSet;
-        AbstractButton respawnAnchorButton = SettingButton.builder(
+        AbstractButton respawnAnchorButton = (AbstractButton) SettingButton.builder(
                 button -> C2STagPacket.sendBooleanToServer(SET_RESPAWN_POINT, true)
                 , () -> !rp && powerEnough(128, 256))
-                .settingBounds(settingX, settingY).build(SettingButton::new);
+                .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 
 
-        AbstractButton teleportAnchorButton = SettingButton.builder(
+        AbstractButton teleportAnchorButton = (AbstractButton) SettingButton.builder(
                 button -> C2STagPacket.sendBooleanToServer(TELEPORT_TO_ANCHOR, false),
                         () -> powerEnough(128, 256))
-                .settingBounds(settingX, settingY + S_B_S).build(SettingButton::new);
+                .settingBounds(settingX, settingY + S_B_S).build(SettingButton::new).setWidgetIndex(1).setIHasHovered(() -> index == 1);
+
+        widgets.add(respawnAnchorButton);
+        widgets.add(teleportAnchorButton);
 
 
         TickAbstractWidget textLabel = new FlashString(xOffset, yOffset, font).updateMessage(
                 () -> {
-                    if (respawnAnchorButton.isHovered()) {
-                        respawnAnchorButton.setCustomHovered(true);
-                        teleportAnchorButton.setCustomHovered(false);
-                        currentMessage = Component.translatable("gui.void_dimension.terminal.page3.respawn_set");
-                    }
-                    if (teleportAnchorButton.isHovered()) {
-                        respawnAnchorButton.setCustomHovered(false);
-                        teleportAnchorButton.setCustomHovered(true);
-                        currentMessage = Component.translatable("gui.void_dimension.terminal.page3.teleport_anchor");
-                    }
+                    widgetHasHovered();
+                    if (index == 0)
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page3.text.respawn_set",
+                                rp ? Component.translatable("gui.void_dimension.terminal.page3.text.set") : Component.translatable("gui.void_dimension.terminal.page3.text.not_set"),
+                                256, 2560);
+                    if (index == 1)
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page3.teleport_anchor", 128, 256);
                     return currentMessage;
                 }
         );
-
-        widgets.add(respawnAnchorButton);
-        widgets.add(teleportAnchorButton);
         widgets.add(textLabel);
         return widgets;
     }

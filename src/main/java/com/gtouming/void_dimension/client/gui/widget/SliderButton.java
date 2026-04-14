@@ -27,16 +27,19 @@ public abstract class SliderButton extends TickAbstractWidget {
 //    private static final int HANDLE_HALF_WIDTH = 4;
     private final IActive iActive;
     public double value;
-    private double valueCache;
+    private double valueCache = -1;
     private boolean canChangeValue;
     private boolean canDrag;
 
     public SliderButton(int x, int y, Component message, IActive iActive) {
-        super(x, y, 9, 90, message);
+        super(x, y, 9, 96, message);
         this.iActive = iActive;
 //        this.active = IActive.isActive();
     }
 
+    public void setInitializeValue(double value) {
+        this.value = value;
+    }
 //    public Slider(int x, int y, int width, Component message, ApplyValue applyValue, UpdateMessage updateMessage, IActive IActive) {
 //        this(x, y, width, message, applyValue, updateMessage, IActive);
 //    }
@@ -74,9 +77,8 @@ public abstract class SliderButton extends TickAbstractWidget {
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableDepthTest();
 
-        graphics.blit(ResourceLocation.fromNamespaceAndPath(VoidDimension.MOD_ID, "textures/gui/widget/slider_bar.png"), this.getX() + 2, this.getY(), 0, 0, 7,  90, 7, 90);
-        if (active) graphics.blit(ResourceLocation.fromNamespaceAndPath(VoidDimension.MOD_ID, "textures/gui/widget/slider_handler.png"), getX() + 1, (int) (this.getY() + (this.valueCache == -1 ? this.value : this.valueCache) * (double)(this.height - 3)), 0, customHovered ? 4 : 0, 9, 3, 9, 7);
-        //v = Math.max(0, v - 4);
+        graphics.blit(ResourceLocation.fromNamespaceAndPath(VoidDimension.MOD_ID, "textures/gui/widget/slider_bar.png"), this.getX() + 2, this.getY(), 0, 0, 7,  96, 7, 96);
+        if (active) graphics.blit(ResourceLocation.fromNamespaceAndPath(VoidDimension.MOD_ID, "textures/gui/widget/slider_handler.png"), getX() + 1, (int) (this.getY() + (this.valueCache == -1 ? this.value : this.valueCache) * (double)(this.height - 3)), 0, iHasHovered.isHovered() ? 4 : 0, 9, 3, 9, 7);
 
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
@@ -119,12 +121,6 @@ public abstract class SliderButton extends TickAbstractWidget {
             return false;
         }
     }
-    
-//    private void expand() {
-//        setX(x2);
-//        setWidth(162);
-//        setHeight(7);
-//    }
 
     private void setValueFromValueCache() {
         if (this.valueCache != -1 && this.value != this.valueCache) {

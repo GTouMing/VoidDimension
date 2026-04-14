@@ -20,38 +20,38 @@ public class TerminalPage1 extends BTerminalPage {
         int xOffset = leftPos + 70;
         int yStep = 15;
 
-        // 状态显示
-        TickAbstractWidget statusLabel = new TickString(
-                xOffset, yOffset, 160, font)
-                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.status", terminalMenu.getAnchorPowerLevel() > 0 ? Component.translatable("gui.void_dimension.terminal.running") : Component.translatable("gui.void_dimension.terminal.disabled")))
-                .alignLeft();
-        widgets.add(statusLabel);
-
         // 总能量显示
-        TickAbstractWidget powerLabel = new TickString(xOffset, yOffset + yStep, 160, font)
-                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.total_power", terminalMenu.getTotalPowerLevel()))
+        TickAbstractWidget powerLabel = new TickString(xOffset, yOffset, 160, font)
+                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.total_power", "§b" + terminalMenu.getTotalPowerLevel()))
                 .alignLeft();
         widgets.add(powerLabel);
 
         TickAbstractWidget dimKeyLabel = new TickString(
-                xOffset, yOffset + yStep * 2, 160, Component.translatable("gui.void_dimension.terminal.page1.bound_dim_key"), font).alignLeft();
+                xOffset, yOffset + yStep, 160, Component.translatable("gui.void_dimension.terminal.page1.bound_dim_key"), font).alignLeft();
         TickAbstractWidget dimValueLabel = new TickString(
-                xOffset, yOffset + yStep * 3, 160, font)
-                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_dim_value", VoidTerminal.getBoundDim(player.getMainHandItem())))
+                xOffset, yOffset + yStep * 2, 160, font)
+                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_dim_value", "§b" + VoidTerminal.getBoundDim(player.getMainHandItem())))
                 .alignLeft();
         widgets.add(dimKeyLabel);
         widgets.add(dimValueLabel);
 
-        BlockPos pos = VoidTerminal.getBoundPos(player.getMainHandItem());
-        TickAbstractWidget anchorPosLabel = new TickString(
-                xOffset, yOffset + yStep * 4, 160, font)
-                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_anchor_pos", "§c" + pos.getX(), "§a" + pos.getY(), "§9" + pos.getZ()))
+        TickAbstractWidget anchorPosKeyLabel = new TickString(
+                xOffset, yOffset + yStep * 3, 160, font)
+                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_anchor_pos_key"))
                 .alignLeft();
-        widgets.add(anchorPosLabel);
+        widgets.add(anchorPosKeyLabel);
+
+        BlockPos pos = VoidTerminal.getBoundPos(player.getMainHandItem());
+        TickAbstractWidget anchorPosValueLabel = new TickString(
+                xOffset, yOffset + yStep * 4, 160, font)
+                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_anchor_pos_value", "§c" + pos.getX(), "§a" +  pos.getY(), "§9" + pos.getZ()))
+                .alignLeft();
+        widgets.add(anchorPosValueLabel);
+
 
         TickAbstractWidget boundPowerLabel = new TickString(
                 xOffset, yOffset + yStep * 5, 160, font)
-                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_anchor_power_level", terminalMenu.getAnchorPowerLevel()))
+                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_anchor_power_level", "§b" + terminalMenu.getAnchorPowerLevel()))
                 .alignLeft();
         widgets.add(boundPowerLabel);
 

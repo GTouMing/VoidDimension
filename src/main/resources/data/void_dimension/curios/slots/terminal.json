@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "size": 1,
+  "icon": "",
+  "operation": "SET",
+  "order": 172,
+  "render_toggle": true,
+  "use_native_gui": true
+}

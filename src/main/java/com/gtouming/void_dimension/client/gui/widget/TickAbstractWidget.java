@@ -14,7 +14,9 @@ import java.util.function.Supplier;
 
 public abstract class TickAbstractWidget extends AbstractWidget {
     protected float alignX = 0;
-    protected boolean customHovered = false;
+    protected int widgetIndex;
+    protected IHovered iHasHovered;
+
     public TickAbstractWidget(int x, int y, int width, int height, Component message) {
         super(x, y, width, height, message);
     }
@@ -50,13 +52,18 @@ public abstract class TickAbstractWidget extends AbstractWidget {
         MutableComponent createNarrationMessage(Supplier<MutableComponent> var1);
     }
 
-    public void setCustomHovered(boolean value) {
-        customHovered = value;
+    public TickAbstractWidget setWidgetIndex(int index) {
+        widgetIndex = index;
+        return this;
     }
 
-    public boolean isCustomHovered() {
-        //重写该方法以使用自定义逻辑
-        return false;
+    public TickAbstractWidget setIHasHovered(IHovered IHasHovered) {
+        iHasHovered = IHasHovered;
+        return this;
+    }
+
+    public int getWidgetIndex() {
+        return widgetIndex;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -71,5 +78,9 @@ public abstract class TickAbstractWidget extends AbstractWidget {
 
     public interface Tickable {
         void tickUpdate();
+    }
+
+    public interface IHovered {
+        boolean isHovered();
     }
 }

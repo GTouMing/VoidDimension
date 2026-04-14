@@ -1,7 +1,6 @@
 package com.gtouming.void_dimension.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,13 +16,12 @@ public class LevelRendererMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderColor(FFFF)V",
-                    ordinal = 2,
+                    ordinal = 5,
                     shift = At.Shift.AFTER
-            ))
+            ), cancellable = true)
     private void renderSky(CallbackInfo ci) {
-        FogRenderer.levelFogColor();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.depthMask(true);
-        //ci.cancel();
+        ci.cancel();
     }
 }

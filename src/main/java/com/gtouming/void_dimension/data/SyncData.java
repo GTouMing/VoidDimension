@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 /*
 * 同步服务器获得的数据到客户端
-* 在GUI类会用到
+* 在菜单类会用到
 * */
 
 public class SyncData {

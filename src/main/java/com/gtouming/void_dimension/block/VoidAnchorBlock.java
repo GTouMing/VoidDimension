@@ -8,11 +8,11 @@ import com.gtouming.void_dimension.dimension.generator.PlatformGenerator;
 import com.gtouming.void_dimension.item.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -67,12 +67,8 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+    public void animateTick(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull RandomSource random) {
         super.animateTick(state, level, pos, random);
-//
-//        if (random.nextInt(100) < 50) {
-//            level.playLocalSound((double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, SoundEvents.PORTAL_AMBIENT, SoundSource.BLOCKS, 1F, random.nextFloat() * 0.4F + 0.8F, false);
-//        }
     }
 
     @Override
@@ -117,9 +113,12 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
             }
         }
 
+
         // 掉落玩家死亡物品
-        for (List<ItemStack> items : anchorEntity.getPlayerDeathItems().values()) {
-            for (ItemStack stack : items) {
+        for (ListTag items : anchorEntity.getPlayerLegacy().values()) {
+            for(int i = 0; i < items.size(); ++i) {
+                CompoundTag compoundtag = items.getCompound(i);
+                ItemStack stack = ItemStack.parse(level.registryAccess(), compoundtag).orElse(ItemStack.EMPTY);
                 if (!stack.isEmpty()) {
                     Block.popResource(level, pos.above(), stack);
                 }
@@ -127,18 +126,18 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
         }
 
         // 掉落玩家 vault 物品
-        for (List<ItemStack> items : anchorEntity.getPlayerVaultItems().values()) {
-            for (ItemStack stack : items) {
-                if (!stack.isEmpty()) {
-                    Block.popResource(level, pos.above(), stack);
-                }
-            }
-        }
+//        for (List<ItemStack> items : anchorEntity.getPlayerVaultItems().values()) {
+//            for (ItemStack stack : items) {
+//                if (!stack.isEmpty()) {
+//                    Block.popResource(level, pos.above(), stack);
+//                }
+//            }
+//        }
 
         // 清空所有物品
         anchorEntity.clearContent();
-        anchorEntity.getPlayerDeathItems().clear();
-        anchorEntity.getPlayerVaultItems().clear();
+        anchorEntity.getPlayerLegacy().clear();
+//        anchorEntity.getPlayerVaultItems().clear();
     }
 
     /**

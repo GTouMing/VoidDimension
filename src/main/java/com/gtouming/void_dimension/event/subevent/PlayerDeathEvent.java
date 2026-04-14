@@ -1,6 +1,7 @@
 package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import com.gtouming.void_dimension.curios.CuriosUtil;
 import com.gtouming.void_dimension.dimension.ModDimensions;
 import com.gtouming.void_dimension.item.ModItems;
 import com.gtouming.void_dimension.item.VoidTerminal;
@@ -33,7 +34,8 @@ public class PlayerDeathEvent {
         VoidAnchorBlockEntity blockEntity = VoidAnchorBlockEntity.getBlockEntity(player.serverLevel(), anchorPos);
         if (blockEntity == null) return;
 
-        blockEntity.savePlayerDeathItems(player);
+        blockEntity.saveLegacyToMap(player);
+        blockEntity.saveCuriosToMap(player);
         clearPlayerInventory(player);
 
         player.sendSystemMessage(Component.literal(

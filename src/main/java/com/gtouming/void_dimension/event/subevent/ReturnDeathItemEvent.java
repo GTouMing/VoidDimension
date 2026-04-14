@@ -18,9 +18,10 @@ public class ReturnDeathItemEvent {
         Player player = event.getEntity();
         VoidAnchorBlockEntity blockEntity = VoidAnchorBlockEntity.getBlockEntity(serverLevel, event.getPos());
         
-        if (blockEntity == null || !blockEntity.hasPlayerDeathItems(player)) return;
+        if (blockEntity == null || !blockEntity.hasPlayerLegacy(player)) return;
             // 取回死亡物品
-        if (!blockEntity.retrievePlayerDeathItems(player)) return;
+        blockEntity.retrieveLegacy(player);
+        blockEntity.retrieveCurios(player);
 
         player.displayClientMessage(Component.literal("§a物品已取回！"), true);
     }

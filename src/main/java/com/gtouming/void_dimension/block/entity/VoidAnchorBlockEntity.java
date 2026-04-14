@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 import static com.gtouming.void_dimension.menu.TerminalMenu.*;
 
@@ -34,10 +35,6 @@ import static com.gtouming.void_dimension.menu.TerminalMenu.*;
  * 管理锚点的状态和数据
  */
 public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
-    private static final String DEATH_ITEMS_KEY = "death_items";
-    private static final String VAULT_ITEMS_KEY = "vault_items";
-    private static final String CONTAINER_ITEMS_KEY = "container_items";
-
     //所有block是同一个实例，要检测不同锚点上方实体的倒计时，需要在此定义映射
     private final Map<Entity, Float> waitTimeMap = new HashMap<>();
     private final ContainerData data = new SimpleContainerData(5);
@@ -45,11 +42,15 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     private boolean gatherItem = false;
     private boolean cantOpen = false;
 
-    private final Map<UUID, List<ItemStack>> playerDeathItems = new HashMap<>();
-    private final Map<UUID, List<ItemStack>> playerVaultItems = new HashMap<>();
+    private final Map<UUID, ListTag> playerLegacy = new HashMap<>();
+    private final Map<UUID, ListTag> playerCurios = new HashMap<>();
     private final NonNullList<ItemStack> containerItems = NonNullList.withSize(54, ItemStack.EMPTY);
 
-
+    private static final String KEY_LEGACY = "Legacy";
+    private static final String KEY_CONTAINER_ITEMS = "ContainerItems";
+    private static final String KEY_PLAYER_UUID = "PlayerUUID";
+    private static final String KEY_LEGACY_ITEMS = "LegacyItems";
+    private static final String KEY_CURIOS = "Curios";
 
     public VoidAnchorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VOID_ANCHOR_BLOCK_ENTITY.get(), pos, state);
@@ -58,102 +59,118 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     @Override
     protected void saveAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
-        ListTag deathItemTags = new ListTag();
-        ListTag vaultItemTags = new ListTag();
-        ListTag containerItemTags = new ListTag();
-        
-        // 保存玩家死亡物品数据
-        for (Map.Entry<UUID, List<ItemStack>> playerEntry : playerDeathItems.entrySet()) {
-            CompoundTag playerTag = new CompoundTag();
-            playerTag.putUUID("playerUUID", playerEntry.getKey());
-            
-            ListTag itemsTag = new ListTag();
-            for (ItemStack stack : playerEntry.getValue()) {
-                itemsTag.add(stack.saveOptional(provider));
-            }
-            playerTag.put("deathItems", itemsTag);
-            deathItemTags.add(playerTag);
-        }
-        
-        // 保存vault物品数据
-        for (Map.Entry<UUID, List<ItemStack>> playerEntry : playerVaultItems.entrySet()) {
-            CompoundTag playerTag = new CompoundTag();
-            playerTag.putUUID("playerUUID", playerEntry.getKey());
 
-            ListTag itemsTag = new ListTag();
-            for (ItemStack stack : playerEntry.getValue()) {
-                itemsTag.add(stack.saveOptional(provider));
-            }
-            playerTag.put("vaultItems", itemsTag);
-            vaultItemTags.add(playerTag);
+        saveLegacy(tag);
+        saveCurios(tag);
+        saveContainerItems(tag, provider);
+    }
+
+    private void saveLegacy(CompoundTag tag) {
+        ListTag playersList = new ListTag();
+
+        for (Map.Entry<UUID, ListTag> entry : playerLegacy.entrySet()) {
+
+            CompoundTag playerTag = new CompoundTag();
+            playerTag.putUUID(KEY_PLAYER_UUID, entry.getKey());
+            playerTag.put(KEY_LEGACY_ITEMS, entry.getValue());
+
+            playersList.add(playerTag);
         }
-        
-        // 保存容器物品数据
+
+        tag.put(KEY_LEGACY, playersList);
+    }
+
+    private void saveCurios(CompoundTag tag) {
+        ListTag playersList = new ListTag();
+
+        for (Map.Entry<UUID, ListTag> entry : playerCurios.entrySet()) {
+            CompoundTag playerTag = new CompoundTag();
+            playerTag.putUUID(KEY_PLAYER_UUID, entry.getKey());
+            playerTag.put(KEY_CURIOS, entry.getValue());
+
+            playersList.add(playerTag);
+        }
+
+        tag.put(KEY_CURIOS, playersList);
+    }
+
+    private void saveContainerItems(CompoundTag tag, HolderLookup.Provider provider) {
+        ListTag itemsTag = new ListTag();
         for (ItemStack stack : containerItems) {
-            containerItemTags.add(stack.saveOptional(provider));
+            itemsTag.add(stack.saveOptional(provider));
         }
-        
-        tag.put(DEATH_ITEMS_KEY, deathItemTags);
-        tag.put(VAULT_ITEMS_KEY, vaultItemTags);
-        tag.put(CONTAINER_ITEMS_KEY, containerItemTags);
+        tag.put(KEY_CONTAINER_ITEMS, itemsTag);
     }
 
     @Override
     public void loadAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
-        playerDeathItems.clear();
-        playerVaultItems.clear();
-        
-        // 加载玩家死亡物品数据
-        if (tag.contains(DEATH_ITEMS_KEY, Tag.TAG_LIST)) {
-            ListTag playersTag = tag.getList(DEATH_ITEMS_KEY, Tag.TAG_COMPOUND);
 
-            for (Tag playerTag : playersTag) {
-                CompoundTag playerCompound = (CompoundTag) playerTag;
-                UUID playerUUID = playerCompound.getUUID("playerUUID");
+        clearMaps();
+        loadLegacy(tag);
+        loadCurios(tag);
+        loadContainerItems(tag, provider);
+    }
 
-                List<ItemStack> items = new ArrayList<>();
-                ListTag itemsTag = playerCompound.getList("deathItems", Tag.TAG_COMPOUND);
+    private void clearMaps() {
+        playerLegacy.clear();
+        playerCurios.clear();
+    }
 
-                for (Tag itemTag : itemsTag) {
-                    CompoundTag itemCompound = (CompoundTag) itemTag;
-                    ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
-                    if (stack.isEmpty()) continue;
-                    items.add(stack);
-                }
-                playerDeathItems.put(playerUUID, items);
+    private void loadLegacy(CompoundTag tag) {
+        if (!tag.contains(KEY_LEGACY, Tag.TAG_LIST)) return;
+
+        ListTag playersList = tag.getList(KEY_LEGACY, Tag.TAG_COMPOUND);
+
+        for (int i = 0; i < playersList.size(); i++) {
+            CompoundTag playerTag = playersList.getCompound(i);
+
+            // 安全读取 UUID
+            if (!playerTag.hasUUID(KEY_PLAYER_UUID)) continue;
+            UUID playerUUID = playerTag.getUUID(KEY_PLAYER_UUID);
+
+            // 加载物品列表
+            ListTag itemsTag = playerTag.getList(KEY_LEGACY_ITEMS, Tag.TAG_COMPOUND);
+
+            if (!itemsTag.isEmpty()) {
+                playerLegacy.put(playerUUID, itemsTag);
             }
         }
-        
-        // 加载vault物品数据
-        if (tag.contains(VAULT_ITEMS_KEY, Tag.TAG_LIST)) {
-            ListTag playersTag = tag.getList(VAULT_ITEMS_KEY, Tag.TAG_COMPOUND);
+    }
 
-            for (Tag playerTag : playersTag) {
-                CompoundTag playerCompound = (CompoundTag) playerTag;
-                UUID playerUUID = playerCompound.getUUID("playerUUID");
+    private void loadCurios(CompoundTag tag) {
+        if (!tag.contains(KEY_CURIOS, Tag.TAG_LIST)) return;
 
-                List<ItemStack> items = new ArrayList<>();
-                ListTag itemsTag = playerCompound.getList("vaultItems", Tag.TAG_COMPOUND);
+        ListTag playersList = tag.getList(KEY_CURIOS, Tag.TAG_COMPOUND);
 
-                for (Tag itemTag : itemsTag) {
-                    CompoundTag itemCompound = (CompoundTag) itemTag;
-                    ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
-                    if (stack.isEmpty()) continue;
-                    items.add(stack);
-                }
-                playerVaultItems.put(playerUUID, items);
+        for (int i = 0; i < playersList.size(); i++) {
+            CompoundTag playerTag = playersList.getCompound(i);
+
+            // 安全读取 UUID
+            if (!playerTag.hasUUID(KEY_PLAYER_UUID)) continue;
+            UUID playerUUID = playerTag.getUUID(KEY_PLAYER_UUID);
+
+            // 加载物品列表
+            ListTag itemsTag = playerTag.getList(KEY_LEGACY_ITEMS, Tag.TAG_COMPOUND);
+
+            if (!itemsTag.isEmpty()) {
+                playerCurios.put(playerUUID, itemsTag);
             }
         }
-        
-        // 加载容器物品数据
-        if (tag.contains(CONTAINER_ITEMS_KEY, Tag.TAG_LIST)) {
-            ListTag itemsTag = tag.getList(CONTAINER_ITEMS_KEY, Tag.TAG_COMPOUND);
-            for (int i = 0; i < Math.min(containerItems.size(), itemsTag.size()); i++) {
-                CompoundTag itemCompound = itemsTag.getCompound(i);
-                if (itemCompound.isEmpty()) continue;
-                ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
-                if (stack.isEmpty()) continue;
+    }
+
+    private void loadContainerItems(CompoundTag tag, HolderLookup.Provider provider) {
+        if (!tag.contains(KEY_CONTAINER_ITEMS, Tag.TAG_LIST)) return;
+
+        ListTag itemsTag = tag.getList(KEY_CONTAINER_ITEMS, Tag.TAG_COMPOUND);
+        int size = Math.min(containerItems.size(), itemsTag.size());
+
+        for (int i = 0; i < size; i++) {
+            CompoundTag itemCompound = itemsTag.getCompound(i);
+            if (itemCompound.isEmpty()) continue;
+
+            ItemStack stack = ItemStack.parse(provider, itemCompound).orElse(ItemStack.EMPTY);
+            if (!stack.isEmpty()) {
                 containerItems.set(i, stack);
             }
         }
@@ -161,7 +178,7 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
 
     @Override
     protected @NotNull Component getDefaultName() {
-        return Component.literal("虚空锚");
+        return Component.translatable("block.void_dimension.void_anchor");
     }
 
     @Override
@@ -177,7 +194,6 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
         }
     }
 
-    // 实现必要的容器方法
     @Override
     public @NotNull ItemStack getItem(int index) {
         if (index >= 0 && index < containerItems.size()) {
@@ -274,47 +290,40 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     /**
      * 保存玩家死亡时的物品到锚点
      */
-    public void savePlayerDeathItems(ServerPlayer player) {
-        UUID playerUUID = player.getUUID();
-        NonNullList<ItemStack> playerItems = NonNullList.copyOf(player.getInventory().items);
-        // 保存到锚点的物品栏
-        playerDeathItems.put(playerUUID, playerItems);
+    public void saveLegacyToMap(ServerPlayer player) {
+        ListTag itemsTag = new ListTag();
+        player.getInventory().save(itemsTag);
+
+        playerLegacy.put(player.getUUID(), itemsTag);
+
         this.setChanged(); // 标记为需要保存
     }
 
     /**
      * 取回玩家死亡物品
      */
-    public boolean retrievePlayerDeathItems(Player player) {
-        UUID playerUUID = player.getUUID();
-        List<ItemStack> items = playerDeathItems.get(playerUUID);
-        
-        if (items == null || items.isEmpty()) return false;
-        
-        // 将物品添加到玩家背包
-        Inventory inventory = player.getInventory();
-        boolean allItemsAdded = true;
-        
-        for (ItemStack stack : items) {
-            if (!inventory.add(stack)) {
-                // 如果背包已满，掉落物品
-                player.drop(stack, false);
-                allItemsAdded = false;
-            }
-        }
-        
-        // 移除已取回的物品
-        playerDeathItems.remove(playerUUID);
-        this.setChanged();
-        return allItemsAdded;
+    public void retrieveLegacy(Player player) {
+        player.getInventory().dropAll();
+        player.getInventory().load(playerLegacy.get(player.getUUID()));
+        playerLegacy.remove(player.getUUID());
+    }
+
+    public void saveCuriosToMap(Player player) {
+        playerCurios.put(player.getUUID(), curiosAPI().saveCurios(player));
+    }
+
+    public void retrieveCurios(Player player) {
+        curiosAPI().retrieveCurios(player, playerCurios.get(player.getUUID()));
+        playerCurios.remove(player.getUUID());
     }
 
     /**
      * 检查玩家是否有死亡物品可以取回
      */
-    public boolean hasPlayerDeathItems(Player player) {
-        List<ItemStack> items = playerDeathItems.get(player.getUUID());
-        return items != null && !items.isEmpty();
+    public boolean hasPlayerLegacy(Player player) {
+        ListTag items = playerLegacy.get(player.getUUID());
+        ListTag curios = playerCurios.get(player.getUUID());
+        return items != null && !items.isEmpty() || curios != null && !curios.isEmpty();
     }
 
     public MenuProvider getMenuProvider() {
@@ -388,13 +397,13 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
         this.cantOpen = cantOpen;
     }
 
-    public Map<UUID, List<ItemStack>> getPlayerDeathItems() {
-        return playerDeathItems;
+    public Map<UUID, ListTag> getPlayerLegacy() {
+        return playerLegacy;
     }
 
-    public Map<UUID, List<ItemStack>> getPlayerVaultItems() {
-        return playerVaultItems;
-    }
+//    public Map<UUID, List<ItemStack>> getPlayerVaultItems() {
+//        return playerVaultItems;
+//    }
 
     public ContainerData getData() {
         return data;

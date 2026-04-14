@@ -57,11 +57,11 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 BlockPos pos = getBoundPos(terminal);
 
                 if (packet.tag.contains(CURRENT_PAGE)) TerminalMenu.CP.put(serverPlayer.getUUID(), packet.tag.getInt(CURRENT_PAGE));
-                if (!packet.tag.contains(CHANGE_SETTING)) return;
+//                if (!packet.tag.contains(CHANGE_SETTING)) return;
 
                 {
                     // 虚空维度相关设置
-                    if (packet.tag.contains(SET_DAY_TIME) && powerEnough(serverPlayer, 2560, 256000)) {
+                    if (packet.tag.contains(SET_DAY_TIME)/* && powerEnough(serverPlayer, 2560, 256000)*/) {
                         long dayTime = packet.tag.getLong(SET_DAY_TIME);
                         DimRuleInvoker.setVoidDimensionDayTime(level, dayTime);
                         VoidDimensionData.setVDayTime(level, dayTime);
@@ -135,7 +135,7 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
     public static void sendBooleanToServer(String key, boolean value) {
         CompoundTag tag = new CompoundTag();
-        tag.putString(CHANGE_SETTING, "");
+//        tag.putString(CHANGE_SETTING, "");
         tag.putBoolean(key, value);
         sendToServer(tag);
     }
@@ -143,7 +143,7 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
     private static void decreasePower(ServerLevel level, BlockPos pos, int power) {
         BlockState blockState = level.getBlockState(pos);
         if(!(blockState.getBlock() instanceof VoidAnchorBlock)) return;
-        level.setBlock(pos, blockState.setValue(VoidAnchorBlock.POWER_LEVEL, blockState.getValue(VoidAnchorBlock.POWER_LEVEL) - power), 3);
+        level.setBlock(pos, blockState.setValue(VoidAnchorBlock.POWER_LEVEL, Math.max(0, blockState.getValue(VoidAnchorBlock.POWER_LEVEL) - power)), 3);
 
 
     }

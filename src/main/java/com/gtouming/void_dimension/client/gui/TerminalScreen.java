@@ -155,7 +155,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 
         // 渲染标题
-        guiGraphics.drawCenteredString(this.font, this.title, leftPos + 80, topPos + 7, 0x55FFFF);
+        guiGraphics.drawString(this.font, this.title, leftPos + 60, topPos + 7, 0x55FFFF);
 
         int clipTop = topPos; // 标题区域下方
         int clipBottom = topPos + GUI_HEIGHT - 9; // GUI底部

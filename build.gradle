@@ -13,6 +13,10 @@ repositories {
     maven { url 'https://maven.aliyun.com/repository/central' }
     maven { url 'https://maven.aliyun.com/repository/google' }
     maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    maven {
+        url = "https://maven.theillusivec4.top/releases"
+        name = "TheIllusiveC4 Maven"
+    }
     mavenLocal()
 }
 
@@ -112,6 +116,8 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     runtimeOnly fileTree(dir: 'libs', include: ['*.jar'])
+    // 1. 开发时编译用，让IDE能识别类
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

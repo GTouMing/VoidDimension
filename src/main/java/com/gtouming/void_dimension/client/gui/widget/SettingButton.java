@@ -11,9 +11,9 @@ public class SettingButton extends AbstractButton{
 
     @Override
     protected void renderWidget(@NotNull GuiGraphics guiGraphics, int i, int i1, float v) {
-        if (customHovered && super.active) guiGraphics.blit(BUTTON, getX(), getY(), 0, 12, 11, 11, 23, 23);
-        else if (!customHovered && super.active) guiGraphics.blit(BUTTON, getX(), getY(), 0, 0, 11, 11, 23, 23);
-        else if (customHovered) guiGraphics.blit(BUTTON, getX(), getY(), 12, 12, 11, 11, 23, 23);
+        if (iHasHovered.isHovered() && super.active) guiGraphics.blit(BUTTON, getX(), getY(), 0, 12, 11, 11, 23, 23);
+        else if (!iHasHovered.isHovered() && super.active) guiGraphics.blit(BUTTON, getX(), getY(), 0, 0, 11, 11, 23, 23);
+        else if (iHasHovered.isHovered()) guiGraphics.blit(BUTTON, getX(), getY(), 12, 12, 11, 11, 23, 23);
         else guiGraphics.blit(BUTTON, getX(), getY(), 12, 0, 11, 11, 23, 23);
     }
 

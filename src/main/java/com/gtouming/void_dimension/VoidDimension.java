@@ -7,6 +7,7 @@ import com.gtouming.void_dimension.command.ApplyCommand;
 import com.gtouming.void_dimension.command.CheckCommand;
 import com.gtouming.void_dimension.component.ModDataComponents;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
+import com.gtouming.void_dimension.curios.CuriosUtil;
 import com.gtouming.void_dimension.dimension.ModBiomeModifiers;
 import com.gtouming.void_dimension.dimension.ModDimensions;
 import com.gtouming.void_dimension.event.subevent.SaveTimeWeatherEvent;
@@ -56,6 +57,8 @@ public class VoidDimension {
         NeoForge.EVENT_BUS.register(this);
 
         modContainer.registerConfig(ModConfig.Type.COMMON, VoidDimensionConfig.SPEC);
+
+        CuriosUtil.init();
     }
 
     void commonSetup(final FMLCommonSetupEvent event) {}

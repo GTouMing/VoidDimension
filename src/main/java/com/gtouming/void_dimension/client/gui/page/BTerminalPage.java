@@ -1,9 +1,11 @@
 package com.gtouming.void_dimension.client.gui.page;
 
+import com.gtouming.void_dimension.client.gui.widget.SettingButton;
+import com.gtouming.void_dimension.client.gui.widget.SliderButton;
 import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.menu.TerminalMenu;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
@@ -18,7 +20,10 @@ public abstract class BTerminalPage implements ITerminalPage {
     protected final int S_B_Y = 20;
     protected final int S_B_S = 14;
     protected List<TickAbstractWidget> widgets = new ArrayList<>();
+    //当前显示的文本
     protected Component currentMessage = Component.empty();
+    //当前显示文本对应的设置项按钮的序号
+    protected int index = 0;
     protected Font font;
     protected TerminalMenu terminalMenu;
     protected Player player;
@@ -36,8 +41,20 @@ public abstract class BTerminalPage implements ITerminalPage {
         this.player = player;
     }
 
-    public boolean powerEnough(int requiredPower, int requiredTotalPower) {
+    protected void widgetHasHovered() {
+        widgets.forEach(widget -> {
+            if (((widget instanceof SettingButton) || (widget instanceof SliderButton)) && widget.isHovered()){
+                index = widget.getWidgetIndex();
+            }
+        });
+    }
+
+    protected boolean powerEnough(int requiredPower, int requiredTotalPower) {
         return terminalMenu.getAnchorPowerLevel() >= requiredPower && terminalMenu.getTotalPowerLevel() >= requiredTotalPower;
+    }
+
+    protected boolean correctDimension() {
+        return player.level().dimension().equals(VoidDimensionType.VOID_DIMENSION);
     }
 
     /**
