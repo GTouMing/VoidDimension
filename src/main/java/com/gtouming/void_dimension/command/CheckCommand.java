@@ -70,7 +70,7 @@ public class CheckCommand {
                         + "§cx: " + pos.getX() + ", "
                         + "§ay: " + pos.getY() + ", "
                         + "§9z: " + pos.getZ() + ", "
-                        + "§6power: " + tag.getString("power")), false);
+                        + "§6power: " + state.getValue(VoidAnchorBlock.POWER_LEVEL)), false);
             }
         }
         return 1;

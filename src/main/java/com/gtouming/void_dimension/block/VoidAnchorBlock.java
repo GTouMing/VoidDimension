@@ -163,7 +163,7 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
 
             if (targetAnchorPos == null) {
                 if (entity instanceof ServerPlayer player) {
-                    player.displayClientMessage(Component.literal("§c目标位置无效！"), true);
+                    player.displayClientMessage(Component.translatable("other.void_dimension.message.teleport_failed", sourcePos.toString()), true);
                 }
                 return;
             }
@@ -310,7 +310,7 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
                     if (entity instanceof ServerPlayer player){
                         if (waitTime % tickRate == 0) {
                             int waitSeconds = (int) (waitTime / tickRate);
-                            player.displayClientMessage(Component.literal("§" + waitSeconds % 10 + "倒计时：" + waitSeconds), true);
+                            player.displayClientMessage(Component.translatable("other.void_dimension.tooltip.teleport_countdown", waitSeconds), true);
                         }
                     }
                     float newWaitTime = waitTime - 1;
@@ -377,7 +377,7 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
         }
 
         // 右键方式传送
-        if (player.isCrouching() && mainHand.isEmpty() && offHand.isEmpty() && anchor.useRightClickTeleport() && getPowerLevel(level, pos) > 0) {
+        if (player.isShiftKeyDown() && mainHand.isEmpty() && offHand.isEmpty() && anchor.useRightClickTeleport() && getPowerLevel(level, pos) > 0) {
             handleVoidAnchorTeleport(serverPlayer, pos, serverLevel);
             return InteractionResult.PASS;
         }

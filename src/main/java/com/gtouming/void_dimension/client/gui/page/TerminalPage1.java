@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
+import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
 
 /**
  * 第一页 - 终端信息页面
@@ -30,7 +31,7 @@ public class TerminalPage1 extends BTerminalPage {
                 xOffset, yOffset + yStep, 160, Component.translatable("gui.void_dimension.terminal.page1.bound_dim_key"), font).alignLeft();
         TickAbstractWidget dimValueLabel = new TickString(
                 xOffset, yOffset + yStep * 2, 160, font)
-                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_dim_value", "§b" + VoidTerminal.getBoundDim(player.getMainHandItem())))
+                .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_dim_value", "§b" + VoidTerminal.getBoundDim(curiosAPI().tryGetTerminal(player))))
                 .alignLeft();
         widgets.add(dimKeyLabel);
         widgets.add(dimValueLabel);
@@ -41,7 +42,9 @@ public class TerminalPage1 extends BTerminalPage {
                 .alignLeft();
         widgets.add(anchorPosKeyLabel);
 
-        BlockPos pos = VoidTerminal.getBoundPos(player.getMainHandItem());
+
+
+        BlockPos pos = VoidTerminal.getBoundPos(curiosAPI().tryGetTerminal(player));
         TickAbstractWidget anchorPosValueLabel = new TickString(
                 xOffset, yOffset + yStep * 4, 160, font)
                 .updateMessage(() -> Component.translatable("gui.void_dimension.terminal.page1.bound_anchor_pos_value", "§c" + pos.getX(), "§a" +  pos.getY(), "§9" + pos.getZ()))

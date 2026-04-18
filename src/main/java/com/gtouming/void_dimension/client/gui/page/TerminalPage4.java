@@ -16,27 +16,23 @@ public class TerminalPage4 extends BTerminalPage {
 
     @Override
     protected List<TickAbstractWidget> createComponents() {
-        // 第四页：提示信息
         int yOffset = topPos + 40;
         int xOffset = leftPos + 70;
         int settingY = topPos + S_B_Y;
         int settingX = leftPos + S_B_X;
 
         // ==================== 虚空锚分类 ====================
-        // 切换传送方式逻辑
-        boolean tt = terminalMenu.useRightClickTeleport();
         // 传送方式切换按钮
         TickAbstractWidget teleportTypeButton = SettingButton.builder(
-                button -> C2STagPacket.sendBooleanToServer(SET_TELEPORT_TYPE, !tt),
+                button -> C2STagPacket.sendBooleanToServer(SET_TELEPORT_TYPE, !terminalMenu.useRightClickTeleport()),
                         () -> powerEnough(16, 256))
                 .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 
 
 
         // 切换收集物品逻辑
-        boolean gi = terminalMenu.isGatherItem();
         TickAbstractWidget gatherItemsButton = SettingButton.builder(
-                button -> C2STagPacket.sendBooleanToServer(SET_GATHER_ITEMS, !gi),
+                button -> C2STagPacket.sendBooleanToServer(SET_GATHER_ITEMS, !terminalMenu.isGatherItem()),
                         () -> powerEnough(16, 256))
                 .settingBounds(settingX, settingY + S_B_S).build(SettingButton::new).setWidgetIndex(1).setIHasHovered(() -> index == 1);
 
@@ -57,11 +53,11 @@ public class TerminalPage4 extends BTerminalPage {
                     widgetHasHovered();
                     if (index == 0)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page4.teleport_type",
-                                tt ? Component.translatable("gui.void_dimension.terminal.page4.text.right_click") : Component.translatable("gui.void_dimension.terminal.page4.text.countdown"),
+                                terminalMenu.useRightClickTeleport() ? Component.translatable("gui.void_dimension.terminal.page4.text.right_click") : Component.translatable("gui.void_dimension.terminal.page4.text.countdown"),
                                 128, 256);
                     if (index == 1)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page4.gather_item",
-                                gi ? Component.translatable("gui.void_dimension.terminal.page4.text.on") : Component.translatable("gui.void_dimension.terminal.page4.text.off"),
+                                terminalMenu.isGatherItem() ? Component.translatable("gui.void_dimension.terminal.page4.text.on") : Component.translatable("gui.void_dimension.terminal.page4.text.off"),
                                 128, 256);
                     if (index == 2)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page4.open_container", 1, 1);

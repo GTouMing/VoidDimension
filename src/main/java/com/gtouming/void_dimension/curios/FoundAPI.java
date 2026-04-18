@@ -10,7 +10,7 @@ import static top.theillusivec4.curios.api.CuriosApi.getCuriosInventory;
 
 public class FoundAPI extends NoFoundAPI{
 
-    public ItemStack getTerminalInCurios(Player player) {
+    public ItemStack tryGetTerminal(Player player) {
         return getCuriosInventory(player)
                 .map(handler -> {
                     // 获取指定槽位类型
@@ -21,9 +21,9 @@ public class FoundAPI extends NoFoundAPI{
                             return stack;
                         }
                     }
-                    return ItemStack.EMPTY;
+                    return super.tryGetTerminal(player);
                 })
-                .orElse(ItemStack.EMPTY);
+                .orElse(super.tryGetTerminal(player));
     }
 
     public void retrieveCurios(Player player, ListTag tag) {

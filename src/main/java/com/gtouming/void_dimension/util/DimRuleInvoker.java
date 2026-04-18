@@ -23,7 +23,7 @@ public class DimRuleInvoker {
                 java.lang.reflect.Method setDayTimeMethod = level.getClass().getMethod("setDayTime", long.class);
                 setDayTimeMethod.invoke(level, dayTime);
             } catch (Exception e) {
-                System.err.println("设置虚空维度单日时间时出错: " + e.getMessage());
+                System.err.println(e.getMessage());
             }
         }
     }

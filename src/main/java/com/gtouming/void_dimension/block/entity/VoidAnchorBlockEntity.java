@@ -37,7 +37,9 @@ import static com.gtouming.void_dimension.menu.TerminalMenu.*;
 public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     //所有block是同一个实例，要检测不同锚点上方实体的倒计时，需要在此定义映射
     private final Map<Entity, Float> waitTimeMap = new HashMap<>();
+
     private final ContainerData data = new SimpleContainerData(5);
+
     private boolean useRightClickTeleport = true;
     private boolean gatherItem = false;
     private boolean cantOpen = false;
@@ -332,12 +334,16 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
 
 
     public MenuConstructor getMenuConstructor() {
+        setData();
+        return (containerId, inventory, player) -> new TerminalMenu(containerId, data);
+    }
+
+    public void setData() {
         data.set(TOTAL_POWER_LEVEL_1, (int) (getTotalPower() >> 32));
         data.set(TOTAL_POWER_LEVEL_2, (int) (getTotalPower() & 0xFFFFFFFFL));
         data.set(ANCHOR_POWER_LEVEL, this.getBlockState().getValue(VoidAnchorBlock.POWER_LEVEL));
         data.set(GATHER_ITEM, this.isGatherItem() ? 1 : 0);
         data.set(TELEPORT_TYPE, this.useRightClickTeleport() ? 1 : 0);
-        return (containerId, inventory, player) -> new TerminalMenu(containerId, data);
     }
 
     public static VoidAnchorBlockEntity[] getAllBlockEntity(ServerLevel level) {

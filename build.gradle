@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        // 将本地仓库放在第一位
+        maven { url = file('F:/IDEA.etc/MavenLocal') }
+        maven { url = 'https://maven.aliyun.com/repository/public' }
+        maven { url = 'https://maven.neoforged.net/releases' }
+        mavenCentral()
+    }
+}
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -17,6 +27,7 @@ repositories {
         url = "https://maven.theillusivec4.top/releases"
         name = "TheIllusiveC4 Maven"
     }
+    maven { url = 'https://neoforged.forgecdn.net' }
     mavenLocal()
 }
 
@@ -116,7 +127,6 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     runtimeOnly fileTree(dir: 'libs', include: ['*.jar'])
-    // 1. 开发时编译用，让IDE能识别类
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -153,7 +163,9 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
                              mod_license            : mod_license,
                              mod_version            : mod_version,
                              mod_authors            : mod_authors,
-                             mod_description        : mod_description]
+                             mod_description        : mod_description,
+                             sources_url            : sources_url,
+    ]
     inputs.properties replaceProperties
     expand replaceProperties
     from "src/main/templates"

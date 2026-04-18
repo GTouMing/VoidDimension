@@ -1,9 +1,12 @@
 package com.gtouming.void_dimension.item;
 
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import com.gtouming.void_dimension.client.input.KeyInputHandler;
+import com.gtouming.void_dimension.curios.CuriosUtil;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.menu.TerminalMenu;
+import com.gtouming.void_dimension.network.C2STagPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -85,20 +88,20 @@ public class VoidTerminal extends Item {
         if (stack.get(BOUND_DATA) == null) {
             // 绑定到锚点
             bindToAnchor(level, stack, pos, powerLevel);
-            player.displayClientMessage(Component.literal("§a虚空终端已绑定到锚点"), true);
+            player.displayClientMessage(Component.translatable("other.void_dimension.message.terminal_bound"), true);
         }
         else {
-            player.displayClientMessage(Component.literal("§c5秒内再次点击以解除绑定或更换绑定"), true);
+            player.displayClientMessage(Component.translatable("other.void_dimension.message.terminal_bound_change"), true);
             if (!bound) bound = true;
             else {
                 bound = false;
                 if (Objects.equals(getBoundPos(stack), pos)) {
                     stack.set(BOUND_DATA, null);
-                    player.displayClientMessage(Component.literal("§c虚空终端已解除绑定"), true);
+                    player.displayClientMessage(Component.translatable("other.void_dimension.message.terminal_unbound"), true);
                 }
                 else {
                     bindToAnchor(level, stack, pos, powerLevel);
-                    player.displayClientMessage(Component.literal("§a虚空终端已绑定到锚点"), true);
+                    player.displayClientMessage(Component.translatable("other.void_dimension.message.terminal_bound"), true);
                 }
            }
         }
@@ -128,9 +131,10 @@ public class VoidTerminal extends Item {
         if (isBound(stack)) {
             BlockEntity entity = getLevelFromDim(serverLevel, getBoundDim(stack)).getBlockEntity(getBoundPos(stack));
             if (!(entity instanceof VoidAnchorBlockEntity anchor)) return InteractionResultHolder.fail(stack);
+            C2STagPacket.setPlayerOpenFromCurio(serverPlayer, false);
             serverPlayer.openMenu(anchor.getMenuProvider(), TerminalMenu.writeBuf(anchor, serverPlayer));
         } else {
-            player.displayClientMessage(Component.literal("§c虚空终端未绑定到任何锚点"), true);
+            player.displayClientMessage(Component.translatable("other.void_dimension.message.terminal_not_bound"), true);
         }
 
         return InteractionResultHolder.sidedSuccess(stack, !level.isClientSide());
@@ -143,13 +147,16 @@ public class VoidTerminal extends Item {
         if (isBound(stack)) {
             BlockPos pos = getBoundPos(stack);
             if (pos == null) return;
-            tooltip.add(Component.literal("§a已绑定锚点: " + " " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ()));
-            tooltip.add(Component.literal("§a绑定锚点所在维度: " + getBoundDim(stack)));
-            tooltip.add(Component.literal("§a当前能量: " + getBoundPowerLevel(stack) + "/" + maxPowerLevel)); // 使用配置中的能量上限
+            tooltip.add(Component.translatable("other.void_dimension.tooltip.bound_pos", "§c" + pos.getX(), "§a" + pos.getY(), "§9" + pos.getZ()));
+            tooltip.add(Component.translatable("other.void_dimension.tooltip.bound_dim", "§b" + getBoundDim(stack)));
+            tooltip.add(Component.translatable("other.void_dimension.tooltip.power_level", "§b" + getBoundPowerLevel(stack)+ "/" + maxPowerLevel)); // 使用配置中的能量上限
         } else {
-            tooltip.add(Component.literal("§c未绑定锚点"));
+            tooltip.add(Component.translatable("other.void_dimension.tooltip.not_bound"));
         }
-        tooltip.add(Component.literal("§5右键锚点绑定，右键使用打开终端"));
+        tooltip.add(Component.translatable("other.void_dimension.tooltip.usage_tip"));
+        if (CuriosUtil.CURIOS_LOADED) {
+            tooltip.add(Component.translatable("other.void_dimension.tooltip.using_hotkey_to_open", KeyInputHandler.OPEN_VOID_TERMINAL_KEY.getTranslatedKeyMessage()));
+        }
     }
 
     /**
@@ -185,10 +192,6 @@ public class VoidTerminal extends Item {
         boundData.putLong("pos", pos.asLong());
         boundData.putInt("power_level", powerLevel);
         stack.set(BOUND_DATA, boundData);
-    }
-
-    private boolean isBound(ItemStack stack) {
-        return stack.get(BOUND_DATA) != null;
     }
 
     public static String getBoundDim(ItemStack stack) {
@@ -243,5 +246,9 @@ public class VoidTerminal extends Item {
         }
         // 锚点被破坏，解绑终端
         stack.set(BOUND_DATA, null);
+    }
+
+    public static boolean isBound(ItemStack stack) {
+        return stack.get(BOUND_DATA) != null;
     }
 }

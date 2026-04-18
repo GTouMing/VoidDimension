@@ -22,9 +22,9 @@ import java.util.*;
 
 import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
 import static com.gtouming.void_dimension.component.TagKeyName.CURRENT_PAGE;
+import static com.gtouming.void_dimension.component.TagKeyName.OPEN_VOID_TERMINAL_FROM_CURIO;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
-    //private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/terminal_gui_background.png");
 
     public static final int GUI_WIDTH = 256;
     public static final int GUI_HEIGHT = 166;
@@ -137,7 +137,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // 渲染GUI背景
-//        guiGraphics.blit(GUI_TEXTURE, leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/gui_background.png"), leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
@@ -188,6 +187,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     public void onClose() {
         super.onClose();
         C2STagPacket.sendIntToServer(CURRENT_PAGE, currentPage);
+        C2STagPacket.sendBooleanToServer(OPEN_VOID_TERMINAL_FROM_CURIO, false);
     }
 
 

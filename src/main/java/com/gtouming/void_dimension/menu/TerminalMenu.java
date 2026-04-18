@@ -3,6 +3,7 @@ package com.gtouming.void_dimension.menu;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.item.VoidTerminal;
+import com.gtouming.void_dimension.network.S2CTagPacket;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -20,13 +21,12 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
+import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 
 public class TerminalMenu extends AbstractContainerMenu implements IContainerFactory<TerminalMenu> {
     public static final Map<UUID, Integer> CP = new HashMap<>();
-    public static final Map<UUID, Boolean> RS = new HashMap<>();
     public int currentPage;
-    public boolean respawnSet;
 
     public static final int TOTAL_POWER_LEVEL_1 = 0;
     public static final int TOTAL_POWER_LEVEL_2 = 1;
@@ -54,7 +54,6 @@ public class TerminalMenu extends AbstractContainerMenu implements IContainerFac
         data.set(GATHER_ITEM, buf.readInt());
         data.set(TELEPORT_TYPE, buf.readInt());
         currentPage = buf.readInt();
-        respawnSet = buf.readBoolean();
     }
 
 
@@ -65,8 +64,9 @@ public class TerminalMenu extends AbstractContainerMenu implements IContainerFac
 
     @Override
     public boolean stillValid(@NotNull Player player) {
-        if (player.getMainHandItem().getItem() instanceof VoidTerminal) {
-            return player.getMainHandItem().get(BOUND_DATA) != null;
+        ItemStack terminalStack = curiosAPI().tryGetTerminal(player);
+        if (terminalStack.getItem() instanceof VoidTerminal) {
+            return terminalStack.get(BOUND_DATA) != null;
         }
         return false;
     }
@@ -95,7 +95,7 @@ public class TerminalMenu extends AbstractContainerMenu implements IContainerFac
             buf.writeInt(anchor.isGatherItem() ? 1 : 0);
             buf.writeInt(anchor.useRightClickTeleport() ? 1 : 0);
             buf.writeInt(CP.getOrDefault(player.getUUID(), 0));
-            buf.writeBoolean(RS.getOrDefault(player.getUUID(), false));
+            S2CTagPacket.sendRespawnPointSetToPlayer(anchor, player);
         };
     }
 

@@ -1,15 +1,19 @@
 package com.gtouming.void_dimension.network;
 
-import com.gtouming.void_dimension.data.VoidDimensionData;
-import com.gtouming.void_dimension.data.SyncData;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
+
+import static com.gtouming.void_dimension.component.TagKeyName.GET_RESPAWN_POINT;
 
 public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static final Type<S2CTagPacket> TYPE =
@@ -22,6 +26,8 @@ public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
             }
     );
 
+    public static boolean respawnSet;
+
     @Override
     public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
@@ -31,25 +37,21 @@ public record S2CTagPacket(CompoundTag tag) implements CustomPacketPayload {
     public static void handle(S2CTagPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             // 客户端处理
-//            if (context.flow().isClientbound()) {
-//                if (packet.tag.contains("total_power")) SyncData.clientTotalPower = packet.tag.getLong("total_power");
-//            }
+            if (context.flow().isClientbound()) {
+                if (packet.tag.contains(GET_RESPAWN_POINT)) respawnSet = packet.tag.getBoolean(GET_RESPAWN_POINT);
+            }
         });
     }
 
-    public static void sendToAllPlayers(CompoundTag tag) {
-        PacketDistributor.sendToAllPlayers(new S2CTagPacket(tag));
-    }
-
-    public static void sendLongToAllPlayers(String key, long value) {
-        CompoundTag tag = new CompoundTag();
-        tag.putLong(key, value);
-        sendToAllPlayers(tag);
-    }
-
-    public static void sendBooleanToAllPlayers(String key, boolean value) {
-        CompoundTag tag = new CompoundTag();
-        tag.putBoolean(key, value);
-        sendToAllPlayers(tag);
+    public static void sendRespawnPointSetToPlayer(VoidAnchorBlockEntity anchor, ServerPlayer player) {
+        MinecraftServer server = player.level().getServer();
+        if (server != null) {
+            ServerLevel level = server.getLevel(player.getRespawnDimension());
+            if(level != null && player.getRespawnPosition() != null) {
+                CompoundTag tag = new CompoundTag();
+                tag.putBoolean(GET_RESPAWN_POINT, anchor.equals(VoidAnchorBlockEntity.getBlockEntity(level, player.getRespawnPosition().below())));
+                PacketDistributor.sendToPlayer(player, new S2CTagPacket(tag));
+            }
+        }
     }
 }

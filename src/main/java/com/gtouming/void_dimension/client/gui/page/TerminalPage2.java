@@ -59,7 +59,7 @@ public class TerminalPage2 extends BTerminalPage {
                     if (index == 0)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.weather", getCurrentWeather(), 2560, 256000);
                     if (index == 1)
-                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.daytime", dayTime(), 2560, 256000);
+                        currentMessage = Component.translatable("gui.void_dimension.terminal.page2.text.daytime", "§b" + dayTime(), 2560, 256000);
                     return currentMessage;
                 });
         widgets.add(textLabel);

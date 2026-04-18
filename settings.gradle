@@ -1,8 +1,10 @@
 pluginManagement {
     repositories {
-        mavenLocal()
-        gradlePluginPortal()
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
         maven { url = 'https://maven.neoforged.net/releases' }
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 

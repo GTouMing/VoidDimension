@@ -23,6 +23,6 @@ public class ReturnDeathItemEvent {
         blockEntity.retrieveLegacy(player);
         blockEntity.retrieveCurios(player);
 
-        player.displayClientMessage(Component.literal("§a物品已取回！"), true);
+        player.displayClientMessage(Component.translatable("other.void_dimension.message.legacy_has_returned"), true);
     }
 }

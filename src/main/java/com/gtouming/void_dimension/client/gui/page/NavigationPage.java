@@ -16,20 +16,20 @@ import java.util.Random;
  */
 public class NavigationPage extends BTerminalPage {
     private static final Component[] TIP_TEXTS = {
-            Component.literal("传送时, 能量会在虚空维度和主世界之间流动..."),
-            Component.literal("不是哥们"),
-            Component.literal("对，对吗？哥们"),
+            Component.literal("§b传送时, 能量会在虚空维度和主世界之间流动..."),
+            Component.literal("§b不是哥们"),
             Component.literal("§k1145141919810"),
-            Component.literal("功能后面的数字绿色是耗能，红色是需求总能量阈值"),
+            Component.literal("§b消耗能量是使用该功能即将消耗的锚点的能量（废话）"),
+            Component.literal("§b需求能量是使用该功能需要虚空维度总能量达到的阈值"),
             Component.literal("§7写获取维度总能量的方法花了一天时间..."),
-            Component.literal("锚点貌似无法破坏？在改了在改了...（新建文件夹）"),
+            Component.literal("§b锚点貌似可以破坏？传送时会生成新锚点？刷！（马上修）"),
             Component.literal("§cC§di§6a§el§al§bo§9~ (∠・ω< )⌒☆"),
-            Component.literal("系统提示：定期维护锚点以确保稳定性§m瞎说的"),
-            Component.literal("两手空空蹲下右键使用锚点传送")
+            Component.literal("§b系统提示：定期维护锚点以确保稳定性§m瞎说的"),
+            Component.literal("§b两手空空Shift+右键使用锚点传送")
     };
     private static final Random RANDOM = new Random();
     private final Component randomTip;
-    private int currentPage = -1;
+    private int currentPage;
     private ChangeCallback pageChangeCallback;
     private final PageButton[] pageButtons = new PageButton[4]; // 4
     private final ResourceLocation GUI_ANCHOR = ResourceLocation.fromNamespaceAndPath(VoidDimension.MOD_ID, "textures/gui/widget/void_anchor_gui.png");
@@ -59,7 +59,6 @@ public class NavigationPage extends BTerminalPage {
      */
     @Override
     protected List<TickAbstractWidget> createComponents() {
-        // 如果currentPage未被设置，则从物品堆栈中读取
         if (currentPage < 0 || currentPage > 3)
             currentPage = terminalMenu.currentPage;
 

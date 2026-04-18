@@ -2,6 +2,7 @@ package com.gtouming.void_dimension.client.gui.page;
 
 import com.gtouming.void_dimension.client.gui.widget.*;
 import com.gtouming.void_dimension.network.C2STagPacket;
+import com.gtouming.void_dimension.network.S2CTagPacket;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -24,10 +25,9 @@ public class TerminalPage3 extends BTerminalPage {
         int settingX = leftPos + S_B_X;
 
         // ==================== 玩家分类 ====================
-        boolean rp = terminalMenu.respawnSet;
         AbstractButton respawnAnchorButton = (AbstractButton) SettingButton.builder(
                 button -> C2STagPacket.sendBooleanToServer(SET_RESPAWN_POINT, true)
-                , () -> !rp && powerEnough(128, 256))
+                , () -> powerEnough(128, 256))
                 .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 
 
@@ -45,7 +45,7 @@ public class TerminalPage3 extends BTerminalPage {
                     widgetHasHovered();
                     if (index == 0)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page3.text.respawn_set",
-                                rp ? Component.translatable("gui.void_dimension.terminal.page3.text.set") : Component.translatable("gui.void_dimension.terminal.page3.text.not_set"),
+                                S2CTagPacket.respawnSet ? Component.translatable("gui.void_dimension.terminal.page3.text.set") : Component.translatable("gui.void_dimension.terminal.page3.text.not_set"),
                                 256, 2560);
                     if (index == 1)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page3.teleport_anchor", 128, 256);

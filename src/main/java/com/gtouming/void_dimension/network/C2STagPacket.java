@@ -22,9 +22,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
+import java.util.*;
 
 import static com.gtouming.void_dimension.component.TagKeyName.*;
+import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
 import static com.gtouming.void_dimension.item.VoidTerminal.getBoundDim;
@@ -40,6 +41,9 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 return new C2STagPacket(readTag == null ? new CompoundTag() : readTag);
             }
     );
+
+    private static final List<UUID> FROM_CURIO = new ArrayList<>();
+
     @Override
     public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
@@ -51,24 +55,27 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
                 ServerPlayer serverPlayer = (ServerPlayer) context.player();
                 ServerLevel level = serverPlayer.serverLevel();
 
-                if (!(serverPlayer.getMainHandItem().getItem() instanceof VoidTerminal)) return;
-                ItemStack terminal = serverPlayer.getMainHandItem();
-                ServerLevel boundLevel = getLevelFromDim(level, getBoundDim(terminal));
-                BlockPos pos = getBoundPos(terminal);
-
                 if (packet.tag.contains(CURRENT_PAGE)) TerminalMenu.CP.put(serverPlayer.getUUID(), packet.tag.getInt(CURRENT_PAGE));
-//                if (!packet.tag.contains(CHANGE_SETTING)) return;
+                if (packet.tag.contains(OPEN_VOID_TERMINAL_FROM_CURIO)) {
+                    setPlayerOpenFromCurio(serverPlayer, packet.tag.getBoolean(OPEN_VOID_TERMINAL_FROM_CURIO));
+                }
+
+                ItemStack terminalStack = FROM_CURIO.contains(serverPlayer.getUUID()) ? curiosAPI().tryGetTerminal(serverPlayer) : serverPlayer.getMainHandItem();
+                if (!(terminalStack.getItem() instanceof VoidTerminal)) return;
+                ServerLevel boundLevel = getLevelFromDim(level, getBoundDim(terminalStack));
+                BlockPos pos = getBoundPos(terminalStack);
+
 
                 {
                     // 虚空维度相关设置
-                    if (packet.tag.contains(SET_DAY_TIME)/* && powerEnough(serverPlayer, 2560, 256000)*/) {
+                    if (packet.tag.contains(SET_DAY_TIME) && powerEnough(terminalStack, 2560, 256000)) {
                         long dayTime = packet.tag.getLong(SET_DAY_TIME);
                         DimRuleInvoker.setVoidDimensionDayTime(level, dayTime);
                         VoidDimensionData.setVDayTime(level, dayTime);
                         decreasePower(boundLevel, pos, 2560);
                     }
 
-                    if (packet.tag.contains(SET_WEATHER) && powerEnough(serverPlayer, 2560, 256000)) {
+                    if (packet.tag.contains(SET_WEATHER) && powerEnough(terminalStack, 2560, 256000)) {
                         // 直接从服务器获取虚空维度实例，避免跨维度同步问题
                         ServerLevel voidLevel = Objects.requireNonNull(serverPlayer.getServer()).getLevel(VoidDimensionType.VOID_DIMENSION);
                         if (voidLevel != null) {
@@ -84,12 +91,19 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
                 {
                     // 玩家相关设置
-                    if (packet.tag.contains(SET_RESPAWN_POINT) && boundLevel != null && powerEnough(serverPlayer, 128, 256)) {
-                        serverPlayer.setRespawnPosition(boundLevel.dimension(), pos.above(), 0.0f, true, true);
+                    if (packet.tag.contains(SET_RESPAWN_POINT) && boundLevel != null && powerEnough(terminalStack, 128, 256)) {
+                        if (packet.tag.getBoolean(SET_RESPAWN_POINT)){
+                            serverPlayer.setRespawnPosition(boundLevel.dimension(), pos.above(), 0.0f, true, true);
+                        }
+                        else {
+                            serverPlayer.setRespawnPosition(boundLevel.dimension(), null, 0.0f, true, true);
+                        }
+                        if ((boundLevel.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor))
+                            S2CTagPacket.sendRespawnPointSetToPlayer(anchor, serverPlayer);
                         decreasePower(boundLevel, pos, 128);
                     }
 
-                    if (packet.tag.contains(TELEPORT_TO_ANCHOR) && boundLevel != null && powerEnough(serverPlayer, 128, 256)) {
+                    if (packet.tag.contains(TELEPORT_TO_ANCHOR) && boundLevel != null && powerEnough(terminalStack, 128, 256)) {
                         serverPlayer.teleportTo(boundLevel, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0.0f, 0.0f);
                         decreasePower(boundLevel, pos, 128);
                     }
@@ -97,20 +111,24 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
                 // 虚空锚相关设置
                 if (boundLevel != null && (boundLevel.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor)) {
-                    if (packet.tag.contains(SET_GATHER_ITEMS) && powerEnough(serverPlayer, 16, 256)) {
+                    if (packet.tag.getBoolean(OPEN_VOID_TERMINAL_FROM_CURIO)) {
+                        serverPlayer.openMenu(anchor.getMenuProvider(), TerminalMenu.writeBuf(anchor, serverPlayer));
+                    }
+
+                    if (packet.tag.contains(SET_GATHER_ITEMS) && powerEnough(terminalStack, 16, 256)) {
                         anchor.setGatherItem(packet.tag.getBoolean(SET_GATHER_ITEMS));
                         decreasePower(boundLevel, pos, 16);
                     }
-                    if (packet.tag.contains(SET_TELEPORT_TYPE) && powerEnough(serverPlayer, 16, 256)) {
+                    if (packet.tag.contains(SET_TELEPORT_TYPE) && powerEnough(terminalStack, 16, 256)) {
                         anchor.setUseRightClickTeleport(packet.tag.getBoolean(SET_TELEPORT_TYPE));
                         decreasePower(boundLevel, pos, 16);
                     }
-                    if (packet.tag.contains(OPEN_CONTAINER) && powerEnough(serverPlayer, 1, 1)) {
+                    if (packet.tag.contains(OPEN_CONTAINER) && powerEnough(terminalStack, 1, 1)) {
                         if (anchor.getLevel() == serverPlayer.serverLevel()) {
                             serverPlayer.openMenu(anchor);
                             decreasePower(boundLevel, pos, 1);
                         }
-                        else serverPlayer.sendSystemMessage(Component.literal("乂，虚空锚不在当前维度"));
+                        else serverPlayer.sendSystemMessage(Component.translatable("other.void_dimension.message.wrong_dimension"));
                     }
                 }
             }
@@ -135,7 +153,6 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
     public static void sendBooleanToServer(String key, boolean value) {
         CompoundTag tag = new CompoundTag();
-//        tag.putString(CHANGE_SETTING, "");
         tag.putBoolean(key, value);
         sendToServer(tag);
     }
@@ -148,7 +165,12 @@ public record C2STagPacket(CompoundTag tag) implements CustomPacketPayload {
 
     }
 
-    public static boolean powerEnough(ServerPlayer player, int requiredPower, int requiredTotalPower) {
-        return VoidTerminal.getBoundPowerLevel(player.getMainHandItem()) >= requiredPower && getTotalPower() >= requiredTotalPower;
+    public static boolean powerEnough(ItemStack terminal, int requiredPower, int requiredTotalPower) {
+        return VoidTerminal.getBoundPowerLevel(terminal) >= requiredPower && getTotalPower() >= requiredTotalPower;
+    }
+
+    public static void setPlayerOpenFromCurio(ServerPlayer player, boolean fromCurio) {
+        if (fromCurio) FROM_CURIO.add(player.getUUID());
+        else FROM_CURIO.remove(player.getUUID());
     }
 }

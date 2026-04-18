@@ -1,8 +1,8 @@
 package com.gtouming.void_dimension.event.subevent;
 
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
-import com.gtouming.void_dimension.curios.CuriosUtil;
 import com.gtouming.void_dimension.dimension.ModDimensions;
+import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.item.ModItems;
 import com.gtouming.void_dimension.item.VoidTerminal;
 import net.minecraft.core.BlockPos;
@@ -12,9 +12,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
-import java.util.Collections;
-
 import static com.gtouming.void_dimension.component.ModDataComponents.BOUND_DATA;
+import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
 
 public class PlayerDeathEvent {
 
@@ -31,42 +30,29 @@ public class PlayerDeathEvent {
         ItemStack stack = findBoundVoidTerminal(player);
         if (ItemStack.EMPTY.equals(stack)) return;
         // 保存死亡物品到锚点方块实体
-        VoidAnchorBlockEntity blockEntity = VoidAnchorBlockEntity.getBlockEntity(player.serverLevel(), anchorPos);
+        VoidAnchorBlockEntity blockEntity = VoidAnchorBlockEntity.getBlockEntity(VoidDimensionType.getLevelFromDim(player.serverLevel(), VoidTerminal.getBoundDim(stack)), anchorPos);
         if (blockEntity == null) return;
 
         blockEntity.saveLegacyToMap(player);
         blockEntity.saveCuriosToMap(player);
-        clearPlayerInventory(player);
+        player.getInventory().clearContent();
 
-        player.sendSystemMessage(Component.literal(
-                "§a你的物品已保存在已绑定的虚空锚:" + anchorPos + "，右键锚点可快速取回"
-        ));
-    }
-
-    /**
-     * 清除玩家背包中的所有物品
-     */
-    private static void clearPlayerInventory(ServerPlayer player) {
-        var inventory = player.getInventory();
-
-        inventory.setItem(inventory.selected, ItemStack.EMPTY);
-        inventory.offhand.set(0, ItemStack.EMPTY);
-
-        Collections.fill(inventory.armor, ItemStack.EMPTY);
-        Collections.fill(inventory.items, ItemStack.EMPTY);
+        player.sendSystemMessage(Component.translatable("other.void_dimension.message.legacy_saved",
+                anchorPos.toString()));
     }
 
     /**
      * 查找绑定的锚点
      */
     private static BlockPos findBoundedAnchor(ServerPlayer player) {
-        if (ItemStack.EMPTY.equals(findBoundVoidTerminal(player))) return null;
+        if (ItemStack.EMPTY.equals(findBoundVoidTerminal(player))) return BlockPos.ZERO;
         return VoidTerminal.getBoundPos(findBoundVoidTerminal(player));
     }
 
     private static ItemStack findBoundVoidTerminal(ServerPlayer player) {
+        if (!ItemStack.EMPTY.equals(curiosAPI().tryGetTerminal(player))) return curiosAPI().tryGetTerminal(player);
         for (ItemStack stack : player.getInventory().items) {
-            if (stack.is(ModItems.VOID_TERMINAL ) && stack.get(BOUND_DATA) != null) return stack;
+            if (stack.is(ModItems.VOID_TERMINAL) && stack.get(BOUND_DATA) != null) return stack;
         }
         return ItemStack.EMPTY;
     }
