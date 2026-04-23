@@ -37,4 +37,11 @@ public class FoundAPI extends NoFoundAPI{
                 curiosList.addAll(inv.saveInventory(true)));
         return curiosList;
     }
+
+    public ListTag getCurios(Player player) {
+        ListTag curiosList = new ListTag();
+        getCuriosInventory(player).ifPresent(inv ->
+                curiosList.addAll(inv.saveInventory(false)));
+        return curiosList;
+    }
 }

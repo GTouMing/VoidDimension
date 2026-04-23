@@ -8,5 +8,6 @@ public interface ICuriosAPI {
     ItemStack tryGetTerminal(Player player);
     void retrieveCurios(Player player, ListTag tag);
     ListTag saveCurios(Player player);
+    ListTag getCurios(Player player);
 
 }

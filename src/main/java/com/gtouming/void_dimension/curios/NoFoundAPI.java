@@ -18,4 +18,8 @@ public class NoFoundAPI implements ICuriosAPI{
     public ListTag saveCurios(Player player) {
         return new ListTag();
     }
+
+    public ListTag getCurios(Player player) {
+        return new ListTag();
+    }
 }

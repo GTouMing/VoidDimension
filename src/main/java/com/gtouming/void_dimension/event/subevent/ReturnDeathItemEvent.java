@@ -20,9 +20,8 @@ public class ReturnDeathItemEvent {
         
         if (blockEntity == null || !blockEntity.hasPlayerLegacy(player)) return;
             // 取回死亡物品
-        blockEntity.retrieveLegacy(player);
-        blockEntity.retrieveCurios(player);
-
-        player.displayClientMessage(Component.translatable("other.void_dimension.message.legacy_has_returned"), true);
+        if (blockEntity.retrieveLegacy(player) && blockEntity.retrieveCurios(player)) {
+            player.displayClientMessage(Component.translatable("other.void_dimension.message.legacy_has_returned"), true);
+        }
     }
 }

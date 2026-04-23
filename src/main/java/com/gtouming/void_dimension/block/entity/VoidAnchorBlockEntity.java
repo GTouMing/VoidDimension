@@ -1,5 +1,6 @@
 package com.gtouming.void_dimension.block.entity;
 
+import com.google.common.collect.ImmutableList;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
@@ -304,19 +305,34 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     /**
      * 取回玩家死亡物品
      */
-    public void retrieveLegacy(Player player) {
-        player.getInventory().dropAll();
-        player.getInventory().load(playerLegacy.get(player.getUUID()));
-        playerLegacy.remove(player.getUUID());
+    public boolean retrieveLegacy(Player player) {
+        ListTag legacy = playerLegacy.get(player.getUUID());
+        Inventory inventory = player.getInventory();
+        for(List<ItemStack> list : ImmutableList.of(inventory.items, inventory.armor, inventory.offhand)) {
+            for (ItemStack itemstack : list) {
+                if (!itemstack.isEmpty()) {
+                    player.drop(itemstack, false, false);
+                }
+            }
+        }
+        player.getInventory().load(legacy);
+        boolean success = player.getInventory().save(new ListTag()).equals(legacy);
+        if (success)
+            playerLegacy.remove(player.getUUID());
+        return success;
     }
 
     public void saveCuriosToMap(Player player) {
         playerCurios.put(player.getUUID(), curiosAPI().saveCurios(player));
     }
 
-    public void retrieveCurios(Player player) {
-        curiosAPI().retrieveCurios(player, playerCurios.get(player.getUUID()));
-        playerCurios.remove(player.getUUID());
+    public boolean retrieveCurios(Player player) {
+        ListTag curios = playerCurios.get(player.getUUID());
+        curiosAPI().retrieveCurios(player, curios);
+        boolean success = curiosAPI().getCurios(player).equals(curios);
+        if (success)
+            playerCurios.remove(player.getUUID());
+        return success;
     }
 
     /**
