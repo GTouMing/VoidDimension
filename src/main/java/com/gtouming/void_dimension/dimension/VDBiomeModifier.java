@@ -37,10 +37,9 @@ public class VDBiomeModifier implements BiomeModifier {
             List<MobSpawnSettings.SpawnerData> spawners = VoidDimensionConfig.getConfiguredSpawners();
 
             for (MobSpawnSettings.SpawnerData spawner : spawners) {
-                builder.getMobSpawnSettings().addSpawn(MobCategory.MONSTER, spawner);
+                builder.getMobSpawnSettings().addMobCharge(spawner.type, (double) spawner.getWeight().asInt() / VoidDimensionConfig.topWeight, 24).addSpawn(spawner.type.getCategory(), spawner);
             }
         }
-
     }
 
     @Override

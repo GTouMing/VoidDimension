@@ -81,6 +81,7 @@ public class VoidDimensionConfig {
     // 添加刷怪配置变量
     public static boolean enableMonsterSpawning = true;
     public static List<String> monsterSpawners = new ArrayList<>(List.of("minecraft:zombie=100,4,4", "minecraft:skeleton=100,4,4", "minecraft:spider=100,4,4", "minecraft:enderman=10,1,4"));
+    public static int topWeight = 0;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event){
@@ -299,6 +300,7 @@ public class VoidDimensionConfig {
      */
     private static List<MobSpawnSettings.SpawnerData> getConfiguredSpawners(List<String> spawnerConfigs) {
         List<MobSpawnSettings.SpawnerData> spawners = new ArrayList<>();
+        topWeight = 0;
 
         for (String spawnerConfig : spawnerConfigs) {
             String[] parts = spawnerConfig.split("=");
@@ -315,6 +317,7 @@ public class VoidDimensionConfig {
                     if (entityLocation != null && BuiltInRegistries.ENTITY_TYPE.containsKey(entityLocation)) {
                         EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(entityLocation);
                         spawners.add(new MobSpawnSettings.SpawnerData(type, weight, minCount, maxCount));
+                        topWeight += weight;
                     }
                 } catch (Exception e) {
                     // 忽略无效配置
