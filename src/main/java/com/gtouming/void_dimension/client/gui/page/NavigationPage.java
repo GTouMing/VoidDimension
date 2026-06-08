@@ -60,7 +60,7 @@ public class NavigationPage extends BTerminalPage {
     @Override
     protected List<TickAbstractWidget> createComponents() {
         if (currentPage < 0 || currentPage > 3)
-            currentPage = terminalMenu.currentPage;
+            currentPage = 0;
 
         // 按钮纵向排列参数
         int buttonHeight = 15;   // 按钮高度

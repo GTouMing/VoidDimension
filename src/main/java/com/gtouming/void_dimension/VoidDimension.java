@@ -12,9 +12,8 @@ import com.gtouming.void_dimension.dimension.ModBiomeModifiers;
 import com.gtouming.void_dimension.dimension.ModDimensions;
 import com.gtouming.void_dimension.event.subevent.SaveTimeWeatherEvent;
 import com.gtouming.void_dimension.item.ModItems;
-import com.gtouming.void_dimension.menu.ModMenus;
-import com.gtouming.void_dimension.network.C2STagPacket;
-import com.gtouming.void_dimension.network.S2CTagPacket;
+
+import com.gtouming.void_dimension.network.*;
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -48,8 +47,6 @@ public class VoidDimension {
 
         ModBlockEntities.register(modEventBus);
 
-        ModMenus.register(modEventBus);
-
         ModSounds.register(modEventBus);
 
         ModBiomeModifiers.register(modEventBus);
@@ -69,15 +66,27 @@ public class VoidDimension {
     void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.8");
         registrar.playToClient(
-                S2CTagPacket.TYPE,
-                S2CTagPacket.STREAM_CODEC,
-                S2CTagPacket::handle
+                GuiS2CPacket.TYPE,
+                GuiS2CPacket.STREAM_CODEC,
+                GuiS2CPacket::handle
         );
 
         registrar.playToServer(
-                C2STagPacket.TYPE,
-                C2STagPacket.STREAM_CODEC,
-                C2STagPacket::handle
+                GuiC2SPacket.TYPE,
+                GuiC2SPacket.STREAM_CODEC,
+                GuiC2SPacket::handle
+        );
+
+        registrar.playToServer(
+                DimensionC2SPacket.TYPE,
+                DimensionC2SPacket.STREAM_CODEC,
+                DimensionC2SPacket::handle
+        );
+
+        registrar.playToServer(
+                PlayerC2SPacket.TYPE,
+                PlayerC2SPacket.STREAM_CODEC,
+                PlayerC2SPacket::handle
         );
     }
 

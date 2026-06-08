@@ -4,7 +4,7 @@ import com.gtouming.void_dimension.client.gui.widget.SettingButton;
 import com.gtouming.void_dimension.client.gui.widget.SliderButton;
 import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
-import com.gtouming.void_dimension.menu.TerminalMenu;
+import com.gtouming.void_dimension.network.GuiS2CPacket;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +25,6 @@ public abstract class BTerminalPage implements ITerminalPage {
     //当前显示文本对应的设置项按钮的序号
     protected int index = 0;
     protected Font font;
-    protected TerminalMenu terminalMenu;
     protected Player player;
     protected int leftPos;
     protected int topPos;
@@ -33,11 +32,10 @@ public abstract class BTerminalPage implements ITerminalPage {
     /**
      * 初始化通用参数
      */
-    protected void initCommonParams(Font font, int leftPos, int topPos, TerminalMenu terminalMenu, Player player) {
+    protected void initCommonParams(Font font, int leftPos, int topPos, Player player) {
         this.font = font;
         this.leftPos = leftPos;
         this.topPos = topPos;
-        this.terminalMenu = terminalMenu;
         this.player = player;
     }
 
@@ -50,7 +48,7 @@ public abstract class BTerminalPage implements ITerminalPage {
     }
 
     protected boolean powerEnough(int requiredPower, int requiredTotalPower) {
-        return terminalMenu.getAnchorPowerLevel() >= requiredPower && terminalMenu.getTotalPowerLevel() >= requiredTotalPower;
+        return GuiS2CPacket.getAnchorPowerLevel() >= requiredPower && GuiS2CPacket.getTotalPowerLevel() >= requiredTotalPower;
     }
 
     protected boolean correctDimension() {
@@ -63,8 +61,8 @@ public abstract class BTerminalPage implements ITerminalPage {
     protected abstract List<TickAbstractWidget> createComponents();
 
      @Override
-    public List<TickAbstractWidget> initComponents(Font font, int leftPos, int topPos, TerminalMenu terminalMenu, Player player) {
-        initCommonParams(font, leftPos, topPos, terminalMenu, player);
+    public List<TickAbstractWidget> initComponents(Font font, int leftPos, int topPos, Object dummy, Player player) {
+        initCommonParams(font, leftPos, topPos, player);
         widgets.clear();
         return createComponents();
     }

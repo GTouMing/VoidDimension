@@ -1,13 +1,13 @@
 package com.gtouming.void_dimension.client.gui.page;
 
 import com.gtouming.void_dimension.client.gui.widget.*;
-import com.gtouming.void_dimension.network.C2STagPacket;
-import com.gtouming.void_dimension.network.S2CTagPacket;
+import com.gtouming.void_dimension.network.PlayerC2SPacket;
+import com.gtouming.void_dimension.network.GuiS2CPacket;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-import static com.gtouming.void_dimension.component.TagKeyName.*;
+import static com.gtouming.void_dimension.network.PlayerC2SPacket.*;
 
 /**
  * 第三页 - 玩家相关设置
@@ -26,13 +26,13 @@ public class TerminalPage3 extends BTerminalPage {
 
         // ==================== 玩家分类 ====================
         AbstractButton respawnAnchorButton = (AbstractButton) SettingButton.builder(
-                button -> C2STagPacket.sendBooleanToServer(SET_RESPAWN_POINT, true)
+                button -> PlayerC2SPacket.sendBooleanToServer(SET_RESPAWN_POINT, true)
                 , () -> powerEnough(128, 256))
                 .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 
 
         AbstractButton teleportAnchorButton = (AbstractButton) SettingButton.builder(
-                button -> C2STagPacket.sendBooleanToServer(TELEPORT_TO_ANCHOR, false),
+                button -> PlayerC2SPacket.sendBooleanToServer(TELEPORT_TO_ANCHOR, false),
                         () -> powerEnough(128, 256))
                 .settingBounds(settingX, settingY + S_B_S).build(SettingButton::new).setWidgetIndex(1).setIHasHovered(() -> index == 1);
 
@@ -45,7 +45,7 @@ public class TerminalPage3 extends BTerminalPage {
                     widgetHasHovered();
                     if (index == 0)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page3.text.respawn_set",
-                                S2CTagPacket.respawnSet ? Component.translatable("gui.void_dimension.terminal.page3.text.set") : Component.translatable("gui.void_dimension.terminal.page3.text.not_set"),
+                                GuiS2CPacket.respawnSet ? Component.translatable("gui.void_dimension.terminal.page3.text.set") : Component.translatable("gui.void_dimension.terminal.page3.text.not_set"),
                                 256, 2560);
                     if (index == 1)
                         currentMessage = Component.translatable("gui.void_dimension.terminal.page3.teleport_anchor", 128, 256);

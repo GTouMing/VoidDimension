@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
-import com.gtouming.void_dimension.menu.TerminalMenu;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -14,8 +14,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.SimpleMenuProvider;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -29,7 +28,7 @@ import java.util.*;
 
 import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
-import static com.gtouming.void_dimension.menu.TerminalMenu.*;
+
 
 /**
  * 虚空锚点方块实体
@@ -38,6 +37,12 @@ import static com.gtouming.void_dimension.menu.TerminalMenu.*;
 public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     //所有block是同一个实例，要检测不同锚点上方实体的倒计时，需要在此定义映射
     private final Map<Entity, Float> waitTimeMap = new HashMap<>();
+
+    public static final int TOTAL_POWER_LEVEL_1 = 0;
+    public static final int TOTAL_POWER_LEVEL_2 = 1;
+    public static final int ANCHOR_POWER_LEVEL = 2;
+    public static final int GATHER_ITEM = 3;
+    public static final int TELEPORT_TYPE = 4;
 
     private final ContainerData data = new SimpleContainerData(5);
 
@@ -344,23 +349,7 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
         return items != null && !items.isEmpty() || curios != null && !curios.isEmpty();
     }
 
-    public MenuProvider getMenuProvider() {
-        return new SimpleMenuProvider(getMenuConstructor(), Component.translatable("item.void_dimension.void_terminal"));
-    }
 
-
-    public MenuConstructor getMenuConstructor() {
-        setData();
-        return (containerId, inventory, player) -> new TerminalMenu(containerId, data);
-    }
-
-    public void setData() {
-        data.set(TOTAL_POWER_LEVEL_1, (int) (getTotalPower() >> 32));
-        data.set(TOTAL_POWER_LEVEL_2, (int) (getTotalPower() & 0xFFFFFFFFL));
-        data.set(ANCHOR_POWER_LEVEL, this.getBlockState().getValue(VoidAnchorBlock.POWER_LEVEL));
-        data.set(GATHER_ITEM, this.isGatherItem() ? 1 : 0);
-        data.set(TELEPORT_TYPE, this.useRightClickTeleport() ? 1 : 0);
-    }
 
     public static VoidAnchorBlockEntity[] getAllBlockEntity(ServerLevel level) {
         List<CompoundTag> tags = VoidDimensionData.getAnchorList(level);

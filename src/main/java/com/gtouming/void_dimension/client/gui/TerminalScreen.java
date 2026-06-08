@@ -3,28 +3,26 @@ package com.gtouming.void_dimension.client.gui;
 import com.gtouming.void_dimension.client.gui.page.*;
 import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
 import com.gtouming.void_dimension.client.sound.ModSounds;
-import com.gtouming.void_dimension.menu.TerminalMenu;
-import com.gtouming.void_dimension.network.C2STagPacket;
+import com.gtouming.void_dimension.network.GuiC2SPacket;
+import com.gtouming.void_dimension.network.GuiS2CPacket;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
-import static com.gtouming.void_dimension.component.TagKeyName.CURRENT_PAGE;
-import static com.gtouming.void_dimension.component.TagKeyName.OPEN_VOID_TERMINAL_FROM_CURIO;
+import static com.gtouming.void_dimension.network.GuiC2SPacket.OPEN_VOID_TERMINAL_FROM_CURIO;
 
-public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
+public class TerminalScreen extends Screen {
 
     public static final int GUI_WIDTH = 256;
     public static final int GUI_HEIGHT = 166;
@@ -34,10 +32,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
     // 分页相关
     private final BTerminalPage[] pages = {
-        new TerminalPage1(),
-        new TerminalPage2(),
-        new TerminalPage3(),
-        new TerminalPage4()
+            new TerminalPage1(),
+            new TerminalPage2(),
+            new TerminalPage3(),
+            new TerminalPage4()
     };
     private final Player player;
     private int currentPage;
@@ -45,14 +43,27 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     private List<TickAbstractWidget> navigationButtons = new ArrayList<>();
     private List<TickAbstractWidget> currentPageWidgets = new ArrayList<>();
 
-    private final TerminalMenu terminalMenu;
+    // 保存当前页面，以便在重新打开时恢复
+    private static int savedCurrentPage = 0;
 
-    public TerminalScreen(TerminalMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        this.terminalMenu = menu;
-        this.player = inventory.player;
-        this.currentPage = menu.currentPage;
+    public TerminalScreen() {
+        super(Component.translatable("item.void_dimension.void_terminal"));
+        this.player = Minecraft.getInstance().player;
+        this.currentPage = savedCurrentPage;
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.GUI_OPEN.get(), 1, 0.5F));
+    }
+    
+    @Override
+    protected void init() {
+        super.init();
+        // 告诉服务器我们打开了GUI
+        GuiC2SPacket.sendGuiOpenedToServer();
+        // 计算界面位置（居中显示）
+        this.leftPos = (this.width - GUI_WIDTH) / 2;
+        this.topPos = (this.height - GUI_HEIGHT) / 2;
+        // 显示当前页面的组件
+        showCurrentPage();
+        showNavigationButton();
     }
 
     private void showCurrentPage() {
@@ -65,8 +76,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         currentPageWidgets.clear();
 
         // 获取当前页面的组件
-        ITerminalPage currentPage = pages[this.currentPage];
-        currentPageWidgets = currentPage.initComponents(this.font, leftPos, topPos, terminalMenu, player);
+        ITerminalPage page = pages[this.currentPage];
+        currentPageWidgets = page.initComponents(this.font, leftPos, topPos, null, player);
         // 显示当前页面的组件
         for (AbstractWidget widget : currentPageWidgets) {
             addRenderableWidget(widget);
@@ -86,7 +97,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
             this.currentPage = ccb;
             showCurrentPage();
         });
-        this.navigationButtons = navigationPage.initComponents(this.font, leftPos, topPos, terminalMenu, player);
+        this.navigationButtons = navigationPage.initComponents(this.font, leftPos, topPos, null, player);
 
         // 显示当前页面的组件
         for (AbstractWidget widget : navigationButtons) {
@@ -94,21 +105,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         }
     }
 
-    @Override
-    protected void init() {
-        super.init();
 
-        // 计算界面位置（居中显示）
-        this.leftPos = (this.width - GUI_WIDTH) / 2 ;
-        this.topPos = (this.height - GUI_HEIGHT) / 2;
 
-        // 显示当前页面的组件
-        showCurrentPage();
-        showNavigationButton();
-    }
-
-    public void containerTick() {
-        super.containerTick();
+    public void tick() {
         for (TickAbstractWidget widget : navigationButtons) {
             widget.onTick();
         }
@@ -142,9 +141,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
         guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/gui_background.png"), leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
         RenderSystem.disableBlend();
 
-        guiGraphics.fill(leftPos + 247, topPos + 66, leftPos + 252, topPos + 100, terminalMenu.getAnchorPowerLevel() > 0 ? 0xAA55FF55 : 0xAAFF5555); // 标题背景
+        guiGraphics.fill(leftPos + 247, topPos + 66, leftPos + 252, topPos + 100, GuiS2CPacket.getAnchorPowerLevel() > 0 ? 0xAA55FF55 : 0xAAFF5555); // 标题背景
 
-        guiGraphics.fill(leftPos + 19, topPos + 152 - 91 * terminalMenu.getAnchorPowerLevel() / 2560, leftPos + 22, topPos + 152, 0xFF55FFFF); // 标题背景
+        guiGraphics.fill(leftPos + 19, topPos + 152 - 91 * GuiS2CPacket.getAnchorPowerLevel() / 2560, leftPos + 22, topPos + 152, 0xFF55FFFF); // 标题背景
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -174,10 +173,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     }
 
     @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float v, int i, int i1) {
-    }
-
-    @Override
     public boolean isPauseScreen() {
         return false; // 游戏不会暂停
     }
@@ -186,8 +181,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
     @Override
     public void onClose() {
         super.onClose();
-        C2STagPacket.sendIntToServer(CURRENT_PAGE, currentPage);
-        C2STagPacket.sendBooleanToServer(OPEN_VOID_TERMINAL_FROM_CURIO, false);
+        savedCurrentPage = currentPage;
+        GuiC2SPacket.sendBooleanToServer(OPEN_VOID_TERMINAL_FROM_CURIO, false);
+        // 告诉服务器我们关闭了GUI
+        GuiC2SPacket.sendGuiClosedToServer();
     }
 
 

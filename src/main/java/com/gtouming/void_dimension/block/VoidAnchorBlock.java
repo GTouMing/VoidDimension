@@ -1,11 +1,13 @@
 package com.gtouming.void_dimension.block;
 
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
+import static com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity.*;
 import com.gtouming.void_dimension.config.VoidDimensionConfig;
 import com.gtouming.void_dimension.data.SyncData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 import com.gtouming.void_dimension.dimension.generator.PlatformGenerator;
 import com.gtouming.void_dimension.item.ModItems;
+import com.gtouming.void_dimension.network.GuiS2CPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -44,7 +46,6 @@ import java.util.*;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.maxPowerLevel;
 import static com.gtouming.void_dimension.config.VoidDimensionConfig.teleportWaitTime;
 import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
-import static com.gtouming.void_dimension.menu.TerminalMenu.*;
 
 /**
  * 虚空传送门方块
@@ -351,6 +352,12 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof VoidAnchorBlock) {
             level.setBlock(pos, state.setValue(POWER_LEVEL, powerLevel), 3);
+            // 如果是服务端，发送更新给所有打开GUI的玩家
+            if (level instanceof ServerLevel serverLevel) {
+                if (level.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor) {
+                    GuiS2CPacket.broadcastGuiUpdate(serverLevel, anchor);
+                }
+            }
         }
     }
 

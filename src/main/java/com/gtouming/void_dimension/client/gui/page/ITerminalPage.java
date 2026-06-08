@@ -1,7 +1,6 @@
 package com.gtouming.void_dimension.client.gui.page;
 
 import com.gtouming.void_dimension.client.gui.widget.TickAbstractWidget;
-import com.gtouming.void_dimension.menu.TerminalMenu;
 import net.minecraft.client.gui.Font;
 import net.minecraft.world.entity.player.Player;
 
@@ -17,5 +16,5 @@ public interface ITerminalPage {
      * @param topPos GUI顶坐标
      * @return 组件列表
      */
-    List<TickAbstractWidget> initComponents(Font font, int leftPos, int topPos, TerminalMenu terminalMenu, Player player);
+    List<TickAbstractWidget> initComponents(Font font, int leftPos, int topPos, Object dummy, Player player);
 }

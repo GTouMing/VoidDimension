@@ -1,12 +1,12 @@
 package com.gtouming.void_dimension.client.gui.page;
 
 import com.gtouming.void_dimension.client.gui.widget.*;
-import com.gtouming.void_dimension.network.C2STagPacket;
+import com.gtouming.void_dimension.network.DimensionC2SPacket;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-import static com.gtouming.void_dimension.component.TagKeyName.*;
+import static com.gtouming.void_dimension.network.DimensionC2SPacket.*;
 
 /**
  * 第二页 - 世界相关设置
@@ -26,7 +26,7 @@ public class TerminalPage2 extends BTerminalPage {
         AbstractButton weatherButton = (AbstractButton) SettingButton.builder(
                 button -> {
                     weather = (weather + 1) % 3;// 循环切换天气
-                    C2STagPacket.sendLongToServer(SET_WEATHER, weather);// 发送天气设置到服务器
+                    DimensionC2SPacket.sendIntToServer(SET_WEATHER, weather);// 发送天气设置到服务器
                 }, () -> powerEnough(2560, 256000) && correctDimension())
                 .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 
@@ -36,7 +36,7 @@ public class TerminalPage2 extends BTerminalPage {
                 () -> powerEnough(2560, 256000) && correctDimension()) {
             @Override
             public void applyValue() {
-                C2STagPacket.sendIntToServer(SET_DAY_TIME, (int) (this.value * 24000));
+                DimensionC2SPacket.sendLongToServer(SET_DAY_TIME, (long) (this.value * 24000));
 //                C2STagPacket.sendBooleanToServer(CHANGE_SETTING, true);
             }
 

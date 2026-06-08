@@ -14,4 +14,12 @@ public class TagKeyName {
     public static String SET_GATHER_ITEMS = "set_gather_items";
     public static String OPEN_CONTAINER = "open_container";
     public static String OPEN_VOID_TERMINAL_FROM_CURIO = "open_void_terminal_from_curio";
+
+    // GUI数据同步
+    public static String TOTAL_POWER_LEVEL_1 = "total_power_level_1";
+    public static String TOTAL_POWER_LEVEL_2 = "total_power_level_2";
+    public static String ANCHOR_POWER_LEVEL = "anchor_power_level";
+    public static String GATHER_ITEM = "gather_item";
+    public static String TELEPORT_TYPE = "teleport_type";
+    public static String OPEN_VOID_TERMINAL = "open_void_terminal";
 }

@@ -5,8 +5,8 @@ import com.gtouming.void_dimension.client.input.KeyInputHandler;
 import com.gtouming.void_dimension.curios.CuriosUtil;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.block.VoidAnchorBlock;
-import com.gtouming.void_dimension.menu.TerminalMenu;
-import com.gtouming.void_dimension.network.C2STagPacket;
+import com.gtouming.void_dimension.network.GuiC2SPacket;
+import com.gtouming.void_dimension.network.GuiS2CPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -131,8 +131,8 @@ public class VoidTerminal extends Item {
         if (isBound(stack)) {
             BlockEntity entity = getLevelFromDim(serverLevel, getBoundDim(stack)).getBlockEntity(getBoundPos(stack));
             if (!(entity instanceof VoidAnchorBlockEntity anchor)) return InteractionResultHolder.fail(stack);
-            C2STagPacket.setPlayerOpenFromCurio(serverPlayer, false);
-            serverPlayer.openMenu(anchor.getMenuProvider(), TerminalMenu.writeBuf(anchor, serverPlayer));
+            GuiC2SPacket.setPlayerOpenFromCurio(serverPlayer, false);
+            GuiS2CPacket.sendGuiDataToPlayer(anchor, serverPlayer, true);
         } else {
             player.displayClientMessage(Component.translatable("other.void_dimension.message.terminal_not_bound"), true);
         }
