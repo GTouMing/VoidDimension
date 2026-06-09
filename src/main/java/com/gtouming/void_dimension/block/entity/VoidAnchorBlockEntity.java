@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.gtouming.void_dimension.curios.CuriosUtil.curiosAPI;
-import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
 
 
 /**
