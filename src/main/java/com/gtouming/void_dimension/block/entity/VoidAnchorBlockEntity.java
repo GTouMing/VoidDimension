@@ -50,6 +50,9 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     private boolean gatherItem = false;
     private boolean cantOpen = false;
 
+    // 追踪打开这个锚点GUI的玩家
+    private final Set<UUID> openGuiPlayers = new HashSet<>();
+
     private final Map<UUID, ListTag> playerLegacy = new HashMap<>();
     private final Map<UUID, ListTag> playerCurios = new HashMap<>();
     private final NonNullList<ItemStack> containerItems = NonNullList.withSize(54, ItemStack.EMPTY);
@@ -418,5 +421,18 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
 
     public ContainerData getData() {
         return data;
+    }
+
+    // 添加追踪打开GUI玩家的方法
+    public void addOpenGuiPlayer(UUID playerUUID) {
+        openGuiPlayers.add(playerUUID);
+    }
+
+    public void removeOpenGuiPlayer(UUID playerUUID) {
+        openGuiPlayers.remove(playerUUID);
+    }
+
+    public Set<UUID> getOpenGuiPlayers() {
+        return openGuiPlayers;
     }
 }

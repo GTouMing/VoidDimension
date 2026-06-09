@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-import static com.gtouming.void_dimension.network.GuiC2SPacket.*;
+import static com.gtouming.void_dimension.network.PacketHelper.*;
 
 
 /**

@@ -349,11 +349,15 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
     }
 
     public static void setPowerLevel(Level level, BlockPos pos, int powerLevel) {
+        setPowerLevel(level, pos, powerLevel, true);
+    }
+
+    public static void setPowerLevel(Level level, BlockPos pos, int powerLevel, boolean shouldBroadcast) {
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof VoidAnchorBlock) {
             level.setBlock(pos, state.setValue(POWER_LEVEL, powerLevel), 3);
-            // 如果是服务端，发送更新给所有打开GUI的玩家
-            if (level instanceof ServerLevel serverLevel) {
+            // 如果是服务端且需要广播，发送更新给所有打开GUI的玩家
+            if (shouldBroadcast && level instanceof ServerLevel serverLevel) {
                 if (level.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor) {
                     GuiS2CPacket.broadcastGuiUpdate(serverLevel, anchor);
                 }

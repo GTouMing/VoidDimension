@@ -6,6 +6,7 @@ import com.gtouming.void_dimension.client.input.KeyInputHandler;
 import com.gtouming.void_dimension.client.renderer.VoidAnchorRenderer;
 import com.gtouming.void_dimension.curios.CuriosUtil;
 import com.gtouming.void_dimension.network.GuiC2SPacket;
+import com.gtouming.void_dimension.network.PacketHelper;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -41,7 +42,7 @@ public class ClientEvent {
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
         if (CuriosUtil.CURIOS_LOADED && KeyInputHandler.OPEN_VOID_TERMINAL_KEY.isDown()) {
-            GuiC2SPacket.sendBooleanToServer(GuiC2SPacket.OPEN_VOID_TERMINAL_FROM_CURIO, true);
+            GuiC2SPacket.sendBooleanToServer(PacketHelper.OPEN_VOID_TERMINAL_FROM_CURIO, true);
         }
     }
 }

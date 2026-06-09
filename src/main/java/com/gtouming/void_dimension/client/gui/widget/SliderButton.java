@@ -165,4 +165,9 @@ public abstract class SliderButton extends TickAbstractWidget {
     public abstract void applyValue();
 
     public abstract void updateMessage();
+
+    @Override
+    public void onTick() {
+        super.active = this.iActive.isActive();
+    }
 }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
-import static com.gtouming.void_dimension.network.GuiC2SPacket.OPEN_VOID_TERMINAL_FROM_CURIO;
+import static com.gtouming.void_dimension.network.PacketHelper.*;
 
 public class TerminalScreen extends Screen {
 

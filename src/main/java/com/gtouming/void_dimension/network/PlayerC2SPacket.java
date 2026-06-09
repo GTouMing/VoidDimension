@@ -1,8 +1,6 @@
 package com.gtouming.void_dimension.network;
 
 import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
-import com.gtouming.void_dimension.curios.CuriosUtil;
-import com.gtouming.void_dimension.item.VoidTerminal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -14,11 +12,6 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-
-import static com.gtouming.void_dimension.data.SyncData.getTotalPower;
-import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
-import static com.gtouming.void_dimension.item.VoidTerminal.getBoundDim;
-import static com.gtouming.void_dimension.item.VoidTerminal.getBoundPos;
 
 public record PlayerC2SPacket(CompoundTag tag) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PlayerC2SPacket> TYPE =
@@ -45,27 +38,27 @@ public record PlayerC2SPacket(CompoundTag tag) implements CustomPacketPayload {
                 ServerPlayer serverPlayer = (ServerPlayer) context.player();
                 ServerLevel level = serverPlayer.serverLevel();
 
-                ItemStack terminalStack = serverPlayer.getMainHandItem();
-                if (!(terminalStack.getItem() instanceof VoidTerminal)) {
-                    terminalStack = CuriosUtil.curiosAPI().tryGetTerminal(serverPlayer);
-                    if (!(terminalStack.getItem() instanceof VoidTerminal)) return;
-                }
-                ServerLevel boundLevel = getLevelFromDim(level, getBoundDim(terminalStack));
-                var pos = getBoundPos(terminalStack);
+                ItemStack terminalStack = PacketHelper.getTerminalStack(serverPlayer, false);
+                if (terminalStack.isEmpty()) return;
 
-                if (packet.tag.contains(SET_RESPAWN_POINT) && boundLevel != null && PacketHelper.powerEnough(terminalStack, 128, 256)) {
+                VoidAnchorBlockEntity anchor = PacketHelper.getBoundAnchor(level, terminalStack);
+                if (anchor == null) return;
+
+                ServerLevel boundLevel = (ServerLevel) anchor.getLevel();
+                if (boundLevel == null) return;
+                var pos = anchor.getBlockPos();
+
+                if (packet.tag.contains(SET_RESPAWN_POINT) && PacketHelper.powerEnough(terminalStack, 128, 256)) {
                     if (packet.tag.getBoolean(SET_RESPAWN_POINT)) {
                         serverPlayer.setRespawnPosition(boundLevel.dimension(), pos.above(), 0.0f, true, true);
                     } else {
                         serverPlayer.setRespawnPosition(boundLevel.dimension(), null, 0.0f, true, true);
                     }
-                    if ((boundLevel.getBlockEntity(pos) instanceof VoidAnchorBlockEntity anchor)) {
-                        GuiS2CPacket.sendRespawnPointSetToPlayer(anchor, serverPlayer);
-                    }
+                    GuiS2CPacket.sendRespawnPointSetToPlayer(anchor, serverPlayer);
                     PacketHelper.decreasePower(boundLevel, pos, 128);
                 }
 
-                if (packet.tag.contains(TELEPORT_TO_ANCHOR) && boundLevel != null && PacketHelper.powerEnough(terminalStack, 128, 256)) {
+                if (packet.tag.contains(TELEPORT_TO_ANCHOR) && PacketHelper.powerEnough(terminalStack, 128, 256)) {
                     serverPlayer.teleportTo(boundLevel, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0.0f, 0.0f);
                     PacketHelper.decreasePower(boundLevel, pos, 128);
                 }

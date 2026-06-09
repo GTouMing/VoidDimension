@@ -64,6 +64,11 @@ public abstract class AbstractButton extends TickAbstractWidget{
     }
 
     @Override
+    public void onTick() {
+        super.active = IActive.isActive();
+    }
+
+    @Override
     public void playDownSound(@NotNull SoundManager handler) {
         handler.play(SimpleSoundInstance.forUI(ModSounds.BUTTON_RELEASE.get(), 1));
     }

@@ -1,9 +1,8 @@
 package com.gtouming.void_dimension.network;
 
-import com.gtouming.void_dimension.curios.CuriosUtil;
+import com.gtouming.void_dimension.block.entity.VoidAnchorBlockEntity;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
-import com.gtouming.void_dimension.item.VoidTerminal;
 import com.gtouming.void_dimension.util.DimRuleInvoker;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -18,10 +17,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-
-import static com.gtouming.void_dimension.dimension.VoidDimensionType.getLevelFromDim;
-import static com.gtouming.void_dimension.item.VoidTerminal.getBoundDim;
-import static com.gtouming.void_dimension.item.VoidTerminal.getBoundPos;
 
 public record DimensionC2SPacket(CompoundTag tag) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<DimensionC2SPacket> TYPE =
@@ -48,13 +43,14 @@ public record DimensionC2SPacket(CompoundTag tag) implements CustomPacketPayload
                 ServerPlayer serverPlayer = (ServerPlayer) context.player();
                 ServerLevel level = serverPlayer.serverLevel();
 
-                ItemStack terminalStack = serverPlayer.getMainHandItem();
-                if (!(terminalStack.getItem() instanceof VoidTerminal)) {
-                    terminalStack = CuriosUtil.curiosAPI().tryGetTerminal(serverPlayer);
-                    if (!(terminalStack.getItem() instanceof VoidTerminal)) return;
-                }
-                ServerLevel boundLevel = getLevelFromDim(level, getBoundDim(terminalStack));
-                var pos = getBoundPos(terminalStack);
+                ItemStack terminalStack = PacketHelper.getTerminalStack(serverPlayer, false);
+                if (terminalStack.isEmpty()) return;
+
+                VoidAnchorBlockEntity anchor = PacketHelper.getBoundAnchor(level, terminalStack);
+                if (anchor == null) return;
+
+                ServerLevel boundLevel = (ServerLevel) anchor.getLevel();
+                var pos = anchor.getBlockPos();
 
                 if (packet.tag.contains(SET_DAY_TIME) && PacketHelper.powerEnough(terminalStack, 2560, 256000)) {
                     long dayTime = packet.tag.getLong(SET_DAY_TIME);
