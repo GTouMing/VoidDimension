@@ -1,19 +1,22 @@
 package com.gtouming.void_dimension.event;
 
-import com.gtouming.void_dimension.VoidDimension;
 import com.gtouming.void_dimension.data.SyncData;
+import com.gtouming.void_dimension.dimension.chunk.LevelLoadManager;
 import com.gtouming.void_dimension.event.subevent.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
-@EventBusSubscriber(modid = VoidDimension.MOD_ID)
+import static com.gtouming.void_dimension.VoidDimension.MOD_ID;
+
+@EventBusSubscriber(modid = MOD_ID)
 public class CommonEvent {
 
     @SubscribeEvent
@@ -49,6 +52,11 @@ public class CommonEvent {
     @SubscribeEvent
     static void onServerStopping(ServerStoppingEvent event) {
         SaveTimeWeatherEvent.onServerStopping(event);
+    }
+
+    @SubscribeEvent
+    static void onServerStarted(ServerStartedEvent event) {
+        LevelLoadManager.notifyServerStarted();
     }
 
     @SubscribeEvent

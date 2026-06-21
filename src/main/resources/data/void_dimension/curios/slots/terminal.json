@@ -1,9 +1,7 @@
 {
   "replace": false,
   "size": 1,
-  "icon": "",
+  "icon": "void_dimension:slot/empty_void_terminal_slot",
   "operation": "SET",
-  "order": 172,
-  "render_toggle": true,
-  "use_native_gui": true
+  "order": 172
 }

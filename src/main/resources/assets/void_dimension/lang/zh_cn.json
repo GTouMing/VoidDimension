@@ -12,7 +12,7 @@
   "gui.void_dimension.terminal.page1.bound_anchor_pos_key": "§6✦锚点坐标：",
   "gui.void_dimension.terminal.page1.bound_anchor_pos_value": "§cx:%d, §ay:%d, §9z:%d",
   "gui.void_dimension.terminal.page1.bound_anchor_power_level": "§6✦锚点能量等级：%d",
-  "gui.void_dimension.terminal.page2.text.weather": "§6✦循环改变虚空维度的天气。\n\n✦当前天气：%s\n\n§6✦消耗：§b%d\n§6✦需求：§b%d",
+  "gui.void_dimension.terminal.page2.text.weather": "§6✦循环改变虚空维度的天气。\n\n✦当前维度天气：%s\n\n§6✦消耗：§b%d\n§6✦需求：§b%d",
   "gui.void_dimension.terminal.page2.text.daytime": "§6✦调节时间。\n\n✦当前时间：%d\n\n§6✦消耗：§b%d\n§6✦需求：§b%d",
   "gui.void_dimension.terminal.page2.text.raining": "§e雨天",
   "gui.void_dimension.terminal.page2.text.thundering": "§c雷雨",

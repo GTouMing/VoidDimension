@@ -62,24 +62,27 @@ public record GuiS2CPacket(CompoundTag tag) implements CustomPacketPayload {
                 if (packet.tag.contains(BOUND_POS)) guiBoundPos = packet.tag.getLong(BOUND_POS);
 
                 if (packet.tag.contains(OPEN_VOID_TERMINAL) && packet.tag.getBoolean(OPEN_VOID_TERMINAL)) {
-                    net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
-                    if (minecraft.player != null) {
-                        minecraft.setScreen(new com.gtouming.void_dimension.client.gui.TerminalScreen());
-                    }
+                    openGuiOnClient();
                 }
             }
         });
+    }
+
+    private static void openGuiOnClient() {
+        try {
+            Class<?> handlerClass = Class.forName("com.gtouming.void_dimension.client.network.ClientGuiHandler");
+            handlerClass.getMethod("openTerminalScreen").invoke(null);
+        } catch (Exception ignored) {
+        }
     }
 
     public static void sendRespawnPointSetToPlayer(VoidAnchorBlockEntity anchor, ServerPlayer player) {
         MinecraftServer server = player.level().getServer();
         if (server != null) {
             ServerLevel level = server.getLevel(player.getRespawnDimension());
-            if (level != null && player.getRespawnPosition() != null) {
-                CompoundTag tag = new CompoundTag();
-                tag.putBoolean(GET_RESPAWN_POINT, anchor.equals(VoidAnchorBlockEntity.getBlockEntity(level, player.getRespawnPosition().below())));
-                PacketDistributor.sendToPlayer(player, new GuiS2CPacket(tag));
-            }
+            CompoundTag tag = new CompoundTag();
+            tag.putBoolean(GET_RESPAWN_POINT, level != null && player.getRespawnPosition() != null && anchor.equals(VoidAnchorBlockEntity.getBlockEntity(level, player.getRespawnPosition().below())));
+            PacketDistributor.sendToPlayer(player, new GuiS2CPacket(tag));
         }
     }
 

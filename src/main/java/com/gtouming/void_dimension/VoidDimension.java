@@ -64,7 +64,7 @@ public class VoidDimension {
      * 注册网络包处理器
      */
     void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.8");
+        final PayloadRegistrar registrar = event.registrar("void_dimension").versioned("0.8.2");
         registrar.playToClient(
                 GuiS2CPacket.TYPE,
                 GuiS2CPacket.STREAM_CODEC,

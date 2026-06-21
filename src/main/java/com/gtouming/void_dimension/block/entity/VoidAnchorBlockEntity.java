@@ -5,6 +5,8 @@ import com.gtouming.void_dimension.block.VoidAnchorBlock;
 import com.gtouming.void_dimension.data.VoidDimensionData;
 import com.gtouming.void_dimension.dimension.VoidDimensionType;
 
+import com.gtouming.void_dimension.dimension.chunk.ChunkLoadData;
+import com.gtouming.void_dimension.dimension.chunk.LevelLoadManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -15,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -61,6 +64,11 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     private static final String KEY_PLAYER_UUID = "PlayerUUID";
     private static final String KEY_LEGACY_ITEMS = "LegacyItems";
     private static final String KEY_CURIOS = "Curios";
+
+    private static final int MAX_LAYERS = 4;
+    private int lastLayers = 0;
+    private boolean isLoaded = false;
+    private ChunkLoadData loadData = null;
 
     public VoidAnchorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VOID_ANCHOR_BLOCK_ENTITY.get(), pos, state);
@@ -184,6 +192,84 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
                 containerItems.set(i, stack);
             }
         }
+    }
+
+    public void tick() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+
+        ServerLevel serverLevel = (ServerLevel) level;
+
+        // 1. 检测基座层数
+        int currentLayers = countBaseLayers();
+
+        // 2. 无变化则跳过
+        if (currentLayers == lastLayers && isLoaded) {
+            return;
+        }
+
+        // 3. 清理旧加载
+        if (isLoaded && loadData != null) {
+            LevelLoadManager.unregister(worldPosition, level);
+            LevelLoadManager.reload(serverLevel);
+            isLoaded = false;
+            loadData = null;
+        }
+
+        // 4. 注册新加载
+        if (currentLayers > 0) {
+            // 层数决定了加载范围
+            // 层数1：加载1x1区块
+            // 层数2：加载3x3区块
+            // 层数3：加载5x5区块
+            // 层数4：加载7x7区块
+            loadData = ChunkLoadData.create(
+                    currentLayers,
+                    worldPosition
+            );
+            LevelLoadManager.register(worldPosition, loadData, serverLevel);
+            isLoaded = true;
+        }
+
+        lastLayers = currentLayers;
+    }
+
+    /**
+     * 统计金属方块基座的层数
+     */
+    private int countBaseLayers() {
+        if (level == null) return 0;
+
+        BlockPos basePos = this.worldPosition.below();
+        int layers = 0;
+
+        for (int layer = 0; layer < MAX_LAYERS; layer++) {
+            int radius = 1 + layer;
+            boolean layerComplete = true;
+
+            for (int x = -radius; x <= radius; x++) {
+                for (int z = -radius; z <= radius; z++) {
+                    BlockPos checkPos = basePos.offset(x, -layer, z);
+                    BlockState state = level.getBlockState(checkPos);
+
+                    // 使用标签匹配所有金属方块（信标基座方块）
+                    if (!state.is(BlockTags.BEACON_BASE_BLOCKS)) {
+                        layerComplete = false;
+                        break;
+                    }
+                }
+                if (!layerComplete) break;
+            }
+
+            if (layerComplete) {
+                layers++;
+            } else {
+                break;
+            }
+        }
+
+        return layers;
     }
 
     @Override
@@ -413,10 +499,6 @@ public class VoidAnchorBlockEntity extends BaseContainerBlockEntity {
     public Map<UUID, ListTag> getPlayerLegacy() {
         return playerLegacy;
     }
-
-//    public Map<UUID, List<ItemStack>> getPlayerVaultItems() {
-//        return playerVaultItems;
-//    }
 
     public ContainerData getData() {
         return data;

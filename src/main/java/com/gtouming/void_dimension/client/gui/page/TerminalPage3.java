@@ -26,7 +26,7 @@ public class TerminalPage3 extends BTerminalPage {
 
         // ==================== 玩家分类 ====================
         AbstractButton respawnAnchorButton = (AbstractButton) SettingButton.builder(
-                button -> PlayerC2SPacket.sendBooleanToServer(SET_RESPAWN_POINT, true)
+                button -> PlayerC2SPacket.sendBooleanToServer(SET_RESPAWN_POINT, !GuiS2CPacket.respawnSet)
                 , () -> powerEnough(128, 256))
                 .settingBounds(settingX, settingY).build(SettingButton::new).setWidgetIndex(0).setIHasHovered(() -> index == 0);
 

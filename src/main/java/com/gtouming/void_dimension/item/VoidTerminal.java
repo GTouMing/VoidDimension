@@ -199,7 +199,7 @@ public class VoidTerminal extends Item {
         if (boundData != null) {
             return boundData.getString("dim");
         }
-        return null;
+        return "overworld";
     }
 
     public static BlockPos getBoundPos(ItemStack stack) {

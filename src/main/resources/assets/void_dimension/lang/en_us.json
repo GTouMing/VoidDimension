@@ -12,7 +12,7 @@
   "gui.void_dimension.terminal.page1.bound_anchor_pos_key": "§6✦Anchor Position:",
   "gui.void_dimension.terminal.page1.bound_anchor_pos_value": "§cx:%d, §ay:%d, §9z:%d",
   "gui.void_dimension.terminal.page1.bound_anchor_power_level": "§6✦Anchor Power Level: %d",
-  "gui.void_dimension.terminal.page2.text.weather": "§6✦Cyclically change the weather in the Void Dimension.\n\n✦Current Weather: %s\n\n§6✦Consume: §b%d\n§6✦Require: §b%d",
+  "gui.void_dimension.terminal.page2.text.weather": "§6✦Cyclically change the weather in the Void Dimension.\n\n✦Current Dimension Weather: %s\n\n§6✦Consume: §b%d\n§6✦Require: §b%d",
   "gui.void_dimension.terminal.page2.text.daytime": "§6✦Adjust the daytime.\n\n✦Current Time: %d\n\n§6✦Consume: §b%d\n§6✦Require: §b%d",
   "gui.void_dimension.terminal.page2.text.raining": "§eRaining",
   "gui.void_dimension.terminal.page2.text.thundering": "§cThundering",

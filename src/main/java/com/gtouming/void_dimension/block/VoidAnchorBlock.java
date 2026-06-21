@@ -126,15 +126,6 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
             }
         }
 
-        // 掉落玩家 vault 物品
-//        for (List<ItemStack> items : anchorEntity.getPlayerVaultItems().values()) {
-//            for (ItemStack stack : items) {
-//                if (!stack.isEmpty()) {
-//                    Block.popResource(level, pos.above(), stack);
-//                }
-//            }
-//        }
-
         // 清空所有物品
         anchorEntity.clearContent();
         anchorEntity.getPlayerLegacy().clear();
@@ -250,6 +241,7 @@ public class VoidAnchorBlock extends Block implements EntityBlock {
             if (!(level1 instanceof ServerLevel serverLevel)) return;
             if (VoidAnchorBlock.getPowerLevel(level, pos) == 0) return;
             if (!(t instanceof VoidAnchorBlockEntity anchor)) return;
+            anchor.tick();
             {
                 if(getTotalPower() != (((long) anchor.getData().get(TOTAL_POWER_LEVEL_1) << 32) | (anchor.getData().get(TOTAL_POWER_LEVEL_2) & 0xFFFFFFFFL))) {
                     anchor.getData().set(TOTAL_POWER_LEVEL_1, (int) (getTotalPower() >> 32));

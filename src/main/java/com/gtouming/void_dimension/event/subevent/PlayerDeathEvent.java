@@ -50,7 +50,8 @@ public class PlayerDeathEvent {
     }
 
     private static ItemStack findBoundVoidTerminal(ServerPlayer player) {
-        if (!ItemStack.EMPTY.equals(curiosAPI().tryGetTerminal(player))) return curiosAPI().tryGetTerminal(player);
+        ItemStack itemStack = curiosAPI().tryGetTerminal(player);
+        if (itemStack.getItem() instanceof VoidTerminal && VoidTerminal.isBound(itemStack)) return curiosAPI().tryGetTerminal(player);
         for (ItemStack stack : player.getInventory().items) {
             if (stack.is(ModItems.VOID_TERMINAL) && stack.get(BOUND_DATA) != null) return stack;
         }
